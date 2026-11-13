@@ -76,7 +76,8 @@ export function BoardView({ id }: { id: string }) {
             <div className="-mx-6 flex min-h-0 flex-1 items-start gap-3 overflow-x-auto px-6 pb-2">
               {lanes.map((l, i) => (
                 <section key={l.id} className="bg-muted/60 flex max-h-full w-72 shrink-0 flex-col rounded-xl p-1">
-                  <ColumnHeader column={l.column} count={byColumn.get(l.id)!.length} first={i === 0} last={i === columns.length - 1} />
+                  {/* 11px: the name lines up with the card text (2px list inset + 1px card border + 8px row padding). */}
+                  <ColumnHeader column={l.column} count={byColumn.get(l.id)!.length} first={i === 0} last={i === columns.length - 1} className="px-[11px]" />
                   <div className="min-h-0 overflow-y-auto px-0.5">{list(l.id)}</div>
                   <QuickAdd place={INBOX} spot={spot(l.id)} placeholder="Add" />
                 </section>

@@ -63,7 +63,7 @@ export function ItemRow({
         "flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors duration-150 outline-none",
         density === "card" && "mt-0.5",
         done
-          ? "border-brand bg-brand text-white"
+          ? "border-primary bg-primary text-primary-foreground"
           : density === "minimal"
             ? "border-foreground/20 hover:border-foreground/45"
             : "border-foreground/25 hover:border-foreground/50",

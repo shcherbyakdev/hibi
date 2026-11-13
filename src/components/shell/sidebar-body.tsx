@@ -10,7 +10,7 @@ import { signOut } from "@/features/auth/actions";
 import { OPEN_COMMAND_MENU_EVENT } from "@/components/command-menu";
 import { cn } from "@/lib/utils";
 import { SyncStatus } from "./sync-status";
-import { HibiLogo } from "@/components/brand/hibi-logo";
+import { HibiMark, HibiWordmark } from "@/components/brand/hibi-logo";
 import { activeClass, iconClass, idleClass, itemClass } from "./sidebar-styles";
 import { SidebarBoards } from "@/features/boards/components/sidebar-boards";
 import { usePlannerHref } from "@/features/planner/last-view";
@@ -23,9 +23,14 @@ export function SidebarBody({ userEmail, onNavigate }: { userEmail: string; onNa
 
   return (
     <div className="flex h-full flex-col px-3 py-4">
-      <div className="flex h-9 items-center gap-2.5 px-1.5 pr-8 md:pr-1.5">
-        <Link href="/plan" aria-label="hibi — go to the planner" className="flex items-center rounded-md px-0.5 outline-none focus-visible:ring-1 focus-visible:ring-ring/60">
-          <HibiLogo size={18} />
+      {/* On the nav grid: the mark centred in the 14px icon column, the
+          wordmark starting where the nav labels start. */}
+      <div className="flex h-9 items-center px-2 pr-8 md:pr-2">
+        <Link href="/plan" aria-label="hibi — go to the planner" className="flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-1 focus-visible:ring-ring/60">
+          <span className="flex w-3.5 justify-center">
+            <HibiMark height={11} />
+          </span>
+          <HibiWordmark size={18} />
         </Link>
         <span className="ml-auto">
           <SyncStatus />
@@ -68,15 +73,15 @@ export function SidebarBody({ userEmail, onNavigate }: { userEmail: string; onNa
       </nav>
 
       <div className="flex flex-col gap-1 pt-2">
-        <div className="text-subtle truncate px-2.5 text-xs" title={userEmail}>
+        <div className="text-subtle truncate px-2 text-xs" title={userEmail}>
           {userEmail}
         </div>
         <form action={signOut}>
           <button
             type="submit"
-            className="text-muted-foreground hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-ring/40 flex h-7 w-full items-center gap-2 rounded-md px-2 text-xs transition-colors duration-150 ease-strong outline-none focus-visible:ring-2"
+            className="text-muted-foreground hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-ring/40 flex h-7 w-full items-center gap-2.5 rounded-md px-2 text-xs transition-colors duration-150 ease-strong outline-none focus-visible:ring-2"
           >
-            <HugeiconsIcon icon={Logout03Icon} size={15} className="text-subtle" />
+            <HugeiconsIcon icon={Logout03Icon} size={14} className="text-subtle" />
             Sign out
           </button>
         </form>

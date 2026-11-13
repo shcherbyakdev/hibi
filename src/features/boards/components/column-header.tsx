@@ -6,11 +6,12 @@ import type { BoardColumn } from "@/lib/sync/db";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useBoardActions } from "../use-boards";
 import { InlineName } from "./inline-name";
+import { cn } from "@/lib/utils";
 
-export function ColumnHeader({ column, count, first, last }: { column: BoardColumn | null; count: number; first: boolean; last: boolean }) {
+export function ColumnHeader({ column, count, first, last, className }: { column: BoardColumn | null; count: number; first: boolean; last: boolean; className?: string }) {
   const actions = useBoardActions();
   return (
-    <header className="group/col flex h-8 items-center gap-1.5 px-2 text-xs font-medium">
+    <header className={cn("group/col flex h-8 items-center gap-1.5 px-2 text-xs font-medium", className)}>
       {column ? <InlineName value={column.name} label={`column ${column.name}`} maxLength={80} onSave={(n) => actions.renameColumn(column, n)} /> : <span className="text-muted-foreground">No column</span>}
       <span className="text-subtle tabular-nums">{count || ""}</span>
       {column ? (

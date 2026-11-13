@@ -259,14 +259,19 @@ src/
    except floating things; small uppercase mono for section labels, field
    labels, dates and times; two-tone light headings ("Today" ink + date
    grey, 22px/400). Round task checkboxes kept on purpose.
-   **Brand → hibi** (日々, "day after day"). Logo: the smile-and-dot mark,
-   redrawn as SVG from the brand artwork in its own coordinates
-   (`components/brand/hibi-logo.tsx`), treated minimally after "dose"
-   (logosystem.co): monochrome, symbol sized to the letters, lowercase
-   Geist Medium wordmark, no tile. Accent = the logo blue #4858fa (sampled;
-   lifted to #6f7dff at night). Favicon `app/icon.svg`. Internal names
-   (folder, Dexie db `todo-<user>`, storage keys) stay `todo` on purpose:
-   renaming the local db would drop unsynced changes.
+   **Brand → hibi** (日々, "day after day"). Logo (`components/brand/hibi-logo.tsx`):
+   the smile-and-dot mark redrawn as SVG from the brand artwork in its own
+   coordinates, lightened (dot r 44, stroke 54; source 60/79), minimal after
+   "dose" (logosystem.co): no tile, symbol sized to the letters. Mark = logo
+   blue `primary` #4858fa in both themes; wordmark = Outfit 500 (brand-only
+   font, round i-dots echo the mark), ink. One blue app-wide: solid "brand"
+   fills (checked box, today marker, timer dot) use `primary`; `brand` is the
+   lifted text/tint variant for dark mode; board tone "periwinkle" = brand
+   blue, "blue" key = teal. Alignment: sidebar logo on the nav grid (mark in
+   the icon column, wordmark at the label line), Today heading on the rows,
+   kanban column names on the card text. Favicon `app/icon.svg`. Internal
+   names (folder, Dexie db `todo-<user>`, storage keys) stay `todo` on
+   purpose: renaming the local db would drop unsynced changes.
 8. **Ship.** GH Actions CI + deploy (migrate → promote), Vercel `fra1`,
    Supabase prod project.
 

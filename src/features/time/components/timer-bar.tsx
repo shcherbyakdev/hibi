@@ -60,7 +60,7 @@ export function TimerBar() {
 
   return (
     <div role="timer" aria-label={`${left !== null ? "Pomodoro" : "Timer"} for ${item.title}`} className="bg-brand/10 flex h-7 items-center gap-1.5 rounded-md pr-0.5 pl-2 text-xs">
-      {left !== null ? <Ring fraction={1 - left / running.planned_seconds!} /> : <span className="bg-brand size-1.5 rounded-[1px] motion-safe:animate-pulse" />}
+      {left !== null ? <Ring fraction={1 - left / running.planned_seconds!} /> : <span className="bg-primary size-1.5 rounded-[1px] motion-safe:animate-pulse" />}
       <button type="button" onClick={() => sheet.open(item.id)} className="max-w-40 truncate font-medium outline-none hover:underline">
         {item.title}
       </button>

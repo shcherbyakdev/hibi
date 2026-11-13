@@ -50,9 +50,9 @@ export function BoardMenu({ board, taskCount }: { board: Board; taskCount: numbe
             <DropdownMenuSubContent className="w-40">
               {(Object.keys(BOARD_TONES) as BoardToneKey[]).map((tone) => (
                 <DropdownMenuItem key={tone} onClick={() => actions.setTone(board, tone)}>
-                  <HugeiconsIcon icon={DashboardSquare02Icon} size={14} className={BOARD_TONES[tone]} />
-                  <span className="capitalize">{tone}</span>
-                  {boardTone(board) === BOARD_TONES[tone] ? <Check className="ml-auto size-3.5" /> : null}
+                  <HugeiconsIcon icon={DashboardSquare02Icon} size={14} className={BOARD_TONES[tone].cls} />
+                  {BOARD_TONES[tone].label}
+                  {boardTone(board) === BOARD_TONES[tone].cls ? <Check className="ml-auto size-3.5" /> : null}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuSubContent>

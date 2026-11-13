@@ -76,13 +76,14 @@
   /* Task priority signal bars: lit bars orange, urgent red. */
   --color-priority-urgent: var(--priority-urgent);
   --color-priority: var(--priority);
-  /* A blue for board colours (the kind palette has none). */
-  --color-blue: var(--blue);
+  /* Teal for board colours (blue is the brand's). */
+  --color-teal: var(--teal);
   /* The brand accent (the appointments blue): focus rings, checked
      controls, the active nav icon. Controls themselves stay ink pills. */
   --color-brand: var(--brand);
   --color-brand-text: var(--brand-text);
   --font-display: var(--font-display, var(--font-sans));
+  --font-brand: var(--font-brand);
   /* Landing motion curves (Emil Kowalski's design-engineering rules): the
      built-in easings are too weak; entering/exiting takes the strong
      ease-out, on-screen movement the strong ease-in-out. */
@@ -156,7 +157,7 @@
   --on-kind: #171717;
   --priority-urgent: #e5484d;
   --priority: #f76b15;
-  --blue: #4040f0;
+  --teal: #0d9488;
   --brand: #4858fa;
   --brand-text: #3a46d8;
   --danger: #e11d48;
@@ -231,7 +232,7 @@
   --on-kind: #0a0a0a;
   --priority-urgent: #ff6369;
   --priority: #ff8b3e;
-  --blue: #8080f5;
+  --teal: #2dd4bf;
   --brand: #6f7dff;
   --brand-text: #a3abff;
   --danger: #ff4d5e;

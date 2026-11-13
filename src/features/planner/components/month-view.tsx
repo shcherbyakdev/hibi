@@ -64,7 +64,7 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
                       aria-label={`Open ${label.dayLong(d)}`}
                       className={cn(
                         "hover:bg-muted focus-visible:ring-ring/40 flex size-6 items-center justify-center self-start rounded-md text-xs tabular-nums outline-none focus-visible:ring-2",
-                        d === today ? "bg-brand hover:bg-brand font-semibold text-white" : inMonth(d) ? "text-foreground" : "text-subtle",
+                        d === today ? "bg-primary hover:bg-primary text-primary-foreground font-semibold" : inMonth(d) ? "text-foreground" : "text-subtle",
                       )}
                     >
                       {label.dayOfMonth(d)}

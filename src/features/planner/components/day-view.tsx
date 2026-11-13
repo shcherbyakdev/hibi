@@ -20,7 +20,10 @@ export function DayView({ date, today, go }: { date: string; today: string; go: 
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
+      {/* px-3: the heading lines up with the rows' checkboxes and labels. */}
+      <div className="px-3">
       <DateNav title={date === today ? "Today" : label.weekdayLong(date)} sub={date === today ? `${label.weekdayLong(date)}, ${label.dayMonth(date)}` : label.dayMonth(date)} onPrev={() => go(addDays(date, -1))} onNext={() => go(addDays(date, 1))} onToday={() => go(today)} isCurrent={date === today} />
+      </div>
       <PlannerBoard
         groups={groups}
         today={today}
