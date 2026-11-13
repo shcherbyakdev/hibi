@@ -15,7 +15,7 @@ import {
   type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { SortableContext, arrayMove, rectSortingStrategy, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 
@@ -66,8 +66,9 @@ export function Board<T extends Row>({
   renderItem: (item: T, state: { overlay: boolean }) => React.ReactNode;
   /** What screen readers hear for an item (never its id). */
   itemLabel: (item: T) => string;
-  /** `className` styles the group's drop zone (e.g. flex-1 to fill a cell). */
-  children: (list: (groupId: string, className?: string) => React.ReactNode) => React.ReactNode;
+  /** `className` styles the group's drop zone (e.g. flex-1 to fill a cell);
+      `grid` lays its rows out as a grid (sorting animates in 2D). */
+  children: (list: (groupId: string, className?: string, grid?: boolean) => React.ReactNode) => React.ReactNode;
 }) {
   const [drag, setDrag] = React.useState<{ id: string; from: string; initial: Record<string, string[]>; order: Record<string, string[]> } | null>(null);
   const sensors = useSensors(useSensor(RowPointerSensor, { activationConstraint: { distance: 4 } }));
@@ -131,11 +132,11 @@ export function Board<T extends Row>({
     },
   };
 
-  const list = (groupId: string, className?: string) => {
+  const list = (groupId: string, className?: string, grid = false) => {
     const ids = order[groupId] ?? [];
     return (
       <DropList id={groupId} disabled={noDrop.has(groupId)} className={className}>
-        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+        <SortableContext items={ids} strategy={grid ? rectSortingStrategy : verticalListSortingStrategy}>
           {ids.map((id) => {
             const item = byId.get(id);
             return item ? (

@@ -19,7 +19,7 @@ export function PlannerBoard({
 }: {
   groups: BoardGroup<Item>[];
   today: string;
-  children: (list: (groupId: string, className?: string) => React.ReactNode) => React.ReactNode;
+  children: (list: (groupId: string, className?: string, grid?: boolean) => React.ReactNode) => React.ReactNode;
   showPlace?: (item: Item) => boolean;
   renderItem?: (item: Item, state: { overlay: boolean }) => React.ReactNode;
 }) {

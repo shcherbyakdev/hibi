@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { usePrefs } from "@/lib/prefs";
 import { isOverdue } from "@/features/planner/periods";
 import { PlayButton, RowTime } from "@/features/time/components/row-timer";
-import { useTimer } from "@/features/time/use-timer";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useItemActions } from "../use-items";
 import { placeLabel } from "../model";
@@ -43,7 +42,6 @@ export function ItemRow({
   density?: "list" | "card" | "minimal";
 }) {
   const actions = useItemActions();
-  const timer = useTimer();
   const { weekStart } = usePrefs();
   const [editing, setEditing] = React.useState(false);
   const done = item.status === "done";
@@ -122,20 +120,24 @@ export function ItemRow({
   };
 
   if (density === "card") {
-    const tracked = timer.running?.item_id === item.id || timer.totalFor(item.id) > 0;
-    const hasMeta = !!item.notes || tracked || (showPlace && !!item.plan_scope);
+    // Cards (week columns, kanban) can be narrow: the title takes the whole
+    // first line; the second line always starts with priority — visible at
+    // rest (faint bars when unset), so nothing appears or moves on hover.
     return (
       <div {...rowProps} className={cn(rowProps.className, "flex flex-col gap-1 py-1.5")}>
         <div className="flex items-start gap-2 pr-1">
           {checkbox}
-          {/* Centred on the title's first line (20px). */}
-          <span className="flex h-5 shrink-0 items-center">{priority}</span>
           {title}
         </div>
-        {hasMeta ? (
-          // Under the title: checkbox 16 + gap 8 + priority 16 + gap 8 = 48px.
-          <div className="flex min-w-0 items-center gap-2 pl-12">{meta}</div>
-        ) : null}
+        {/* Under the title: checkbox 16 + gap 8 = 24px. */}
+        <div className="flex min-w-0 items-center gap-2 pl-6">
+          {overlay ? (
+            <PriorityIcon priority={item.priority} className={cn("size-3.5", done && "opacity-40")} />
+          ) : (
+            <PriorityPicker value={item.priority} onChange={setPriority} className={cn("-mx-1 size-5", done && "opacity-40")} iconClassName="size-3.5" />
+          )}
+          {meta}
+        </div>
         {overlay ? null : <HoverActions item={item} today={today} className="top-1 right-1 h-6" />}
       </div>
     );

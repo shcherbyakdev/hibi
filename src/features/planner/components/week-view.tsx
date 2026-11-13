@@ -4,16 +4,20 @@ import { useEffect, useRef } from "react";
 import { usePlanned } from "@/features/items/use-items";
 import { placeId } from "@/features/items/model";
 import { QuickAdd } from "@/features/items/components/quick-add";
+import { ItemCard } from "@/features/items/components/item-row";
 import type { Item } from "@/lib/sync/db";
+import { usePrefs } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
 import { addDays, label, periodOf, weekDays } from "../periods";
 import { DateNav } from "./date-nav";
 import { PlannerBoard } from "./planner-board";
-import { ItemCard } from "@/features/items/components/item-row";
-import { usePrefs } from "@/lib/prefs";
 
-/* "This week" bucket + seven day columns, side by side; scrolls sideways on
-   narrow screens. Drag between columns to reschedule. */
+const columnHeader = "flex h-8 items-center gap-1.5 px-[9px] font-mono text-[11px] uppercase tracking-[0.06em]";
+
+/* The week without sideways scrolling: the "This week" bucket is a band on
+   top (its cards flow in a grid), and the seven days share the full width
+   below, wrapping onto a second row when columns would get too narrow.
+   Drag between the bucket and any day, or between days, to reschedule. */
 export function WeekView({ date, today, go }: { date: string; today: string; go: (d: string) => void }) {
   const { weekStart } = usePrefs();
   const start = periodOf("week", date, weekStart);
@@ -22,56 +26,56 @@ export function WeekView({ date, today, go }: { date: string; today: string; go:
   // setting are dated a day off and must still show up.
   const bucket = usePlanned("week", start, addDays(start, 6));
   const dayItems = usePlanned("day", days[0], days[6]);
-  const scroller = useRef<HTMLDivElement>(null);
+  const grid = useRef<HTMLDivElement>(null);
   const loaded = !!bucket && !!dayItems;
-  // Narrow screens show a few columns: bring today's into view.
+  // On small screens the days wrap into rows: bring today's into view.
   useEffect(() => {
-    if (loaded) scroller.current?.querySelector("[data-today]")?.scrollIntoView({ inline: "center", block: "nearest" });
+    if (loaded) grid.current?.querySelector("[data-today]")?.scrollIntoView({ block: "nearest" });
   }, [loaded, start]);
   if (!bucket || !dayItems) return null;
 
   const byDay = new Map<string, Item[]>(days.map((d) => [d, []]));
   for (const i of dayItems) byDay.get(i.plan_date!)?.push(i);
-  const groups = [
-    { id: placeId({ plan_scope: "week", plan_date: start }), items: bucket },
-    ...days.map((d) => ({ id: placeId({ plan_scope: "day", plan_date: d }), items: byDay.get(d)! })),
-  ];
+  const bucketId = placeId({ plan_scope: "week", plan_date: start });
+  const groups = [{ id: bucketId, items: bucket }, ...days.map((d) => ({ id: placeId({ plan_scope: "day", plan_date: d }), items: byDay.get(d)! }))];
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-5">
+    <div className="flex flex-col gap-5">
       <DateNav title="Week" sub={label.week(start)} onPrev={() => go(addDays(start, -7))} onNext={() => go(addDays(start, 7))} onToday={() => go(today)} isCurrent={date === today} />
-      <div ref={scroller} className="-mx-6 flex min-h-0 flex-1 gap-2 overflow-x-auto px-6 pb-2">
-        <PlannerBoard
-          groups={groups}
-          today={today}
-          // Narrow columns: titles wrap, metadata goes underneath.
-          renderItem={(item, { overlay }) => <ItemCard item={item} today={today} overlay={overlay} />}
-        >
-          {(list) =>
-            groups.map((g) => {
-            const isBucket = g.id.startsWith("week:");
-            const d = g.id.slice(4);
-            return (
-              <section key={g.id} data-today={d === today || undefined} className={cn("flex min-w-48 flex-1 basis-0 flex-col rounded-xl p-1", isBucket ? "bg-muted/60" : d === today && "bg-brand/5")}>
-                <header className="flex h-8 items-center gap-1.5 px-[9px] font-mono text-[11px] uppercase tracking-[0.06em]">
-                  {isBucket ? (
-                    <span>This week</span>
-                  ) : (
-                    <>
-                      <span className={d === today ? "text-brand-text" : "text-muted-foreground"}>{label.weekday(d)}</span>
-                      <span className={cn("tabular-nums", d === today ? "text-brand-text" : "text-subtle")}>{label.dayOfMonth(d)}</span>
-                    </>
-                  )}
-                  <span className="text-subtle ml-auto tabular-nums">{g.items.length || ""}</span>
-                </header>
-                {list(g.id)}
-                <QuickAdd place={isBucket ? { plan_scope: "week", plan_date: start } : { plan_scope: "day", plan_date: d }} placeholder="Add" />
-              </section>
-            );
-            })
-          }
-        </PlannerBoard>
-      </div>
+      <PlannerBoard groups={groups} today={today} renderItem={(item, { overlay }) => <ItemCard item={item} today={today} overlay={overlay} />}>
+        {(list) => (
+          <>
+            <section className="bg-muted/60 rounded-xl p-1">
+              <header className={columnHeader}>
+                <span>This week</span>
+                <span className="text-subtle ml-auto tabular-nums">{bucket.length || ""}</span>
+              </header>
+              {list(bucketId, "grid grid-cols-[repeat(auto-fill,minmax(13rem,1fr))] gap-x-1.5", true)}
+              <QuickAdd place={{ plan_scope: "week", plan_date: start }} placeholder="Add to this week" />
+            </section>
+
+            {/* As many columns as fit at ≥7.5rem, in calendar order: all seven on
+                a laptop, weekdays + weekend at ~1024px, two per row on phones.
+                auto-fit (not fill) so the seven stretch to the full width. */}
+            <div ref={grid} className="grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-1.5">
+              {days.map((d) => {
+                const isToday = d === today;
+                return (
+                  <section key={d} data-today={isToday || undefined} className={cn("flex min-w-0 flex-col rounded-xl p-1 md:min-h-56", isToday && "bg-brand/5")}>
+                    <header className={columnHeader}>
+                      <span className={isToday ? "text-brand-text" : "text-muted-foreground"}>{label.weekday(d)}</span>
+                      <span className={cn("tabular-nums", isToday ? "text-brand-text" : "text-subtle")}>{label.dayOfMonth(d)}</span>
+                      <span className="text-subtle ml-auto tabular-nums">{byDay.get(d)!.length || ""}</span>
+                    </header>
+                    {list(placeId({ plan_scope: "day", plan_date: d }), "flex-1")}
+                    <QuickAdd place={{ plan_scope: "day", plan_date: d }} placeholder="Add" />
+                  </section>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </PlannerBoard>
     </div>
   );
 }
