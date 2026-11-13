@@ -1,6 +1,6 @@
 "use client";
 
-import { Pause, Play } from "lucide-react";
+import { Clock3, Pause, Play } from "lucide-react";
 import type { Item } from "@/lib/sync/db";
 import { clock, formatTotal } from "../model";
 import { useNow, useTimer } from "../use-timer";
@@ -26,7 +26,14 @@ export function RowTime({ item }: { item: Item }) {
         <Pause className="size-3" /> {clock(total)}
       </button>
     );
-  return total > 0 ? <span className="text-subtle shrink-0 font-mono text-[11px] tabular-nums">{formatTotal(total)}</span> : null;
+  // The clock says what the number is: time tracked on this task.
+  return total > 0 ? (
+    <span title="Time tracked" className="text-subtle flex shrink-0 items-center gap-1 font-mono text-[11px] tabular-nums">
+      <Clock3 className="size-3" aria-hidden />
+      {formatTotal(total)}
+      <span className="sr-only"> tracked</span>
+    </span>
+  ) : null;
 }
 
 /** Hover action: start this task's timer, or pause it while it runs. */

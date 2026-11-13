@@ -228,3 +228,21 @@ function TitleInput({ item, onDone }: { item: Item; onDone: () => void }) {
     />
   );
 }
+
+/** A task as a bordered card (week columns, kanban): the border says where
+    one task ends and the next begins, so its metadata line clearly belongs
+    to it; cards sit 6px apart. Done cards step back. The drag copy draws
+    its own lifted card (ItemRow overlay). */
+export function ItemCard({ item, today, showPlace = false, overlay = false }: { item: Item; today: string; showPlace?: boolean; overlay?: boolean }) {
+  return (
+    <div className="py-[3px]">
+      {overlay ? (
+        <ItemRow item={item} today={today} showPlace={showPlace} density="card" overlay />
+      ) : (
+        <div className={cn("bg-card rounded-md border transition-opacity", item.status === "done" && "opacity-60 hover:opacity-100")}>
+          <ItemRow item={item} today={today} showPlace={showPlace} density="card" />
+        </div>
+      )}
+    </div>
+  );
+}

@@ -6,7 +6,7 @@ import { PageActions } from "@/components/shell/page-actions";
 import type { Item } from "@/lib/sync/db";
 import { useToday } from "@/lib/use-today";
 import { cn } from "@/lib/utils";
-import { ItemRow } from "@/features/items/components/item-row";
+import { ItemCard, ItemRow } from "@/features/items/components/item-row";
 import { QuickAdd } from "@/features/items/components/quick-add";
 import { INBOX } from "@/features/items/model";
 import { useItemActions } from "@/features/items/use-items";
@@ -56,16 +56,7 @@ export function BoardView({ id }: { id: string }) {
         onMove={(item, laneId, prev, next) => void itemActions.moveToColumn(item, laneId === NONE ? null : laneId, prev, next)}
         renderItem={(item, { overlay }) =>
           kanban ? (
-            <div className="py-0.5">
-              {/* The drag copy draws its own lifted card (ItemRow overlay). */}
-              {overlay ? (
-                <ItemRow item={item} today={today} showPlace density="card" overlay />
-              ) : (
-                <div className="bg-card rounded-lg border shadow-xs">
-                  <ItemRow item={item} today={today} showPlace density="card" />
-                </div>
-              )}
-            </div>
+            <ItemCard item={item} today={today} showPlace overlay={overlay} />
           ) : (
             <ItemRow item={item} today={today} overlay={overlay} showPlace />
           )

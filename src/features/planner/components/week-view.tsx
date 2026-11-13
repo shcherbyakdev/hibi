@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { addDays, label, periodOf, weekDays } from "../periods";
 import { DateNav } from "./date-nav";
 import { PlannerBoard } from "./planner-board";
-import { ItemRow } from "@/features/items/components/item-row";
+import { ItemCard } from "@/features/items/components/item-row";
 import { usePrefs } from "@/lib/prefs";
 
 /* "This week" bucket + seven day columns, side by side; scrolls sideways on
@@ -45,7 +45,7 @@ export function WeekView({ date, today, go }: { date: string; today: string; go:
           groups={groups}
           today={today}
           // Narrow columns: titles wrap, metadata goes underneath.
-          renderItem={(item, { overlay }) => <ItemRow item={item} today={today} overlay={overlay} density="card" />}
+          renderItem={(item, { overlay }) => <ItemCard item={item} today={today} overlay={overlay} />}
         >
           {(list) =>
             groups.map((g) => {
@@ -53,7 +53,7 @@ export function WeekView({ date, today, go }: { date: string; today: string; go:
             const d = g.id.slice(4);
             return (
               <section key={g.id} data-today={d === today || undefined} className={cn("flex min-w-48 flex-1 basis-0 flex-col rounded-xl p-1", isBucket ? "bg-muted/60" : d === today && "bg-brand/5")}>
-                <header className="flex h-8 items-center gap-1.5 px-2 font-mono text-[11px] uppercase tracking-[0.06em]">
+                <header className="flex h-8 items-center gap-1.5 px-[9px] font-mono text-[11px] uppercase tracking-[0.06em]">
                   {isBucket ? (
                     <span>This week</span>
                   ) : (
