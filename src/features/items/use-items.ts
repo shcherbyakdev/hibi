@@ -6,7 +6,7 @@ import type { PlanScope } from "@/db/enums";
 import type { Item, LocalDb } from "@/lib/sync/db";
 import { useSync } from "@/lib/sync/provider";
 import { periodOf } from "@/features/planner/periods";
-import { bySortKey, isLive, isOpen, keyBetween, type Place } from "./model";
+import { bySortKey, isLive, isOpen, keyBetween, type Place, type Spot } from "./model";
 
 /* Reads are live IndexedDB queries: they re-render on every local write and
    every pulled change. `undefined` means "first read not back yet" (a few
@@ -43,9 +43,12 @@ export function useInbox(): Item[] | undefined {
   );
 }
 
-/** Last key of the list a place shows, so new and moved items go to its end. */
-async function lastKey(db: LocalDb, p: Place): Promise<string | null> {
-  const rows = p.plan_scope
+/** Last key of the list a place (or a board column) shows, so new and moved
+    items go to its end. */
+async function lastKey(db: LocalDb, p: Place, spot?: Spot): Promise<string | null> {
+  const rows = spot
+    ? await db.items.where("board_id").equals(spot.board_id).filter((i) => isLive(i) && i.column_id === spot.column_id).toArray()
+    : p.plan_scope
     ? await planned(db, p.plan_scope, p.plan_date!, p.plan_date!)
     : await db.items.filter((i) => isLive(i) && !i.plan_scope && !i.board_id).toArray();
   return rows.reduce<string | null>((max, r) => (max === null || r.sort_key > max ? r.sort_key : max), null);
@@ -55,7 +58,8 @@ export function useItemActions() {
   const { db, mutations: m } = useSync();
   return useMemo(
     () => ({
-      async create(title: string, place: Place) {
+      /** New item at the end of a planner list, or of a board column. */
+      async create(title: string, place: Place, spot?: Spot) {
         const text = title.trim();
         if (!text) return;
         await m.insert("items", {
@@ -64,9 +68,9 @@ export function useItemActions() {
           status: "todo",
           priority: 0,
           ...place,
-          board_id: null,
-          column_id: null,
-          sort_key: keyBetween(await lastKey(db, place), null),
+          board_id: spot?.board_id ?? null,
+          column_id: spot?.column_id ?? null,
+          sort_key: keyBetween(await lastKey(db, place, spot), null),
           done_at: null,
         });
       },
@@ -86,6 +90,10 @@ export function useItemActions() {
       /** Drop between two neighbours (their sort keys) in a place's list. */
       move(item: Item, place: Place, prev: string | null, next: string | null) {
         return m.update("items", item.id, { ...place, sort_key: keyBetween(prev, next) });
+      },
+      /** Drop into a board column (null = "No column") between two neighbours. */
+      moveToColumn(item: Item, column_id: string | null, prev: string | null, next: string | null) {
+        return m.update("items", item.id, { column_id, sort_key: keyBetween(prev, next) });
       },
       remove: (item: Item) => m.remove("items", item.id),
     }),

@@ -142,6 +142,15 @@ Week (bucket + 7 columns, today scrolled into view), Month (grid of drop
 targets + bucket), Inbox. The viewed date is `?d=`, changed by
 `history.pushState`, so date stepping never hits the server. Each row's
 options menu is the keyboard path for moving; drag is pointer-only for now.
+
+**Built in phase 5:** sidebar Boards section (inline create), `/boards/[id]`
+with List / Board layouts (saved per board), inline rename for boards and
+columns, column menu (move left/right, delete), "No column" group for items
+whose column is gone (no item writes on column delete), board delete with a
+confirm (soft-deletes its columns and tasks), boards in ⌘K. Same generic
+`Board` as the planner. Dexie v2 adds a plain `board_id` index (the compound
+one skipped null columns). An item has one `sort_key`, shared by its planner
+list and board column.
 | `/inbox` | Unplanned items (no scope, no board). Quick capture lands here. |
 | `/boards/[id]` | `layout=list`: sortable list, grouped by column. `layout=kanban`: columns side by side, dnd across. Toggle with segmented tabs. |
 | `/settings` | Theme, week start, sign out. |

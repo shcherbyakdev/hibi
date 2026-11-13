@@ -5,11 +5,12 @@ import { SyncProvider } from "@/lib/sync/provider";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+  // Sync outermost: the shell, its boards list and ⌘K all read the local db.
   return (
-    <Providers>
-      <SyncProvider userId={user.id}>
+    <SyncProvider userId={user.id}>
+      <Providers>
         <AppShell userEmail={user.email ?? ""}>{children}</AppShell>
-      </SyncProvider>
-    </Providers>
+      </Providers>
+    </SyncProvider>
   );
 }

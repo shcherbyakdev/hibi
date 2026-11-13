@@ -7,6 +7,8 @@ import { Moon, Sun } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { NAV_ITEMS } from "@/components/shell/nav";
+import { DashboardSquare02Icon } from "@hugeicons/core-free-icons";
+import { useBoards } from "@/features/boards/use-boards";
 
 /** Dispatched on `window` by the sidebar's search button; toggles like ⌘K. */
 export const OPEN_COMMAND_MENU_EVENT = "todo:open-command-menu";
@@ -15,6 +17,7 @@ export function CommandMenu() {
   const [open, setOpen] = React.useState(false);
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
+  const boards = useBoards();
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -49,6 +52,15 @@ export function CommandMenu() {
             </CommandItem>
           ))}
         </CommandGroup>
+        {boards?.length ? (
+          <CommandGroup heading="Boards">
+            {boards.map((b) => (
+              <CommandItem key={b.id} value={`board ${b.name} ${b.id}`} onSelect={() => go(`/boards/${b.id}`)}>
+                <HugeiconsIcon icon={DashboardSquare02Icon} size={16} /> {b.name}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        ) : null}
         <CommandGroup heading="Preferences">
           <CommandItem
             onSelect={() => {

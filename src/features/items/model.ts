@@ -19,10 +19,27 @@ export function keyBetween(prev: string | null, next: string | null): string {
   return generateKeyBetween(prev, next);
 }
 
+/** New key for the row at `i` after one step left (-1) or right (+1) in a
+    sorted list; null when it can't move. It lands between the neighbour it
+    passes and the one beyond. */
+export function keyForStep(list: { sort_key: string }[], i: number, dir: -1 | 1): string | null {
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= list.length) return null;
+  return dir === 1
+    ? keyBetween(list[j].sort_key, list[j + 1]?.sort_key ?? null)
+    : keyBetween(list[j - 1]?.sort_key ?? null, list[j].sort_key);
+}
+
 /** Where an item is planned. null scope = unplanned (the Inbox, if it's on
     no board either). */
 export type Place = { plan_scope: PlanScope | null; plan_date: string | null };
 export const INBOX: Place = { plan_scope: null, plan_date: null };
+
+/** Where an item sits on a board. column_id null = the "No column" group.
+    ponytail: an item has ONE sort_key, shared by its planner list and its
+    board column, so reordering in one can shuffle it in the other. Split
+    into two keys if that ever feels wrong. */
+export type Spot = { board_id: string; column_id: string | null };
 
 /** Drag-and-drop group ids are places: "day:2026-11-13", "week:…", "inbox". */
 export const placeId = (p: Place) => (p.plan_scope ? `${p.plan_scope}:${p.plan_date}` : "inbox");

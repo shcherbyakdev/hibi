@@ -3,11 +3,11 @@
 import * as React from "react";
 import { Plus } from "lucide-react";
 import { useItemActions } from "../use-items";
-import type { Place } from "../model";
+import type { Place, Spot } from "../model";
 import { cn } from "@/lib/utils";
 
 /** Type and Enter; focus stays for the next one. The input is the empty state. */
-export function QuickAdd({ place, placeholder = "Add task", className }: { place: Place; placeholder?: string; className?: string }) {
+export function QuickAdd({ place, spot, placeholder = "Add task", className }: { place: Place; spot?: Spot; placeholder?: string; className?: string }) {
   const actions = useItemActions();
   const [value, setValue] = React.useState("");
   return (
@@ -21,7 +21,7 @@ export function QuickAdd({ place, placeholder = "Add task", className }: { place
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && value.trim()) {
-            void actions.create(value, place);
+            void actions.create(value, place, spot);
             setValue("");
           }
           if (e.key === "Escape") e.currentTarget.blur();

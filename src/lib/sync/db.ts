@@ -36,6 +36,11 @@ export class LocalDb extends Dexie {
       outbox: "++seq",
       meta: "key",
     });
+    // v2: a plain board_id index — the compound one skips items whose
+    // column_id is null, and boards need those too ("No column").
+    this.version(2).stores({
+      items: "id, [plan_scope+plan_date], board_id, status",
+    });
   }
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generateNKeysBetween } from "fractional-indexing";
-import { keyBetween, parsePlaceId, placeId } from "./model";
+import { bySortKey, keyBetween, keyForStep, parsePlaceId, placeId } from "./model";
 
 describe("item model", () => {
   it("round-trips places through dnd group ids", () => {
@@ -22,5 +22,22 @@ describe("item model", () => {
     expect(keyBetween(b, null) > b).toBe(true);
     expect(keyBetween(a, a) > a).toBe(true); // equal keys from two offline devices
     expect(typeof keyBetween(null, null)).toBe("string");
+  });
+
+  it("moves a row one step left or right, and refuses past the ends", () => {
+    const keys = generateNKeysBetween(null, null, 4);
+    const list = ["A", "B", "C", "D"].map((name, i) => ({ name, sort_key: keys[i] }));
+    const order = (i: number, dir: -1 | 1) =>
+      list
+        .map((r, k) => (k === i ? { ...r, sort_key: keyForStep(list, i, dir)! } : r))
+        .sort(bySortKey)
+        .map((r) => r.name)
+        .join("");
+    expect(order(1, 1)).toBe("ACBD");
+    expect(order(2, -1)).toBe("ACBD");
+    expect(order(2, 1)).toBe("ABDC"); // into last place
+    expect(order(1, -1)).toBe("BACD"); // into first place
+    expect(keyForStep(list, 0, -1)).toBeNull();
+    expect(keyForStep(list, 3, 1)).toBeNull();
   });
 });

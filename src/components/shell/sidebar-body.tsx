@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -9,13 +10,9 @@ import { signOut } from "@/features/auth/actions";
 import { OPEN_COMMAND_MENU_EVENT } from "@/components/command-menu";
 import { cn } from "@/lib/utils";
 import { SyncStatus } from "./sync-status";
+import { activeClass, idleClass, itemClass } from "./sidebar-styles";
+import { SidebarBoards } from "@/features/boards/components/sidebar-boards";
 
-/* Linear sidebar metrics: 13px/500 items, 14px icons, 8px radius, 28px rows.
-   The active row is lifted onto a card (hairline + small layered shadow). */
-const itemClass =
-  "flex h-7 w-full items-center gap-2.5 rounded-[8px] border border-transparent px-2 text-[13px] font-medium transition-colors duration-150 ease-strong outline-none focus-visible:ring-2 focus-visible:ring-ring/40";
-const idleClass = "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground";
-const activeClass = "border-border bg-card text-foreground shadow-(--shadow-lift)";
 
 export function SidebarBody({ userEmail, onNavigate }: { userEmail: string; onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -43,9 +40,11 @@ export function SidebarBody({ userEmail, onNavigate }: { userEmail: string; onNa
         <kbd className="text-subtle font-mono text-[10px]">⌘K</kbd>
       </button>
 
-      <nav aria-label="Main" className="mt-5 flex flex-1 flex-col gap-5">
+      <nav aria-label="Main" className="mt-5 flex min-h-0 flex-1 flex-col gap-5">
         {NAV_SECTIONS.map((section) => (
-          <div key={section} className={cn("flex flex-col gap-0.5", section === "account" && "mt-auto")}>
+          <React.Fragment key={section}>
+          {section === "account" ? <SidebarBoards onNavigate={onNavigate} /> : null}
+          <div className={cn("flex flex-col gap-0.5", section === "account" && "mt-auto")}>
             {NAV_ITEMS.filter((i) => i.section === section).map(({ href, label, icon }) => {
               const active = isActive(href);
               return (
@@ -62,6 +61,7 @@ export function SidebarBody({ userEmail, onNavigate }: { userEmail: string; onNa
               );
             })}
           </div>
+          </React.Fragment>
         ))}
       </nav>
 
