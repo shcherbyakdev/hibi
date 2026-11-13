@@ -12,7 +12,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     <div>
       <h1 className="mb-6 text-center text-lg font-semibold tracking-tight">Sign in</h1>
       {error === "auth" ? (
-        <p className="text-destructive mb-4 text-center text-sm">That link expired. Sign in again.</p>
+        <p className="text-destructive mb-4 text-center text-sm">That link expired or was opened in another browser. Sign in again.</p>
       ) : null}
       <LoginForm next={safeNextPath(next)} />
       <p className="text-muted-foreground mt-7 text-center text-sm">

@@ -15,10 +15,11 @@ npm run dev      # preflight: starts Supabase, fills .env.local, migrates
 
 | Service | URL |
 |---|---|
+| App | http://localhost:3100 |
 | Supabase API | http://127.0.0.1:54411 |
 | Postgres | postgresql://postgres:postgres@127.0.0.1:54412/postgres |
 | Studio | http://127.0.0.1:54413 |
 | Mailpit (sign-in emails) | http://127.0.0.1:54414 |
 
-Ports are pipline-app's +60, so both stacks run side by side.
+Ports are pipline-app's +60 (app on 3100), so both run side by side.
 `npm run verify` = lint + typecheck + test.
