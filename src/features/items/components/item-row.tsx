@@ -73,9 +73,11 @@ export function ItemRow({
     </button>
   );
 
-  // Done tasks keep their priority, quietly: it no longer competes for attention.
+  // One place for priority in every layout: right after the checkbox. With
+  // none set, the slot stays reserved (titles never shift) and the picker
+  // fades in there on hover. Done tasks keep their priority, quietly.
   const priority = overlay ? (
-    item.priority ? <PriorityIcon priority={item.priority} className={cn(done && "opacity-40")} /> : null
+    item.priority ? <PriorityIcon priority={item.priority} className={cn(done && "opacity-40")} /> : <span className="size-4 shrink-0" />
   ) : (
     <PriorityPicker value={item.priority} onChange={setPriority} quietWhenNone className={cn("-mx-1", done && "opacity-40")} />
   );
@@ -121,26 +123,20 @@ export function ItemRow({
 
   if (density === "card") {
     const tracked = timer.running?.item_id === item.id || timer.totalFor(item.id) > 0;
-    const hasMeta = item.priority > 0 || !!item.notes || tracked || (showPlace && !!item.plan_scope);
+    const hasMeta = !!item.notes || tracked || (showPlace && !!item.plan_scope);
     return (
       <div {...rowProps} className={cn(rowProps.className, "flex flex-col gap-1 py-1.5")}>
         <div className="flex items-start gap-2 pr-1">
           {checkbox}
+          {/* Centred on the title's first line (20px). */}
+          <span className="flex h-5 shrink-0 items-center">{priority}</span>
           {title}
         </div>
         {hasMeta ? (
-          // Indented to line up under the title (checkbox 16px + gap 8px).
-          <div className="flex min-w-0 items-center gap-2 pl-6">
-            {item.priority ? priority : null}
-            {meta}
-          </div>
+          // Under the title: checkbox 16 + gap 8 + priority 16 + gap 8 = 48px.
+          <div className="flex min-w-0 items-center gap-2 pl-12">{meta}</div>
         ) : null}
-        {overlay ? null : (
-          <HoverActions item={item} today={today} className="top-1 right-1 h-6">
-            {/* No metadata line to hold it: priority lives with the actions. */}
-            {item.priority ? null : <PriorityPicker value={0} onChange={setPriority} className="size-6" />}
-          </HoverActions>
-        )}
+        {overlay ? null : <HoverActions item={item} today={today} className="top-1 right-1 h-6" />}
       </div>
     );
   }
@@ -165,7 +161,7 @@ export function ItemRow({
 
 /** ▶ and ⋯ laid over the row's right edge on hover/focus, on a fade of the
     row's hover colour; click-through while hidden. */
-function HoverActions({ item, today, className, children }: { item: Item; today: string; className?: string; children?: React.ReactNode }) {
+function HoverActions({ item, today, className }: { item: Item; today: string; className?: string }) {
   const actions = useItemActions();
   const sheet = useItemSheet();
   const button = "text-subtle hover:text-foreground hover:bg-background/60 flex size-6 shrink-0 items-center justify-center rounded-md outline-none";
@@ -177,7 +173,6 @@ function HoverActions({ item, today, className, children }: { item: Item; today:
         className,
       )}
     >
-      {children}
       <PlayButton item={item} className={button} />
       <DropdownMenu>
         <DropdownMenuTrigger data-no-dnd aria-label={`Options for "${item.title}"`} className={cn(button, "focus-visible:ring-ring/40 focus-visible:ring-2")}>
