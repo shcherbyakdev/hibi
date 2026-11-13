@@ -12,6 +12,7 @@ import { NAV_ITEMS } from "@/components/shell/nav";
 import { useSync } from "@/lib/sync/provider";
 import { focusQuickAdd } from "@/lib/focus-quick-add";
 import { useBoards } from "@/features/boards/use-boards";
+import { boardTone } from "@/features/boards/tone";
 import { useItemSheet } from "@/features/items/components/item-sheet";
 import { isLive, placeLabel } from "@/features/items/model";
 import { PriorityIcon } from "@/features/items/components/priority-icon";
@@ -119,7 +120,7 @@ export function CommandMenu() {
           <CommandGroup heading="Boards">
             {boards.map((b) => (
               <CommandItem key={b.id} value={`board ${b.name} ${b.id}`} onSelect={() => run(() => router.push(`/boards/${b.id}`))}>
-                <HugeiconsIcon icon={DashboardSquare02Icon} size={16} /> {b.name}
+                <HugeiconsIcon icon={DashboardSquare02Icon} size={16} className={boardTone(b)} /> {b.name}
               </CommandItem>
             ))}
           </CommandGroup>

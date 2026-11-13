@@ -5,9 +5,10 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { DashboardSquare02Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
-import { activeClass, iconClass, idleClass, itemClass, sectionLabelClass } from "@/components/shell/sidebar-styles";
+import { activeClass, idleClass, itemClass, sectionLabelClass } from "@/components/shell/sidebar-styles";
 import { cn } from "@/lib/utils";
 import { useBoardActions, useBoards } from "../use-boards";
+import { boardTone } from "../tone";
 
 /** The sidebar's Boards section: one row per board, and + to name a new one
     inline (Enter creates it and opens it, Escape cancels). */
@@ -49,7 +50,7 @@ export function SidebarBoards({ onNavigate }: { onNavigate?: () => void }) {
           const active = pathname === href;
           return (
             <Link key={b.id} href={href} onClick={onNavigate} aria-current={active ? "page" : undefined} className={cn(itemClass, active ? activeClass : idleClass)}>
-              <HugeiconsIcon icon={DashboardSquare02Icon} size={14} className={cn("shrink-0", iconClass(active))} />
+              <HugeiconsIcon icon={DashboardSquare02Icon} size={14} className={cn("shrink-0", boardTone(b))} />
               <span className="truncate">{b.name}</span>
             </Link>
           );
