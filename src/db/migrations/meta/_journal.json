@@ -29,6 +29,13 @@
       "when": 1794570356160,
       "tag": "0003_time_entries_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794592473329,
+      "tag": "0004_least_privilege",
+      "breakpoints": true
     }
   ]
 }
