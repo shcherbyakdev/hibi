@@ -41,7 +41,7 @@ export function PlannerBoard({
 
 export function GroupHeader({ children, count, accent, className }: { children: React.ReactNode; count?: number; accent?: boolean; className?: string }) {
   return (
-    <div className={cn("flex h-8 items-center gap-2 px-2 font-mono text-[11px] uppercase tracking-[0.06em]", accent ? "text-danger" : "text-muted-foreground", className)}>
+    <div className={cn("flex h-8 items-center gap-2 px-2 font-mono text-[11px] uppercase tracking-[0.06em]", accent ? "text-destructive" : "text-muted-foreground", className)}>
       {children}
       {count ? <span className="text-subtle tabular-nums">{count}</span> : null}
     </div>

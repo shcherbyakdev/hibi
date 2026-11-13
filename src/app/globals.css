@@ -31,11 +31,6 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -48,36 +43,7 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
-  --color-highlight: var(--highlight);
-  --color-highlight-foreground: var(--highlight-foreground);
-  --color-tint: var(--tint);
-  --color-success: var(--success);
-  /* Landing kind colours: what a booking is, coloured the same everywhere. */
-  --color-kind-time: var(--kind-time);
-  --color-kind-time-soft: var(--kind-time-soft);
-  --color-kind-space: var(--kind-space);
-  --color-kind-space-soft: var(--kind-space-soft);
-  --color-kind-stay: var(--kind-stay);
-  --color-kind-stay-soft: var(--kind-stay-soft);
-  --color-danger: var(--danger);
-  --color-danger-soft: var(--danger-soft);
   --color-subtle: var(--subtle);
-  --color-kind-class: var(--kind-class);
-  --color-kind-class-soft: var(--kind-class-soft);
-  --color-kind-embed: var(--kind-embed);
-  --color-kind-time-text: var(--kind-time-text);
-  --color-kind-space-text: var(--kind-space-text);
-  --color-kind-class-text: var(--kind-class-text);
-  --color-kind-stay-text: var(--kind-stay-text);
-  /* Ink for text sitting ON a solid kind colour (chips, badges): the kind
-     colours are bright in both themes, so near-black holds AA everywhere
-     white fails (white on stay orange is 2.2:1; ink is 7.8:1). */
-  --color-on-kind: var(--on-kind);
-  /* Task priority signal bars: lit bars orange, urgent red. */
-  --color-priority-urgent: var(--priority-urgent);
-  --color-priority: var(--priority);
-  /* Teal for board colours (blue is the brand's). */
-  --color-teal: var(--teal);
   /* The brand accent (the appointments blue): focus rings, checked
      controls, the active nav icon. Controls themselves stay ink pills. */
   --color-brand: var(--brand);
@@ -97,11 +63,6 @@
   --color-scrim: #000000;
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --color-status-not-started: var(--status-not-started);
-  --color-status-in-progress: var(--status-in-progress);
-  --color-status-complete: var(--status-complete);
-  --color-status-at-risk: var(--status-at-risk);
-  --color-status-blocked: var(--status-blocked);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -137,40 +98,12 @@
   --border: rgb(23 23 23 / 0.1);
   --input: rgb(23 23 23 / 0.14);
   --ring: #4858fa;
-  --highlight: #18e299;
-  --highlight-foreground: #171717;
-  --tint: #f4f4f5;
-  --success: #12a66b;
-  --kind-time: #6975e2;
-  --kind-time-soft: #f1f1ff;
-  --kind-space: #18c27f;
-  --kind-space-soft: #e3f9ec;
-  --kind-stay: #ff4d00;
-  --kind-stay-soft: #fff0e8;
-  --kind-class: #f6339a;
-  --kind-class-soft: #ffe6f0;
-  --kind-embed: #8f3cf8;
-  --kind-time-text: #4b5bc4;
-  --kind-space-text: #0c7039;
-  --kind-class-text: #b61a60;
-  --kind-stay-text: #a03a06;
-  --on-kind: #171717;
-  --priority-urgent: #e5484d;
-  --priority: #f76b15;
-  --teal: #0d9488;
   --brand: #4858fa;
   --brand-text: #3a46d8;
-  --danger: #e11d48;
-  --danger-soft: #fde7ef;
   /* Flat, like the reference: depth comes from hairlines. Only things that
      float (menus, a dragged row) get a lift. */
   --shadow-card: none;
   --shadow-lift: 0 12px 32px -16px rgb(0 0 0 / 0.25), 0 0 0 1px rgb(23 23 23 / 0.06);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
   /* Square, as in the reference: 2px takes only the edge off. */
   --radius: 0.125rem;
   --sidebar: #fafafa;
@@ -181,11 +114,6 @@
   --sidebar-accent-foreground: #171717;
   --sidebar-border: rgb(23 23 23 / 0.1);
   --sidebar-ring: #4858fa;
-  --status-not-started: oklch(0.65 0 0);
-  --status-in-progress: oklch(0.62 0.17 250);
-  --status-complete: oklch(0.68 0.17 150);
-  --status-at-risk: oklch(0.78 0.15 75);
-  --status-blocked: oklch(0.63 0.22 25);
 }
 
 .dark {
@@ -212,38 +140,10 @@
   --border: rgb(255 255 255 / 0.1);
   --input: rgb(255 255 255 / 0.12);
   --ring: #7d89ff;
-  --highlight: #18e299;
-  --highlight-foreground: #0a0a0a;
-  --tint: #1c1c1c;
-  --success: #18e299;
-  --kind-time: #8080f5;
-  --kind-time-soft: #17173a;
-  --kind-space: #18e299;
-  --kind-space-soft: #0f2e22;
-  --kind-stay: #ff6a2b;
-  --kind-stay-soft: #34170a;
-  --kind-class: #f860c4;
-  --kind-class-soft: #3a1030;
-  --kind-embed: #b040f8;
-  --kind-time-text: #b8b8ff;
-  --kind-space-text: #5ef0b6;
-  --kind-class-text: #fbc8e0;
-  --kind-stay-text: #ffb38a;
-  --on-kind: #0a0a0a;
-  --priority-urgent: #ff6369;
-  --priority: #ff8b3e;
-  --teal: #2dd4bf;
   --brand: #6f7dff;
   --brand-text: #a3abff;
-  --danger: #ff4d5e;
-  --danger-soft: #331418;
   --shadow-card: none;
   --shadow-lift: 0 16px 40px -16px rgb(0 0 0 / 0.8), 0 0 0 1px rgb(255 255 255 / 0.08);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
   --sidebar: #000000;
   --sidebar-foreground: #ededed;
   --sidebar-primary: #ededed;
@@ -252,11 +152,6 @@
   --sidebar-accent-foreground: #ededed;
   --sidebar-border: rgb(255 255 255 / 0.1);
   --sidebar-ring: #7d89ff;
-  --status-not-started: oklch(0.65 0 0);
-  --status-in-progress: oklch(0.62 0.17 250);
-  --status-complete: oklch(0.68 0.17 150);
-  --status-at-risk: oklch(0.78 0.15 75);
-  --status-blocked: oklch(0.63 0.22 25);
 }
 /* Text selection carries the world too — everywhere, not only on the
    landing. */

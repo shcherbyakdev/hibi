@@ -102,7 +102,7 @@ export function ItemRow({
       {item.notes ? <NotebookText aria-label="Has notes" className="text-subtle size-3.5 shrink-0" /> : null}
       {overlay ? null : <RowTime item={item} />}
       {showPlace && item.plan_scope ? (
-        <span className={cn("shrink-0 truncate font-mono text-[11px] uppercase tracking-[0.06em]", late ? "text-danger" : "text-subtle")}>{placeLabel(item)}</span>
+        <span className={cn("shrink-0 truncate font-mono text-[11px] uppercase tracking-[0.06em]", late ? "text-destructive" : "text-subtle")}>{placeLabel(item)}</span>
       ) : null}
     </>
   );

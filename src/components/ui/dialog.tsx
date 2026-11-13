@@ -185,30 +185,7 @@ function DialogSelect({ className, children, ...props }: React.ComponentProps<"s
   );
 }
 
-const dialogChipTones = {
-  // Kind colours only where the chip names a kind of booking (palette rule).
-  time: "bg-kind-time-soft text-kind-time-text",
-  space: "bg-kind-space-soft text-kind-space-text",
-  neutral: "bg-secondary text-secondary-foreground",
-} as const;
 
-function DialogChip({
-  tone = "neutral",
-  className,
-  ...props
-}: React.ComponentProps<"span"> & { tone?: keyof typeof dialogChipTones }) {
-  return (
-    <span
-      data-slot="dialog-chip"
-      className={cn(
-        dialogChipTones[tone],
-        "inline-flex h-6 items-center rounded-md px-2.5 text-xs font-medium",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
 
 /* `chip › title` header row for the p-0 panel; `chip` may be any node (the
    New-booking dialog puts a live <select> pill there). */
@@ -260,7 +237,6 @@ export {
   dialogFieldClass,
   dialogFieldLabelClass,
   DialogSelect,
-  DialogChip,
   DialogBreadcrumbHeader,
   DialogFooterBar,
   Dialog,

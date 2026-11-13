@@ -3,8 +3,9 @@
 import { useSyncStatus } from "@/lib/sync/provider";
 import { cn } from "@/lib/utils";
 
-/* Quiet when all is well (a faint green dot); amber while changes are on
-   their way, grey when offline. The count says how much is waiting. */
+/* Neutral when all is well (a faint dot), the accent pulsing while changes
+   are on their way, a hollow dot when offline. The count says how much is
+   waiting. */
 export function SyncStatus() {
   const { phase, pending } = useSyncStatus();
   const offline = phase === "offline";
@@ -19,7 +20,7 @@ export function SyncStatus() {
       <span
         className={cn(
           "size-1.5 rounded-[1px] transition-colors duration-300",
-          offline ? "bg-subtle" : busy ? "bg-kind-stay motion-safe:animate-pulse" : "bg-success/60",
+          offline ? "ring-subtle ring-1 ring-inset" : busy ? "bg-brand motion-safe:animate-pulse" : "bg-foreground/25",
         )}
       />
       <span className="sr-only">{label}</span>

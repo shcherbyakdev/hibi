@@ -8,8 +8,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 export const PRIORITY_LABELS = ["No priority", "Urgent", "High", "Medium", "Low"] as const;
 
 /* Signal bars (Linear-style): three ascending bars, the lit count is the
-   level — high 3, medium 2, low 1 — lit in orange; urgent lights all three
-   in red. Unlit bars are faint grey; "No priority" is all three faint. */
+   level — high 3, medium 2, low 1 — lit in ink; urgent lights all three in
+   red, the app's one alert colour. Unlit bars are faint; "No priority" is
+   all three faint. */
 const LIT = [0, 3, 3, 2, 1];
 const BARS = [
   { x: 2, h: 5 },
@@ -24,7 +25,7 @@ export function PriorityIcon({ priority, className }: { priority: number; classN
       viewBox="0 0 16 16"
       role="img"
       aria-label={priority ? `${PRIORITY_LABELS[priority]} priority` : "No priority"}
-      className={cn("size-4 shrink-0", priority === 1 ? "text-priority-urgent" : "text-priority", className)}
+      className={cn("size-4 shrink-0", priority === 1 ? "text-destructive" : "text-foreground", className)}
     >
       {BARS.map((b, i) => (
         <rect key={i} x={b.x} y={13.5 - b.h} width="3" height={b.h} rx="1" fill={i < lit ? "currentColor" : "var(--subtle)"} opacity={i < lit ? 1 : 0.3} />

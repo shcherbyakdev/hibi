@@ -150,7 +150,7 @@ function DetailForm({ item, today, onClose }: { item: Item; today: string; onClo
         <Button
           variant="ghost"
           size="sm"
-          className="text-danger ml-auto"
+          className="text-destructive ml-auto"
           onClick={() => {
             onClose();
             void actions.remove(item);

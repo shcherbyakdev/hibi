@@ -248,9 +248,7 @@ src/
    rows on hairline dividers, 14px titles, a lighter checkbox, flat hover.
    Sidebar (`sidebar-styles.ts`): flat ink tints instead of lifted cards
    (hover 4%, active 7% + full-strength text), inset focus ring; the
-   new-board input is styled as the row it becomes. Boards have a colour
-   (`tone.ts`, stored in `boards.icon`; new boards take the least-used one;
-   Colour submenu in the board menu) shown in the sidebar, ⌘K and title.
+   new-board input is styled as the row it becomes. (Per-board colours were tried and removed when the palette was unified.)
    **Visual language → Autumn (useautumn.com), read off the live site:**
    Geist + Geist Mono; neutral black/grey palette (dark: #000 sidebar,
    #0a0a0a panel, 10%-white hairlines; light derived: white, #171717 ink);
@@ -264,10 +262,7 @@ src/
    coordinates, lightened (dot r 44, stroke 54; source 60/79), minimal after
    "dose" (logosystem.co): no tile, symbol sized to the letters. Mark = logo
    blue `primary` #4858fa in both themes; wordmark = Outfit 500 (brand-only
-   font, round i-dots echo the mark), ink. One blue app-wide: solid "brand"
-   fills (checked box, today marker, timer dot) use `primary`; `brand` is the
-   lifted text/tint variant for dark mode; board tone "periwinkle" = brand
-   blue, "blue" key = teal. Alignment: sidebar logo on the nav grid (mark in
+   font, round i-dots echo the mark), ink. Palette, unified to three roles: neutrals; one blue (logo, checked box, today, running timer, focus, primary actions — `primary` exact, `brand` the lifted tint/text variant at night); one red (`destructive`: overdue, urgent priority, delete, errors). Priority bars are ink, urgent red. Every other colour token was deleted so nothing drifts back in. Alignment: sidebar logo on the nav grid (mark in
    the icon column, wordmark at the label line), Today heading on the rows,
    kanban column names on the card text. Favicon `app/icon.svg`. Internal
    names (folder, Dexie db `todo-<user>`, storage keys) stay `todo` on
