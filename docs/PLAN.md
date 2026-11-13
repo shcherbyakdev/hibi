@@ -1,0 +1,217 @@
+# Todo — personal planner (Linear-fast)
+
+Self-control planner for **day / week / month**, plus free-form **boards**
+(list, kanban). Inherits pipline-app's stack, shell, tokens and infra; swaps
+its server-roundtrip data flow for a **local-first** one so every interaction
+is instant.
+
+---
+
+## 1. What we take from pipline-app (as-is)
+
+| Area | pipline-app | Todo |
+|---|---|---|
+| Framework | Next 16.3 App Router, React 19.3, TS 6, Node 24 (`.nvmrc`, `engines`) | same |
+| Styling | Tailwind v4 (`@tailwindcss/postcss`), `tw-animate-css`, `globals.css` token world (ground/ink/panel/hairline, `.dark`), `@custom-variant dark`, bare `border` = hairline | copy `globals.css` tokens, drop landing/widget/booking blocks; rename `kind-*` → priority/label colours |
+| UI kit | shadcn `base-nova` on `@base-ui/react`, `cva`, `clsx`, `tailwind-merge`, `components/ui/*` (button, dialog, dropdown, popover, command, sheet, tooltip, checkbox, segmented-tabs, sonner…) | copy `components/ui/*` + `components.json` verbatim |
+| Icons | Hugeicons (nav) + lucide | Hugeicons only |
+| Fonts | Inter (opsz) + Geist Mono via `next/font` | same, drop Outfit/Newsreader |
+| Shell | Linear-style `AppShell`: `bg-sidebar` ground, 236px sidebar, content in rounded hairline panel, top bar outside scroller, `nav.ts` single source for sidebar + ⌘K | copy `components/shell/*` + `command-menu.tsx`, new `nav.ts` |
+| Feature layout | `src/features/<name>/{schema.ts (zod), queries.ts, actions.ts, components/}`, `lib/actions.ts` `ActionState` | same folders; `actions.ts` replaced by store mutations (§3) |
+| DnD | `@dnd-kit/core` + `sortable` (sections panel) | same, for list reorder + kanban columns |
+| Data | Supabase (Auth, Postgres, RLS) + Drizzle schema/migrations in `src/db`, `drizzle.config.ts` loopback guard | same; ports **+60** (`546xx`) so both stacks run together |
+| Auth | `@supabase/ssr`, `src/proxy.ts` → `updateSession`, `(auth)` route group, `lib/auth/next-path.ts` | copy; drop orgs → rows owned by `user_id` |
+| Env | `src/env.ts` + `env-schema.ts` (zod-validated) | copy, trimmed |
+| Dev loop | `scripts/dev-preflight.ts` (Docker → supabase start → `.env.local` → migrate), `predev` hook, `db:reset`/`seed` | copy |
+| Quality | ESLint 9 flat config, Vitest, `verify` = lint+typecheck+test | copy |
+| CI/CD | `.github/workflows/ci.yml` (lint/typecheck/test/build/db-drift), `deploy.yml` (migrate → promote), Vercel `fra1` | copy, drop backup.yml at first |
+| Docs | `DESIGN.md` (token + layout rules), `AGENTS.md` (Next 16 note) | trimmed `DESIGN.md`, same `AGENTS.md` |
+
+**Dropped (YAGNI for a personal planner):** Stripe/billing, web-push, Inngest,
+papaparse/CSV, Google sync, booking/embed/portal surfaces, flags, orgs/teams,
+marketing landing, `next-intl` (add back if a second language is needed —
+pipline's `i18n/` folder is the template).
+
+---
+
+## 2. The one big difference: local-first, not server actions
+
+pipline-app mutates via Server Action → Supabase → `revalidatePath` → RSC
+re-render. That's ~100–400 ms per click. Linear feels instant because the
+**client owns the data**: in-memory store, persisted locally, synced in the
+background.
+
+```
+ UI (React, useLiveQuery)
+   │ read: synchronous from IndexedDB-backed store (0 network)
+   │ write: mutate() → local row + outbox entry (same IDB txn)
+   ▼
+ Dexie (IndexedDB)  ── items, boards, columns, outbox, meta(cursor)
+   │                         ▲
+   │ push: drain outbox      │ pull: rows where updated_at > cursor
+   ▼                         │      + Supabase Realtime (postgres_changes)
+ Supabase Postgres (RLS: user_id = auth.uid())
+```
+
+- **Store:** `dexie` + `dexie-react-hooks` (`useLiveQuery`). Two small deps,
+  replaces TanStack Query and any custom cache.
+- **Writes:** one `mutate(table, id, patch)` helper: writes the row with
+  `updated_at = now`, appends to `outbox`, kicks the sync loop. UI never awaits
+  the network.
+- **Push:** drain outbox in order via `supabase.from(t).upsert(rows)`; retry
+  with backoff when offline; `online` event re-kicks.
+- **Pull:** on load + on Realtime event, `select * where updated_at > cursor`
+  → `bulkPut`. Conflict rule: **last-write-wins per row by `updated_at`**
+  (single user, multiple devices — good enough; ponytail ceiling noted in code,
+  upgrade to per-field LWW if edits collide).
+- **Deletes:** soft (`deleted_at`) so they sync; purge job later if needed.
+- **IDs:** `crypto.randomUUID()` client-side, so creates need no roundtrip.
+- **Ordering:** `fractional-indexing` (`generateKeyBetween`) → `sort_key text`.
+  DnD reorder writes exactly one row.
+- **First paint:** shell is RSC (auth check in layout like pipline); data
+  views are client components reading IDB — warm loads render with data
+  instantly, no loading spinners after first sync.
+
+**Built in phase 3** (`src/lib/sync/`): `db.ts` (Dexie, one db per user,
+rows = server rows from generated `src/db/database.types.ts`), `mutate.ts`
+(`insert/update/remove`, row + outbox in one transaction), `engine.ts`
+(push/pull/realtime), `provider.tsx` (`SyncProvider`, `useSync`,
+`useSyncStatus`). As built, beyond the sketch above:
+- The outbox queues ids only; push sends each row's current state (ten edits = one upsert).
+- A row Postgres refuses (constraint/RLS) is rejected — server copy restored or
+  local row dropped, toast shown — so it can't block the queue. Anything else retries with backoff.
+- Pull pages by `(synced_at, id)` keyset after a 5s overlap; Realtime only
+  triggers pulls. A catch-up pull 3s after each subscribe plus a 60s heartbeat
+  cover events Realtime drops.
+- Tests: `src/lib/sync/engine.integration.test.ts` (two devices, offline, LWW,
+  delete, rejection, empty-device fill).
+
+Alternative considered: Rocicorp **Zero** (Linear-style sync engine on
+Postgres). Better at scale/conflicts, but adds a `zero-cache` server to run
+and deploy. Not worth it for one user; revisit if sharing boards.
+
+---
+
+## 3. Domain model
+
+Built in phase 2: `src/db/schema/*`, `src/db/migrations/0001_rls_sync.sql`.
+
+```ts
+// every table: id, user_id (default auth.uid()), created_at,
+//              updated_at (client clock, LWW key), synced_at (server, pull cursor),
+//              deleted_at (soft delete)
+items          title, notes, status (todo|doing|done|dropped), priority (0-4),
+               plan_scope (day|week|month)?, plan_date?, board_id?, column_id?,
+               sort_key, done_at?
+boards         name, icon?, layout (list|kanban), sort_key
+board_columns  board_id, name, sort_key
+```
+
+- One `items` table powers everything: the planner is a **view by
+  `plan_scope/plan_date`**, a board is a **view by `board_id`**. An item can
+  be on a board *and* planned for Tuesday.
+- **Constraints:** scope and date come as a pair; a month plan sits on the 1st
+  (weeks are free: week start is a setting); status/priority/length checks.
+- **`sync_stamp` trigger:** sets `synced_at = now()` and drops any UPDATE whose
+  `updated_at` is older than the stored row's (server-side last-write-wins).
+- **Indexes:** `(user_id, synced_at)` for pull, plus the FK columns. Dexie gets
+  `[plan_scope+plan_date]`, `[board_id+column_id]`, `status` in phase 3.
+- **RLS:** one owner policy per table, `(select auth.uid()) = user_id`;
+  `authenticated` gets CRUD, `anon` nothing. Realtime publishes all three.
+- **Tests:** `src/db/rls.integration.test.ts` (`npm run test:integration`).
+- **Dates:** always local calendar dates, never `toISOString()` (UTC shifts
+  midnight a day back east of GMT; the seed hit this).
+
+---
+
+## 4. Screens
+
+| Route | View |
+|---|---|
+| `/plan/day` | Day list: the day's items + overdue carried in. Default post-login. |
+| `/plan/week` | 7 day columns (Mon–Sun) + "This week" bucket. Drag between days = change `plan_date`. |
+| `/plan/month` | Month grid of day cells + "This month" bucket. Click a day → day view. |
+
+One **Planner** sidebar item; Day / Week / Month is a segmented switch in the top bar (`1/2/3`).
+
+**Built in phase 4:** `features/planner/periods.ts` (local-date math, tested
+in 3 timezones), `features/items/{model,use-items}.ts`, `components/board.tsx`
+(generic dnd: `list(groupId)` render prop, pointer-first collisions, group
+ids are places like `day:2026-11-13`), Day (Overdue group you drag out of),
+Week (bucket + 7 columns, today scrolled into view), Month (grid of drop
+targets + bucket), Inbox. The viewed date is `?d=`, changed by
+`history.pushState`, so date stepping never hits the server. Each row's
+options menu is the keyboard path for moving; drag is pointer-only for now.
+| `/inbox` | Unplanned items (no scope, no board). Quick capture lands here. |
+| `/boards/[id]` | `layout=list`: sortable list, grouped by column. `layout=kanban`: columns side by side, dnd across. Toggle with segmented tabs. |
+| `/settings` | Theme, week start, sign out. |
+
+Shared bits: `ItemRow` (checkbox, title inline-edit, priority, plan chip),
+`ItemDetail` sheet (notes, scope picker), `Board` (generic dnd container used
+by week view *and* kanban — one component, different grouping fn).
+
+**Keyboard (Linear-style):** `C` new item, `⌘K` command menu (nav + actions +
+item search over IDB), `J/K` move, `X` toggle done, `1/2/3` → day/week/month,
+`T`/`W`/`M` plan selected for today/this week/this month, `⌫` delete. One
+`useHotkeys` hook (~30 lines, no dep).
+
+---
+
+## 5. File layout
+
+```
+src/
+  app/
+    (auth)/login, signup, …          ← copied
+    (app)/layout.tsx                 ← requireUser + AppShell + SyncProvider
+    (app)/today|week|month|inbox|boards/[id]|settings/page.tsx
+    globals.css, layout.tsx
+  components/ui/*  shell/*  command-menu.tsx   ← copied
+  db/schema/{items,boards}.ts  db/migrations/  db/rls/
+  features/
+    planner/   periods.ts (+test), components/{day,week,month}-view.tsx
+    boards/    components/{board,list-view,kanban-view,column}.tsx
+    items/     schema.ts (zod), components/{item-row,item-detail,quick-add}.tsx
+  lib/
+    sync/      db.ts (Dexie schema), mutate.ts, sync.ts (push/pull/realtime), sync.test.ts
+    supabase/  auth/  utils.ts  hotkeys.ts    ← mostly copied
+  proxy.ts  env.ts
+```
+
+---
+
+## 6. Phases
+
+1. **Scaffold (copy infra).** `create-next-app` → overwrite with pipline's
+   `package.json` deps (trimmed), tsconfig, eslint, postcss, vitest,
+   components.json, `.nvmrc`, `globals.css` tokens, fonts, `components/ui`,
+   shell, env, proxy, supabase lib, auth pages, dev-preflight, `supabase init`
+   on ports 546xx. ✅ when `npm run dev` boots to an empty shell behind login.
+2. **Schema + RLS.** Drizzle tables, migration, RLS policies, realtime
+   publication, seed user. ✅ `db:reset` works; RLS integration test (copy
+   pipline's `*.rls.integration.test.ts` pattern).
+3. **Sync layer.** Dexie schema, `mutate`, outbox push, pull + realtime,
+   `SyncProvider`, status dot in top bar. ✅ test: create offline → reconnect
+   → row in Postgres; edit on device B appears on A.
+4. **Planner.** `periods.ts` (startOfWeek/month, overdue), Today, Week (dnd
+   between days), Month, Inbox, quick-add. ✅ plan an item day→week→month and
+   back without a spinner.
+5. **Boards.** Board CRUD in sidebar, list + kanban layouts, column CRUD, dnd
+   with fractional keys. ✅ reorder persists across reload and devices.
+6. **Speed + polish.** Hotkeys, ⌘K item search, item detail sheet, dark mode,
+   empty states, motion per pipline's `--ease-strong` rules.
+7. **Ship.** GH Actions CI + deploy (migrate → promote), Vercel `fra1`,
+   Supabase prod project.
+
+Later, not now: recurring items (pipline has `features/recurrence`), weekly
+review/stats, labels, calendar layout for boards, PWA offline install.
+
+---
+
+## 7. Open questions (defaults chosen)
+
+- **Sync engine:** hand-rolled Dexie + Supabase (default) vs Zero.
+- **Overdue handling:** auto-carry into Today as a separate "Overdue" group
+  (default) vs auto-reschedule.
+- **Week starts** Monday (default, setting in `/settings`).
+- **i18n:** English only (default).
