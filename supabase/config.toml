@@ -391,3 +391,22 @@ s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
 
+
+# ─── Production overrides ─────────────────────────────────────────────────────
+# Applied by `supabase config push` to the linked hibi project. The block only
+# takes effect when project_id matches the target project; otherwise the CLI
+# pushes the base (local-dev) values above, so check the diff before saying yes.
+[remotes.production]
+project_id = "sovcaiebdyrdxxcflets"
+
+[remotes.production.auth]
+site_url = "https://hibi-omega.vercel.app"
+additional_redirect_urls = ["https://hibi-omega.vercel.app", "https://hibi-omega.vercel.app/auth/confirm"]
+# Keep production's own values where the local-dev ones above are looser.
+[remotes.production.auth.email]
+max_frequency = "1m0s"
+otp_length = 8
+
+[remotes.production.auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
