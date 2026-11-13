@@ -14,7 +14,9 @@ const INVALID = "This invite link has expired or was already used. Ask for a new
     (Supabase's default email): the session arrives in the #fragment. */
 export function InviteForm({ token }: { token?: string }) {
   const [state, action, pending] = useActionState(token ? acceptInvite : setPassword, initial);
-  const [ready, setReady] = useState<boolean | null>(token ? true : null);
+  // null: checking; false: invalid; { confirm }: waiting for a yes before
+  // replacing another signed-in account; { email }: ready.
+  const [view, setView] = useState<null | false | { email?: string; confirm?: () => void; current?: string }>(token ? {} : null);
 
   useEffect(() => {
     if (token) return;
@@ -23,18 +25,30 @@ export function InviteForm({ token }: { token?: string }) {
     const supabase = createClient();
     const access_token = params.get("access_token");
     const refresh_token = params.get("refresh_token");
-    const session =
-      params.get("type") === "invite" && access_token && refresh_token
-        ? supabase.auth.setSession({ access_token, refresh_token }).then((r) => !r.error)
-        : // Reloaded after the fragment was cleared: the session is in cookies.
-          supabase.auth.getUser().then((r) => !r.error && !!r.data.user);
-    session.then(setReady, () => setReady(false));
+    const fail = () => setView(false);
+    const showUser = () => supabase.auth.getUser().then((r) => setView(!r.error && r.data.user ? { email: r.data.user.email } : false), fail);
+
+    if (params.get("type") !== "invite" || !access_token || !refresh_token) return void showUser(); // reload: session in cookies
+    const adopt = () => supabase.auth.setSession({ access_token, refresh_token }).then((r) => (r.error ? fail() : showUser()), fail);
+    // A link can carry anyone's session: never silently replace the account
+    // this browser is already signed in to (login CSRF).
+    supabase.auth.getUser().then((r) => (r.data.user ? setView({ current: r.data.user.email, confirm: adopt }) : adopt()), adopt);
   }, [token]);
 
-  if (ready === null) return <p className="text-muted-foreground text-sm">Checking your invite…</p>;
-  if (!ready) return <p className="text-destructive text-sm">{INVALID}</p>;
+  if (view === null) return <p className="text-muted-foreground text-sm">Checking your invite…</p>;
+  if (view === false) return <p className="text-destructive text-sm">{INVALID}</p>;
+  if (view.confirm)
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="text-sm">This browser is signed in as {view.current}. Sign out of it and open the invite?</p>
+        <Button onClick={() => (setView(null), view.confirm!())} className="h-11">
+          Continue with the invite
+        </Button>
+      </div>
+    );
   return (
     <form action={action} className="flex flex-col gap-4">
+      {view.email ? <p className="text-sm">Setting up <span className="font-medium">{view.email}</span></p> : null}
       {token ? <input type="hidden" name="token" value={token} /> : null}
       <PasswordField isNew />
       <FormError error={state.error} />
