@@ -1,5 +1,5 @@
-import { EmptyState } from "@/components/shared/empty-state";
+import { Settings } from "@/features/settings/settings";
 
-export default function Page() {
-  return <EmptyState title="Nothing here yet">Coming in a later phase.</EmptyState>;
+export default function SettingsPage() {
+  return <Settings />;
 }

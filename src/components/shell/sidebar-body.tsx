@@ -12,11 +12,13 @@ import { cn } from "@/lib/utils";
 import { SyncStatus } from "./sync-status";
 import { activeClass, idleClass, itemClass } from "./sidebar-styles";
 import { SidebarBoards } from "@/features/boards/components/sidebar-boards";
+import { usePlannerHref } from "@/features/planner/last-view";
 
 
 export function SidebarBody({ userEmail, onNavigate }: { userEmail: string; onNavigate?: () => void }) {
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+  const plannerHref = usePlannerHref();
 
   return (
     <div className="flex h-full flex-col px-3 py-4">
@@ -50,7 +52,7 @@ export function SidebarBody({ userEmail, onNavigate }: { userEmail: string; onNa
               return (
                 <Link
                   key={href}
-                  href={href}
+                  href={href === "/plan" ? plannerHref : href}
                   onClick={onNavigate}
                   aria-current={active ? "page" : undefined}
                   className={cn(itemClass, active ? activeClass : idleClass)}

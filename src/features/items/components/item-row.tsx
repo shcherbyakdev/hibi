@@ -7,14 +7,20 @@ import { MoreHorizontalIcon } from "@hugeicons/core-free-icons";
 import type { Item } from "@/lib/sync/db";
 import { cn } from "@/lib/utils";
 import { isOverdue } from "@/features/planner/periods";
+import { usePrefs } from "@/lib/prefs";
 import { useItemActions } from "../use-items";
 import { placeLabel } from "../model";
 import { PlanMenuItems } from "./plan-menu";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { NotebookText } from "lucide-react";
+import { PriorityIcon } from "./priority-icon";
+import { useItemSheet } from "./item-sheet";
 
 /* Linear-density row: 13px, 32px tall, flat on the ground, hover tint. The
-   title is text until clicked (so the row can be dragged), then an input:
-   Enter or blur saves, Escape reverts. */
+   row itself is the focus stop (J/K walk rows, shortcuts act on the focused
+   one — components/shortcuts.tsx); the title is text until clicked (so the
+   row can be dragged), then an input: Enter or blur saves, Escape reverts.
+   Enter (or the menu) opens the details panel. */
 export function ItemRow({
   item,
   today,
@@ -30,13 +36,17 @@ export function ItemRow({
   const actions = useItemActions();
   const [editing, setEditing] = React.useState(false);
   const done = item.status === "done";
-  const late = isOverdue(item, today);
+  const { weekStart } = usePrefs();
+  const late = isOverdue(item, today, weekStart);
+  const sheet = useItemSheet();
 
   return (
     <div
+      // The drag overlay is a copy: never a second focus stop or shortcut target.
+      {...(overlay ? {} : { tabIndex: 0, "data-item-id": item.id, "aria-label": item.title })}
       className={cn(
-        "group/row flex h-8 items-center gap-2.5 rounded-lg px-2 text-[13px] transition-colors duration-150",
-        overlay ? "bg-card shadow-(--shadow-lift) ring-1 ring-foreground/10" : "hover:bg-muted/60",
+        "group/row flex h-8 items-center gap-2.5 rounded-lg px-2 text-[13px] transition-colors duration-150 outline-none",
+        overlay ? "bg-card shadow-(--shadow-lift) ring-1 ring-foreground/10" : "hover:bg-muted/60 focus-visible:bg-muted focus-visible:ring-1 focus-visible:ring-ring/50",
       )}
     >
       <button
@@ -45,6 +55,7 @@ export function ItemRow({
         role="checkbox"
         aria-checked={done}
         aria-label={done ? `Mark "${item.title}" not done` : `Mark "${item.title}" done`}
+        tabIndex={-1}
         onClick={() => actions.toggleDone(item)}
         className={cn(
           "focus-visible:ring-ring/40 flex size-4 shrink-0 items-center justify-center rounded-full border transition-colors duration-150 outline-none focus-visible:ring-2",
@@ -59,6 +70,7 @@ export function ItemRow({
       ) : (
         <button
           type="button"
+          tabIndex={-1}
           onClick={() => setEditing(true)}
           className={cn("min-w-0 flex-1 truncate text-left outline-none", done && "text-muted-foreground line-through")}
         >
@@ -66,6 +78,8 @@ export function ItemRow({
         </button>
       )}
 
+      {item.notes ? <NotebookText aria-label="Has notes" className="text-subtle size-3.5 shrink-0" /> : null}
+      <PriorityIcon priority={item.priority} />
       {showPlace && item.plan_scope ? (
         <span className={cn("shrink-0 text-xs", late ? "text-danger" : "text-subtle")}>{placeLabel(item)}</span>
       ) : null}
@@ -79,6 +93,8 @@ export function ItemRow({
           <HugeiconsIcon icon={MoreHorizontalIcon} size={16} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem onClick={() => sheet.open(item.id)}>Open details</DropdownMenuItem>
+          <DropdownMenuSeparator />
           <PlanMenuItems item={item} today={today} />
         </DropdownMenuContent>
       </DropdownMenu>

@@ -5,9 +5,9 @@ import type { PlanScope } from "@/db/enums";
    lands a day early east of GMT. Date objects are built at local noon, so a
    DST shift can't push them across midnight. */
 
-/** 0 = Sunday … 1 = Monday. ponytail: fixed to Monday until /settings grows
-    a week-start option; every function already takes it as a parameter. */
-export const WEEK_START = 1;
+/** 0 = Sunday, 1 = Monday. The default; the user's choice comes from
+    usePrefs() and is passed to every function that needs it. */
+export const WEEK_START: 0 | 1 = 1;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 

@@ -18,6 +18,7 @@ export function QuickAdd({ place, spot, placeholder = "Add task", className }: {
         maxLength={500}
         placeholder={placeholder}
         aria-label={placeholder}
+        data-quick-add
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && value.trim()) {

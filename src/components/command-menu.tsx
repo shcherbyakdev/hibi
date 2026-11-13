@@ -3,21 +3,41 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
+import { useLiveQuery } from "dexie-react-hooks";
+import { Moon, Plus, Sun } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
+import { CheckmarkCircle02Icon, CircleIcon, DashboardSquare02Icon } from "@hugeicons/core-free-icons";
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { NAV_ITEMS } from "@/components/shell/nav";
-import { DashboardSquare02Icon } from "@hugeicons/core-free-icons";
+import { useSync } from "@/lib/sync/provider";
+import { focusQuickAdd } from "@/lib/focus-quick-add";
 import { useBoards } from "@/features/boards/use-boards";
+import { useItemSheet } from "@/features/items/components/item-sheet";
+import { isLive, placeLabel } from "@/features/items/model";
 
-/** Dispatched on `window` by the sidebar's search button; toggles like ⌘K. */
+/** Dispatched on `window` by the sidebar's search button and "/"; toggles like ⌘K. */
 export const OPEN_COMMAND_MENU_EVENT = "todo:open-command-menu";
+
+const MAX_TASKS = 30;
 
 export function CommandMenu() {
   const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState("");
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
+  const { db } = useSync();
   const boards = useBoards();
+  const sheet = useItemSheet();
+
+  // Tasks are searched in the local db, only while the menu is open and the
+  // query isn't empty. Pre-filtered to a short list so cmdk ranks dozens, not
+  // thousands. ponytail: substring match on title; add notes / fuzzy if needed.
+  const q = query.trim().toLowerCase();
+  const tasks = useLiveQuery(
+    async () => (open && q ? (await db.items.filter((i) => isLive(i) && i.title.toLowerCase().includes(q)).limit(MAX_TASKS).toArray()) : []),
+    [db, open, q],
+    [],
+  );
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -35,19 +55,48 @@ export function CommandMenu() {
     };
   }, []);
 
-  const go = (href: string) => {
+  const run = (fn: () => void) => {
     setOpen(false);
-    router.push(href);
+    setQuery("");
+    fn();
   };
 
   return (
-    <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Type a command or search…" />
+    <CommandDialog open={open} onOpenChange={(o) => (setOpen(o), o || setQuery(""))}>
+      <CommandInput placeholder="Search tasks, boards, commands…" value={query} onValueChange={setQuery} />
       <CommandList>
         <CommandEmpty>No results.</CommandEmpty>
+        {tasks.length ? (
+          <CommandGroup heading="Tasks">
+            {tasks.map((t) => (
+              <CommandItem key={t.id} value={`task ${t.title} ${t.id}`} onSelect={() => run(() => sheet.open(t.id))}>
+                <HugeiconsIcon icon={t.status === "done" ? CheckmarkCircle02Icon : CircleIcon} size={16} />
+                <span className={t.status === "done" ? "text-muted-foreground line-through" : undefined}>{t.title}</span>
+                {t.plan_scope ? <span className="text-subtle ml-auto text-xs">{placeLabel(t)}</span> : null}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        ) : null}
+        <CommandGroup heading="Actions">
+          <CommandItem value="new task create add" onSelect={() => run(() => void focusQuickAdd(router.push))}>
+            <Plus className="size-4" /> New task
+          </CommandItem>
+          <CommandItem
+            value="toggle theme dark light"
+            onSelect={() => run(() => setTheme(resolvedTheme === "dark" ? "light" : "dark"))}
+          >
+            {resolvedTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            Toggle theme
+          </CommandItem>
+        </CommandGroup>
         <CommandGroup heading="Go to">
-          {NAV_ITEMS.map((item) => (
-            <CommandItem key={item.href} onSelect={() => go(item.href)}>
+          {(["day", "week", "month"] as const).map((v) => (
+            <CommandItem key={v} value={`planner ${v}`} onSelect={() => run(() => router.push(`/plan/${v}`))}>
+              <HugeiconsIcon icon={NAV_ITEMS[0].icon} size={16} /> Planner · <span className="capitalize">{v}</span>
+            </CommandItem>
+          ))}
+          {NAV_ITEMS.slice(1).map((item) => (
+            <CommandItem key={item.href} onSelect={() => run(() => router.push(item.href))}>
               <HugeiconsIcon icon={item.icon} size={16} /> {item.label}
             </CommandItem>
           ))}
@@ -55,23 +104,12 @@ export function CommandMenu() {
         {boards?.length ? (
           <CommandGroup heading="Boards">
             {boards.map((b) => (
-              <CommandItem key={b.id} value={`board ${b.name} ${b.id}`} onSelect={() => go(`/boards/${b.id}`)}>
+              <CommandItem key={b.id} value={`board ${b.name} ${b.id}`} onSelect={() => run(() => router.push(`/boards/${b.id}`))}>
                 <HugeiconsIcon icon={DashboardSquare02Icon} size={16} /> {b.name}
               </CommandItem>
             ))}
           </CommandGroup>
         ) : null}
-        <CommandGroup heading="Preferences">
-          <CommandItem
-            onSelect={() => {
-              setTheme(resolvedTheme === "dark" ? "light" : "dark");
-              setOpen(false);
-            }}
-          >
-            {resolvedTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            Toggle theme
-          </CommandItem>
-        </CommandGroup>
       </CommandList>
     </CommandDialog>
   );

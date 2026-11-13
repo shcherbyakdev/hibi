@@ -163,7 +163,7 @@ export function Board<T extends Row>({
 function DropList({ id, disabled, className, children }: { id: string; disabled?: boolean; className?: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id, disabled });
   return (
-    <div ref={setNodeRef} className={cn("flex min-h-9 flex-col", className)}>
+    <div ref={setNodeRef} data-group={id} className={cn("flex min-h-9 flex-col", className)}>
       {children}
     </div>
   );

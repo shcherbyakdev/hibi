@@ -5,8 +5,10 @@ import { useLiveQuery } from "dexie-react-hooks";
 import type { PlanScope } from "@/db/enums";
 import type { Item, LocalDb } from "@/lib/sync/db";
 import { useSync } from "@/lib/sync/provider";
+import { usePrefs } from "@/lib/prefs";
+import { toast } from "sonner";
 import { periodOf } from "@/features/planner/periods";
-import { bySortKey, isLive, isOpen, keyBetween, type Place, type Spot } from "./model";
+import { bySortKey, INBOX, isLive, isOpen, keyBetween, type Place, type Spot } from "./model";
 
 /* Reads are live IndexedDB queries: they re-render on every local write and
    every pulled change. `undefined` means "first read not back yet" (a few
@@ -24,13 +26,14 @@ export function usePlanned(scope: PlanScope, from: string, to: string = from): I
 /** Open items whose whole period ended before today's (any scope). */
 export function useOverdue(today: string | null): Item[] | undefined {
   const { db } = useSync();
+  const { weekStart } = usePrefs();
   return useLiveQuery(async () => {
     if (!today) return [];
     const ranges = (["day", "week", "month"] as const).map((s) =>
-      db.items.where("[plan_scope+plan_date]").between([s, ""], [s, periodOf(s, today)], true, false).filter((i) => isLive(i) && isOpen(i)).toArray(),
+      db.items.where("[plan_scope+plan_date]").between([s, ""], [s, periodOf(s, today, weekStart)], true, false).filter((i) => isLive(i) && isOpen(i)).toArray(),
     );
     return (await Promise.all(ranges)).flat().sort((a, b) => (a.plan_date! < b.plan_date! ? -1 : a.plan_date! > b.plan_date! ? 1 : bySortKey(a, b)));
-  }, [db, today]);
+  }, [db, today, weekStart]);
 }
 
 /** Unplanned and on no board. ponytail: a filtered scan (IndexedDB can't
@@ -78,6 +81,18 @@ export function useItemActions() {
         const text = title.trim().slice(0, 500);
         if (text && text !== item.title) return m.update("items", item.id, { title: text });
       },
+      /** done_at follows status into and out of "done". */
+      setStatus(item: Item, status: Item["status"]) {
+        if (status === item.status) return;
+        return m.update("items", item.id, { status, done_at: status === "done" ? new Date().toISOString() : null });
+      },
+      edit: (item: Item, patch: Pick<Partial<Item>, "notes" | "priority">) => m.update("items", item.id, patch),
+      /** Onto a board column (end of it), or off boards with null. */
+      async moveToBoard(item: Item, spot: Spot | null) {
+        if (!spot) return m.update("items", item.id, { board_id: null, column_id: null });
+        if (item.board_id === spot.board_id && item.column_id === spot.column_id) return;
+        await m.update("items", item.id, { ...spot, sort_key: keyBetween(await lastKey(db, INBOX, spot), null) });
+      },
       toggleDone(item: Item) {
         const done = item.status !== "done";
         return m.update("items", item.id, { status: done ? "done" : "todo", done_at: done ? new Date().toISOString() : null });
@@ -91,11 +106,17 @@ export function useItemActions() {
       move(item: Item, place: Place, prev: string | null, next: string | null) {
         return m.update("items", item.id, { ...place, sort_key: keyBetween(prev, next) });
       },
+      /** A new position within the same list (keyboard reorder). */
+      reorder: (item: Item, sort_key: string) => m.update("items", item.id, { sort_key }),
       /** Drop into a board column (null = "No column") between two neighbours. */
       moveToColumn(item: Item, column_id: string | null, prev: string | null, next: string | null) {
         return m.update("items", item.id, { column_id, sort_key: keyBetween(prev, next) });
       },
-      remove: (item: Item) => m.remove("items", item.id),
+      /** Soft delete with an Undo toast. */
+      async remove(item: Item) {
+        await m.remove("items", item.id);
+        toast(`Deleted “${item.title}”`, { action: { label: "Undo", onClick: () => void m.restore("items", item.id) } });
+      },
     }),
     [db, m],
   );

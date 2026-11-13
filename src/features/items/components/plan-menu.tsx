@@ -4,13 +4,15 @@ import type { Item } from "@/lib/sync/db";
 import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuGroup } from "@/components/ui/dropdown-menu";
 import { addDays, addMonths, periodOf } from "@/features/planner/periods";
 import { useItemActions } from "../use-items";
+import { usePrefs } from "@/lib/prefs";
 import { INBOX, type Place } from "../model";
 
 /** The keyboard-reachable way to move an item between day, week, month and
     the Inbox (dragging covers the pointer). */
 export function PlanMenuItems({ item, today }: { item: Item; today: string }) {
   const actions = useItemActions();
-  const thisWeek = periodOf("week", today);
+  const { weekStart } = usePrefs();
+  const thisWeek = periodOf("week", today, weekStart);
   const thisMonth = periodOf("month", today);
   const targets: Array<[string, Place]> = [
     ["Today", { plan_scope: "day", plan_date: today }],

@@ -9,13 +9,17 @@ import { cn } from "@/lib/utils";
 import { addDays, label, periodOf, weekDays } from "../periods";
 import { DateNav } from "./date-nav";
 import { PlannerBoard } from "./planner-board";
+import { usePrefs } from "@/lib/prefs";
 
 /* "This week" bucket + seven day columns, side by side; scrolls sideways on
    narrow screens. Drag between columns to reschedule. */
 export function WeekView({ date, today, go }: { date: string; today: string; go: (d: string) => void }) {
-  const start = periodOf("week", date);
+  const { weekStart } = usePrefs();
+  const start = periodOf("week", date, weekStart);
   const days = weekDays(start);
-  const bucket = usePlanned("week", start);
+  // A range, not just `start`: week tasks planned under the other week-start
+  // setting are dated a day off and must still show up.
+  const bucket = usePlanned("week", start, addDays(start, 6));
   const dayItems = usePlanned("day", days[0], days[6]);
   const scroller = useRef<HTMLDivElement>(null);
   const loaded = !!bucket && !!dayItems;
@@ -34,7 +38,7 @@ export function WeekView({ date, today, go }: { date: string; today: string; go:
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5">
-      <DateNav title={label.week(start)} onPrev={() => go(addDays(start, -7))} onNext={() => go(addDays(start, 7))} onToday={() => go(today)} isCurrent={start === periodOf("week", today)} />
+      <DateNav title={label.week(start)} onPrev={() => go(addDays(start, -7))} onNext={() => go(addDays(start, 7))} onToday={() => go(today)} isCurrent={date === today} />
       <div ref={scroller} className="-mx-6 flex min-h-0 flex-1 gap-2 overflow-x-auto px-6 pb-2">
         <PlannerBoard
           groups={groups}

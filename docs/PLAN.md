@@ -151,6 +151,16 @@ confirm (soft-deletes its columns and tasks), boards in ⌘K. Same generic
 `Board` as the planner. Dexie v2 adds a plain `board_id` index (the compound
 one skipped null columns). An item has one `sort_key`, shared by its planner
 list and board column.
+
+**Built in phase 6:** `components/shortcuts.tsx` (one keydown listener;
+task keys act on the focused row — rows are focus stops, so "selection" is
+browser focus; `?` lists them), task details sheet (`item-sheet.tsx`: status,
+priority, plan via native select + date input normalised to the period,
+board/column, autosaving notes), delete with Undo toast, ⌘K task search
+(local substring match) and actions, priority icons, Settings (theme; week
+start saved in Supabase `user_metadata`, parsed server-side in
+`lib/prefs-data.ts`), last planner view remembered per device. Week buckets
+query a 7-day range so tasks dated under the other week-start still show.
 | `/inbox` | Unplanned items (no scope, no board). Quick capture lands here. |
 | `/boards/[id]` | `layout=list`: sortable list, grouped by column. `layout=kanban`: columns side by side, dnd across. Toggle with segmented tabs. |
 | `/settings` | Theme, week start, sign out. |

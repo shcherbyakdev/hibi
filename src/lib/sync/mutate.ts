@@ -48,6 +48,11 @@ export function createMutations(db: LocalDb, userId: string, kick: () => void) {
     remove(table: SyncedTable, id: string): Promise<void> {
       return write(table, id, (prev) => (prev ? { ...prev, deleted_at: new Date().toISOString(), updated_at: nextStamp(prev.updated_at) } : null));
     },
+
+    /** Undo a soft delete. */
+    restore(table: SyncedTable, id: string): Promise<void> {
+      return write(table, id, (prev) => (prev ? { ...prev, deleted_at: null, updated_at: nextStamp(prev.updated_at) } : null));
+    },
   };
 }
 

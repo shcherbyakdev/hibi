@@ -10,13 +10,15 @@ import { cn } from "@/lib/utils";
 import { addMonths, label, monthGrid, periodOf, weekDays } from "../periods";
 import { DateNav } from "./date-nav";
 import { PlannerBoard } from "./planner-board";
+import { usePrefs } from "@/lib/prefs";
 
 /* The month as a grid of day cells (each a drop target) beside the "This
    month" bucket. Drag from the bucket onto a day to schedule it; click a
    day's number to open that day. */
 export function MonthView({ date, today, go, openDay }: { date: string; today: string; go: (d: string) => void; openDay: (d: string) => void }) {
   const start = periodOf("month", date);
-  const grid = monthGrid(start);
+  const { weekStart } = usePrefs();
+  const grid = monthGrid(start, weekStart);
   const bucket = usePlanned("month", start);
   const dayItems = usePlanned("day", grid[0][0], grid.at(-1)!.at(-1)!);
   if (!bucket || !dayItems) return null;
@@ -30,7 +32,7 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
 
   return (
     <div className="flex flex-col gap-5">
-      <DateNav title={label.month(start)} onPrev={() => go(addMonths(start, -1))} onNext={() => go(addMonths(start, 1))} onToday={() => go(today)} isCurrent={start === periodOf("month", today)} />
+      <DateNav title={label.month(start)} onPrev={() => go(addMonths(start, -1))} onNext={() => go(addMonths(start, 1))} onToday={() => go(today)} isCurrent={date === today} />
       <PlannerBoard
         groups={groups}
         today={today}
