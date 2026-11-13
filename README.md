@@ -55,7 +55,11 @@ from `main`; Supabase project `sovcaiebdyrdxxcflets`, eu-central-1).
   diff before answering yes.
 - **Accounts:** sign-up is closed. Visitors leave their email at `/signup`,
   which lands in the `access_requests` table (Supabase dashboard → Table
-  Editor). Create the account under Authentication → Users → Add user,
-  with a password and Auto Confirm, so no email is needed.
+  Editor). To let someone in: Authentication → Users → Add user → **Send
+  invitation**. The email link lands on `/invite`, where they choose their
+  own password. (Or Create new user with a password + Auto Confirm: no email.)
+  A custom invite email (`supabase/templates/invite.html`, commented out in
+  `config.toml`) needs your own SMTP: Supabase blocks custom templates on
+  the built-in sender.
 - **Email:** the built-in mailer (a few per hour) only sends magic links.
   Add SMTP before relying on email.

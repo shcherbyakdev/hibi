@@ -5,7 +5,7 @@
 // (so "//evil.com" and "/\evil.com" are out), no whitespace or control
 // characters, never an auth page (a redirect loop).
 const NEXT_RE = /^\/(?![\/\\])[^\s\x00-\x1f\x7f]*$/;
-const AUTH_PAGES = ["/login", "/signup", "/auth/"];
+const AUTH_PAGES = ["/login", "/signup", "/invite", "/auth/"];
 
 export const DEFAULT_AFTER_LOGIN = "/plan/day";
 
@@ -20,7 +20,7 @@ export function afterLogin(raw: unknown): string {
 }
 
 // Everything is private except the auth pages and their callback.
-const PUBLIC = ["/login", "/signup"];
+const PUBLIC = ["/login", "/signup", "/invite"];
 
 export function isProtectedPath(pathname: string): boolean {
   return !(PUBLIC.includes(pathname) || pathname.startsWith("/auth/"));

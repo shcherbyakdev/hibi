@@ -12,7 +12,7 @@ export function EmailField() {
 }
 
 /** `aside` sits at the right end of the label row (e.g. "Forgot password?"). */
-export function PasswordField({ aside }: { aside?: React.ReactNode }) {
+export function PasswordField({ isNew = false, aside }: { isNew?: boolean; aside?: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between">
@@ -23,9 +23,11 @@ export function PasswordField({ aside }: { aside?: React.ReactNode }) {
         id="password"
         name="password"
         required
-        autoComplete="current-password"
+        minLength={isNew ? 8 : undefined}
+        autoComplete={isNew ? "new-password" : "current-password"}
         className="h-11 rounded-xl"
       />
+      {isNew ? <p className="text-muted-foreground text-xs">At least 8 characters.</p> : null}
     </div>
   );
 }

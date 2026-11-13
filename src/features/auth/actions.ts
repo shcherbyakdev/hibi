@@ -2,9 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { afterLogin } from "@/lib/auth/next-path";
+import { afterLogin, DEFAULT_AFTER_LOGIN } from "@/lib/auth/next-path";
 import { env } from "@/env";
-import { emailSchema, signInSchema, type AuthState } from "./schema";
+import { emailSchema, inviteSchema, passwordSchema, signInSchema, type AuthState } from "./schema";
 
 const confirmUrl = () => `${env.NEXT_PUBLIC_APP_URL}/auth/confirm`;
 
@@ -43,6 +43,38 @@ export async function requestAccess(_prev: AuthState, formData: FormData): Promi
   const { error } = await supabase.from("access_requests").insert({ email: parsed.data.email });
   if (error && error.code !== "23505") return { error: "Couldn't send the request. Try again." };
   return { sent: true };
+}
+
+// The invite link only carries the token; nothing is spent on GET (mail
+// scanners prefetch links). Verifying it together with the new password
+// also means a forwarded link can't silently sign someone into another
+// person's account.
+export async function acceptInvite(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const parsed = inviteSchema.safeParse({ token: formData.get("token"), password: formData.get("password") });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check your details." };
+  const supabase = await createClient();
+  const verified = await supabase.auth.verifyOtp({ token_hash: parsed.data.token, type: "invite" });
+  if (verified.error) return { error: "This invite link has expired or was already used. Ask for a new one." };
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) {
+    // Signed in by now, but without a password: they can set one with
+    // "Forgot password?" on the next visit.
+    console.error("[acceptInvite] password not saved:", error.code);
+    return { error: error.code === "weak_password" ? "That password is too weak. Choose another." : "Couldn't save the password. Try again." };
+  }
+  redirect(DEFAULT_AFTER_LOGIN);
+}
+
+// Default-email invites arrive already signed in (the /invite page sets the
+// session from the link), so here only the password is missing.
+export async function setPassword(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const parsed = passwordSchema.safeParse({ password: formData.get("password") });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check your password." };
+  const supabase = await createClient();
+  if (!(await supabase.auth.getUser()).data.user) return { error: "This invite link has expired or was already used. Ask for a new one." };
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) return { error: error.code === "weak_password" ? "That password is too weak. Choose another." : "Couldn't save the password. Try again." };
+  redirect(DEFAULT_AFTER_LOGIN);
 }
 
 export async function signOut(): Promise<void> {

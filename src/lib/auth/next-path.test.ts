@@ -27,7 +27,7 @@ describe("isProtectedPath", () => {
     for (const p of ["/", "/plan/week", "/boards/abc", "/settings"]) expect(isProtectedPath(p), p).toBe(true);
   });
   it("leaves auth surfaces public", () => {
-    for (const p of ["/login", "/signup", "/auth/confirm"]) expect(isProtectedPath(p), p).toBe(false);
+    for (const p of ["/login", "/signup", "/invite", "/auth/confirm"]) expect(isProtectedPath(p), p).toBe(false);
   });
   it("does not treat lookalike prefixes as public", () => {
     expect(isProtectedPath("/loginx")).toBe(true);

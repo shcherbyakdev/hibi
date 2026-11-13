@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { InviteForward } from "@/components/invite-forward";
 import "./globals.css";
 
 // Autumn-style type (useautumn.com): Geist for everything read, Geist Mono
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body suppressHydrationWarning className="flex min-h-full flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
+          <InviteForward />
         </ThemeProvider>
       </body>
     </html>

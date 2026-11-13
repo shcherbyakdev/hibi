@@ -230,6 +230,14 @@ otp_expiry = 3600
 # Password recovery → /auth/confirm verifies, then next= lands on the
 # authenticated reset page.
 
+# Custom invite email: links to /invite?token_hash=…, spent only when the
+# invitee submits a password (acceptInvite). Supabase allows custom templates
+# only with your own SMTP, so it stays off until SMTP is set up; until then
+# the default email's link lands on /invite via InviteForward + setPassword.
+# [auth.email.template.invite]
+# subject = "You're invited to hibi"
+# content_path = "./supabase/templates/invite.html"
+
 # Uncomment to customize email template
 # [auth.email.template.invite]
 # subject = "You have been invited"
