@@ -23,3 +23,28 @@ npm run dev      # preflight: starts Supabase, fills .env.local, migrates
 
 Ports are pipline-app's +60 (app on 3100), so both run side by side.
 `npm run verify` = lint + typecheck + test.
+
+## CI
+
+`.github/workflows/ci.yml` on every PR and push to `main`: lint, typecheck,
+unit tests, production build, and a `db` job that starts a throwaway
+Supabase (CLI pinned to 2.75.0), applies every migration to an empty
+database, fails on schema/migration drift, and runs the integration tests.
+Require the single `ci` check in branch protection.
+
+## Production environment
+
+Set in Vercel (never locally or in CI):
+
+| Variable | Value |
+|---|---|
+| `APP_ENV` | `production` — turns on the checks in `src/env-schema.ts` |
+| `NEXT_PUBLIC_APP_URL` | the public `https://` URL (email links point here) |
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the production project |
+
+With `APP_ENV=production` the build fails if the app URL is missing,
+local or not https, or if Supabase is local. Production Supabase also
+needs: site URL + redirect URLs set to the domain, the migrations applied
+(`ALLOW_REMOTE_DB=1 npx drizzle-kit migrate` with the production
+`DATABASE_URL`), and a real SMTP provider (the built-in mailer allows
+only a couple of emails per hour).

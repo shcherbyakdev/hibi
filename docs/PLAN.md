@@ -267,8 +267,15 @@ src/
    kanban column names on the card text; every centred-column page (Today, Inbox, board list, Settings) starts its text on one line (12px inset, same minimal rows); filled buttons paint their full border box so they match inputs; column names use the shared uppercase-mono label style. Favicon `app/icon.svg`. Internal
    names (folder, Dexie db `todo-<user>`, storage keys) stay `todo` on
    purpose: renaming the local db would drop unsynced changes.
-8. **Ship.** GH Actions CI + deploy (migrate → promote), Vercel `fra1`,
-   Supabase prod project.
+8. **Ship.** Done before infra: CI (`.github/workflows/ci.yml`: lint, typecheck,
+   unit, build, db job with migrations from empty + drift check + integration
+   tests on a throwaway Supabase); production env checks (`APP_ENV=production`
+   refuses a missing/local/non-https app URL or a local Supabase — build
+   fails closed); sign-out pushes unsynced changes, then deletes the device's
+   IndexedDB copy + `todo:*` keys (asks first if changes can't be pushed) and
+   ends only this session (`scope: "local"`); "Forgot password?" switches to
+   the email link. Remaining: GitHub repo, Supabase prod project (site URL,
+   redirects, migrations, SMTP), Vercel project `fra1` + deploy workflow.
 
 Later, not now: recurring items (pipline has `features/recurrence`), weekly
 review/stats, labels, calendar layout for boards, PWA offline install.

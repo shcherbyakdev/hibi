@@ -11,10 +11,14 @@ export function EmailField() {
   );
 }
 
-export function PasswordField({ isNew = false }: { isNew?: boolean }) {
+/** `aside` sits at the right end of the label row (e.g. "Forgot password?"). */
+export function PasswordField({ isNew = false, aside }: { isNew?: boolean; aside?: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor="password">Password</Label>
+      <div className="flex items-baseline justify-between">
+        <Label htmlFor="password">Password</Label>
+        {aside}
+      </div>
       <PasswordInput
         id="password"
         name="password"

@@ -1,0 +1,12 @@
+name: Setup
+description: Install the pinned Node version and dependencies. Callers check out the repo first.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+    - run: npm ci
+      shell: bash

@@ -18,7 +18,18 @@ export function LoginForm({ next }: { next: string | null }) {
     <form action={action} className="flex flex-col gap-4">
       {next ? <input type="hidden" name="next" value={next} /> : null}
       <EmailField />
-      {magic ? null : <PasswordField />}
+      {magic ? (
+        <p className="text-muted-foreground -mt-1 text-xs">No password needed — we&apos;ll email you a sign-in link.</p>
+      ) : (
+        <PasswordField
+          aside={
+            // A lost password is covered by the email link: one way in, no reset flow to maintain.
+            <button type="button" onClick={() => setMagic(true)} className="text-muted-foreground hover:text-foreground text-xs outline-none focus-visible:underline">
+              Forgot password?
+            </button>
+          }
+        />
+      )}
       <FormError error={state.error} />
       <Button type="submit" disabled={pending} className="h-11">
         {magic ? (pending ? "Sending…" : "Email me a link") : pending ? "Signing in…" : "Sign in"}

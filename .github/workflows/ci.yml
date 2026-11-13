@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: npm run lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: npm run typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: npm test
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - uses: actions/cache@v6
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**/*.[jt]s', 'src/**/*.[jt]sx') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+      # Placeholders: src/env.ts validates these at build time; the bundle is
+      # discarded. APP_ENV is unset here on purpose — the production checks in
+      # env-schema.ts only apply where APP_ENV=production (Vercel).
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54411
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+          NEXT_PUBLIC_APP_URL: http://localhost:3100
+
+  db:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54412/postgres
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+
+      # Pinned to the local CLI version: `latest` would change the toolchain
+      # with no diff in this repo.
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.75.0
+
+      # Only db, auth and realtime are needed (RLS uses auth.uid(); the sync
+      # engine test subscribes to Realtime).
+      - name: Start Supabase
+        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
+
+      - name: Apply migrations to an empty database
+        run: npx drizzle-kit migrate
+
+      - name: Check for schema/migration drift
+        run: |
+          npx drizzle-kit generate
+          if ! git diff --quiet --exit-code src/db/migrations || [ -n "$(git ls-files --others --exclude-standard src/db/migrations)" ]; then
+            echo "::error::src/db/schema changed without a migration. Run 'npm run db:generate' and commit it."
+            git status --short src/db/migrations
+            exit 1
+          fi
+          echo "No drift: committed migrations match the Drizzle schema."
+
+      - name: Integration tests (RLS contract, two-device sync)
+        run: |
+          set -a
+          eval "$(supabase status -o env | grep -E '^[A-Z_]+=')"
+          set +a
+          export NEXT_PUBLIC_SUPABASE_URL="$API_URL"
+          export NEXT_PUBLIC_SUPABASE_ANON_KEY="$ANON_KEY"
+          export SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"
+          npm run test:integration
+
+  ci:
+    # One required status for branch protection: adding a job above never
+    # means editing the rule.
+    if: always()
+    needs: [lint, typecheck, test, build, db]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify all checks passed
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "One or more CI jobs failed."
+            exit 1
+          fi
+          echo "All CI jobs passed."

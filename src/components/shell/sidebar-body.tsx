@@ -4,9 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Logout03Icon, Search01Icon } from "@hugeicons/core-free-icons";
+import { Search01Icon } from "@hugeicons/core-free-icons";
 import { NAV_ITEMS, NAV_SECTIONS } from "./nav";
-import { signOut } from "@/features/auth/actions";
+import { SignOutButton } from "./sign-out-button";
 import { OPEN_COMMAND_MENU_EVENT } from "@/components/command-menu";
 import { cn } from "@/lib/utils";
 import { SyncStatus } from "./sync-status";
@@ -76,15 +76,7 @@ export function SidebarBody({ userEmail, onNavigate }: { userEmail: string; onNa
         <div className="text-subtle truncate px-2 text-xs" title={userEmail}>
           {userEmail}
         </div>
-        <form action={signOut}>
-          <button
-            type="submit"
-            className="text-muted-foreground hover:bg-sidebar-accent hover:text-foreground focus-visible:ring-ring/40 flex h-7 w-full items-center gap-2.5 rounded-md px-2 text-xs transition-colors duration-150 ease-strong outline-none focus-visible:ring-2"
-          >
-            <HugeiconsIcon icon={Logout03Icon} size={14} className="text-subtle" />
-            Sign out
-          </button>
-        </form>
+        <SignOutButton />
       </div>
     </div>
   );

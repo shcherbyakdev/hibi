@@ -46,6 +46,8 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
 
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  // This session only: signing out here must not sign out your other devices
+  // (supabase-js defaults to "global").
+  await supabase.auth.signOut({ scope: "local" });
   redirect("/login");
 }
