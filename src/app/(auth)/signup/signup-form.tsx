@@ -10,7 +10,7 @@ const initial: AuthState = {};
 
 export function SignupForm() {
   const [state, action, pending] = useActionState(signUp, initial);
-  if (state.sent) return <p className="text-center text-sm">Check your email to confirm your account.</p>;
+  if (state.sent) return <p className="text-sm">Check your email to confirm your account.</p>;
   return (
     <form action={action} className="flex flex-col gap-4">
       <EmailField />

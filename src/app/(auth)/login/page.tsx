@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getOptionalUser } from "@/lib/auth/session";
 import { afterLogin, safeNextPath } from "@/lib/auth/next-path";
 import { LoginForm } from "./login-form";
+import { AuthFooter, AuthHeading } from "../fields";
 
 export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const { error, next } = (await searchParams) as { error?: string; next?: string };
@@ -10,17 +11,17 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
   return (
     <div>
-      <h1 className="mb-6 text-center text-[22px] font-normal tracking-[-0.03em]">Sign in</h1>
+      <AuthHeading title="Sign in" sub="Welcome back. Your day is waiting." />
       {error === "auth" ? (
-        <p className="text-destructive mb-4 text-center text-sm">That link expired or was opened in another browser. Sign in again.</p>
+        <p className="text-destructive mb-4 text-sm">That link expired or was opened in another browser. Sign in again.</p>
       ) : null}
       <LoginForm next={safeNextPath(next)} />
-      <p className="text-muted-foreground mt-7 text-center text-sm">
+      <AuthFooter>
         No account?{" "}
         <Link href="/signup" className="text-foreground hover:underline">
           Sign up
         </Link>
-      </p>
+      </AuthFooter>
     </div>
   );
 }

@@ -12,7 +12,7 @@ export function LoginForm({ next }: { next: string | null }) {
   const [magic, setMagic] = useState(false);
   const [state, action, pending] = useActionState(magic ? sendMagicLink : signInWithPassword, initial);
 
-  if (state.sent) return <p className="text-center text-sm">Check your email for a sign-in link.</p>;
+  if (state.sent) return <p className="text-sm">Check your email for a sign-in link.</p>;
 
   return (
     <form action={action} className="flex flex-col gap-4">
