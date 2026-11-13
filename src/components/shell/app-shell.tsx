@@ -12,7 +12,7 @@ export function AppShell({ userEmail, children }: { userEmail: string; children:
         <SidebarBody userEmail={userEmail} />
       </aside>
       <div className="flex min-w-0 flex-1 flex-col md:p-2 md:pl-0">
-        <div className="bg-background flex min-h-0 flex-1 flex-col overflow-hidden md:rounded-[12px] md:border md:shadow-(--shadow-card)">
+        <div className="bg-background flex min-h-0 flex-1 flex-col overflow-hidden md:rounded-md md:border md:shadow-(--shadow-card)">
           <TopBar userEmail={userEmail} />
           {/* `relative` so absolutely-positioned descendants (sr-only inputs,
               popovers) resolve against this scroller, not the page. */}

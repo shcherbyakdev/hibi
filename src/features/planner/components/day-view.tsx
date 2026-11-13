@@ -6,6 +6,7 @@ import { QuickAdd } from "@/features/items/components/quick-add";
 import { addDays, label } from "../periods";
 import { DateNav } from "./date-nav";
 import { GroupHeader, PlannerBoard } from "./planner-board";
+import { ItemRow } from "@/features/items/components/item-row";
 
 export function DayView({ date, today, go }: { date: string; today: string; go: (d: string) => void }) {
   const place: Place = { plan_scope: "day", plan_date: date };
@@ -19,26 +20,28 @@ export function DayView({ date, today, go }: { date: string; today: string; go: 
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
-      <DateNav title={date === today ? `Today, ${label.dayLong(date)}` : label.dayLong(date)} onPrev={() => go(addDays(date, -1))} onNext={() => go(addDays(date, 1))} onToday={() => go(today)} isCurrent={date === today} />
+      <DateNav title={date === today ? "Today" : label.weekdayLong(date)} sub={date === today ? `${label.weekdayLong(date)}, ${label.dayMonth(date)}` : label.dayMonth(date)} onPrev={() => go(addDays(date, -1))} onNext={() => go(addDays(date, 1))} onToday={() => go(today)} isCurrent={date === today} />
       <PlannerBoard
         groups={groups}
         today={today}
-        showPlace={(i) => i.plan_scope !== "day" || i.plan_date !== date}
+        renderItem={(item, { overlay }) => (
+          <ItemRow item={item} today={today} overlay={overlay} density="minimal" showPlace={item.plan_scope !== "day" || item.plan_date !== date} />
+        )}
       >
         {(list) => (
           <>
             {overdue.length ? (
               <section>
-                <GroupHeader accent count={overdue.length}>
+                <GroupHeader accent count={overdue.length} className="px-3">
                   Overdue
                 </GroupHeader>
                 {list("overdue")}
               </section>
             ) : null}
             <section>
-              <GroupHeader count={open}>{open ? "To do" : items.length ? "All done" : "Nothing planned"}</GroupHeader>
+              <GroupHeader count={open} className="px-3">{open ? "To do" : items.length ? "All done" : "Nothing planned"}</GroupHeader>
               {list(placeId(place))}
-              <QuickAdd place={place} />
+              <QuickAdd place={place} className="h-11 gap-3 px-3 text-[14px]" />
             </section>
           </>
         )}

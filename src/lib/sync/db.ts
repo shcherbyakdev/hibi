@@ -7,11 +7,13 @@ import type { BoardLayout, ItemStatus, PlanScope } from "@/db/enums";
 export type Item = Omit<Tables<"items">, "status" | "plan_scope"> & { status: ItemStatus; plan_scope: PlanScope | null };
 export type Board = Omit<Tables<"boards">, "layout"> & { layout: BoardLayout };
 export type BoardColumn = Tables<"board_columns">;
+export type TimeEntry = Tables<"time_entries">;
 
-/** Push order = FK order: a column's board must exist before the column. */
-export const SYNCED_TABLES = ["boards", "board_columns", "items"] as const;
+/** Push order = FK order: a column's board before the column, an item
+    before its time entries. */
+export const SYNCED_TABLES = ["boards", "board_columns", "items", "time_entries"] as const;
 export type SyncedTable = (typeof SYNCED_TABLES)[number];
-export type RowOf<T extends SyncedTable> = { boards: Board; board_columns: BoardColumn; items: Item }[T];
+export type RowOf<T extends SyncedTable> = { boards: Board; board_columns: BoardColumn; items: Item; time_entries: TimeEntry }[T];
 
 /** One per local write; drained by the engine. Only the id is queued: the
     push sends the row's CURRENT state, so ten edits cost one upsert. */
@@ -22,6 +24,7 @@ export class LocalDb extends Dexie {
   boards!: Table<Board, string>;
   board_columns!: Table<BoardColumn, string>;
   items!: Table<Item, string>;
+  time_entries!: Table<TimeEntry, string>;
   outbox!: Table<OutboxEntry, number>;
   meta!: Table<Meta, string>;
 
@@ -40,6 +43,10 @@ export class LocalDb extends Dexie {
     // column_id is null, and boards need those too ("No column").
     this.version(2).stores({
       items: "id, [plan_scope+plan_date], board_id, status",
+    });
+    // v3: timer sessions.
+    this.version(3).stores({
+      time_entries: "id, item_id",
     });
   }
 }

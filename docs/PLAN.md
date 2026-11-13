@@ -1,4 +1,4 @@
-# Todo — personal planner (Linear-fast)
+# hibi — personal planner (Linear-fast)
 
 Self-control planner for **day / week / month**, plus free-form **boards**
 (list, kanban). Inherits pipline-app's stack, shell, tokens and infra; swaps
@@ -219,7 +219,55 @@ src/
    with fractional keys. ✅ reorder persists across reload and devices.
 6. **Speed + polish.** Hotkeys, ⌘K item search, item detail sheet, dark mode,
    empty states, motion per pipline's `--ease-strong` rules.
-7. **Ship.** GH Actions CI + deploy (migrate → promote), Vercel `fra1`,
+7. **Time tracking.** Timer and 25-min pomodoro per task; pause and continue
+   later (across reloads and devices); tracked total per task.
+   Built: `time_entries` table (one row per session; running while
+   `ended_at` is null; `planned_seconds` marks a pomodoro), same RLS/sync as
+   the rest, Dexie v3. `features/time/model.ts` (tested): a pomodoro counts at
+   most its length and closes at exactly start + 25m even if the app was
+   closed; two timers running (two devices) → the newest wins, the older
+   ends where it began. UI: top-bar timer (live total or countdown ring, tab
+   title mirrors it, Resume after pause), row play button + total, Time
+   section in the details panel (sessions, delete), S / P shortcuts, ⌘K
+   pause/resume. Pomodoro end: toast, plus a browser notification when the
+   tab is hidden and permission was granted (asked on first pomodoro start).
+   Priority (0 none, 1 urgent … 4 low) as signal bars: three ascending
+   bars, lit count = level (high 3, medium 2, low 1) in orange, urgent all
+   three in red (`--priority`, `--priority-urgent`). (Briefly Jira chevrons;
+   switched app-wide when Today went minimal.)
+   Visible control first: a picker right after each row's checkbox (faint
+   until hover when unset) and one beside quick add while typing. Extras:
+   0–4 on a focused task, `!1`–`!4` in the title (`parseQuickTitle`, tested),
+   the row menu, the details panel. Lists stay in manual order.
+   Row composition (`item-row.tsx`): two densities. "list" = one line
+   (checkbox · priority · title · notes/time/plan); "card" (week columns,
+   kanban) = wrapping title with a metadata line under it. Hover actions
+   (▶/⏸, ⋯) overlay the right edge and never take layout space; in list rows
+   the metadata fades out while they show (no half-covered text). Done
+   tasks' priority is muted. Today uses a third, "minimal" density: 44px
+   rows on hairline dividers, 14px titles, a lighter checkbox, flat hover.
+   Sidebar (`sidebar-styles.ts`): flat ink tints instead of lifted cards
+   (hover 4%, active 7% + full-strength text), inset focus ring; the
+   new-board input is styled as the row it becomes. Boards have a colour
+   (`tone.ts`, stored in `boards.icon`; new boards take the least-used one;
+   Colour submenu in the board menu) shown in the sidebar, ⌘K and title.
+   **Visual language → Autumn (useautumn.com), read off the live site:**
+   Geist + Geist Mono; neutral black/grey palette (dark: #000 sidebar,
+   #0a0a0a panel, 10%-white hairlines; light derived: white, #171717 ink);
+   one violet (#7c3aed solid primary — white on it holds AA; #9564ff accent
+   at night); square corners (`--radius` 2px, no pills); flat — no shadows
+   except floating things; small uppercase mono for section labels, field
+   labels, dates and times; two-tone light headings ("Today" ink + date
+   grey, 22px/400). Round task checkboxes kept on purpose.
+   **Brand → hibi** (日々, "day after day"). Logo: the smile-and-dot mark,
+   redrawn as SVG from the brand artwork in its own coordinates
+   (`components/brand/hibi-logo.tsx`), treated minimally after "dose"
+   (logosystem.co): monochrome, symbol sized to the letters, lowercase
+   Geist Medium wordmark, no tile. Accent = the logo blue #4858fa (sampled;
+   lifted to #6f7dff at night). Favicon `app/icon.svg`. Internal names
+   (folder, Dexie db `todo-<user>`, storage keys) stay `todo` on purpose:
+   renaming the local db would drop unsynced changes.
+8. **Ship.** GH Actions CI + deploy (migrate → promote), Vercel `fra1`,
    Supabase prod project.
 
 Later, not now: recurring items (pipline has `features/recurrence`), weekly

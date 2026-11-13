@@ -189,6 +189,53 @@ export type Database = {
           },
         ]
       }
+      time_entries: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          ended_at: string | null
+          id: string
+          item_id: string
+          planned_seconds: number | null
+          started_at: string
+          synced_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          ended_at?: string | null
+          id?: string
+          item_id: string
+          planned_seconds?: number | null
+          started_at: string
+          synced_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          ended_at?: string | null
+          id?: string
+          item_id?: string
+          planned_seconds?: number | null
+          started_at?: string
+          synced_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_item_id_items_id_fk"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

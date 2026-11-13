@@ -7,6 +7,7 @@ import type { BoardLayout } from "@/db/enums";
 import type { Board, BoardColumn, Item } from "@/lib/sync/db";
 import { useSync } from "@/lib/sync/provider";
 import { bySortKey, isLive, keyBetween, keyForStep } from "@/features/items/model";
+import { nextTone, type BoardToneKey } from "./tone";
 
 export const DEFAULT_COLUMNS = ["To do", "Doing", "Done"];
 
@@ -39,7 +40,7 @@ const nameOf = (s: string, max: number) => s.trim().slice(0, max);
 export function useBoardActions() {
   const { db, mutations: m } = useSync();
   return useMemo(() => {
-    const lastBoardKey = async () => (await db.boards.filter(isLive).toArray()).sort(bySortKey).at(-1)?.sort_key ?? null;
+    const liveBoards = async () => (await db.boards.filter(isLive).toArray()).sort(bySortKey);
     const columnsOf = async (boardId: string) => (await db.board_columns.where("board_id").equals(boardId).filter(isLive).toArray()).sort(bySortKey);
 
     return {
@@ -47,7 +48,13 @@ export function useBoardActions() {
       async createBoard(name: string, layout: BoardLayout = "kanban"): Promise<string | null> {
         const n = nameOf(name, 120);
         if (!n) return null;
-        const boardId = await m.insert("boards", { name: n, icon: null, layout, sort_key: keyBetween(await lastBoardKey(), null) });
+        const existing = await liveBoards();
+        const boardId = await m.insert("boards", {
+          name: n,
+          icon: nextTone(existing.map((b) => b.icon)), // the colour key (tone.ts)
+          layout,
+          sort_key: keyBetween(existing.at(-1)?.sort_key ?? null, null),
+        });
         const keys = generateNKeysBetween(null, null, DEFAULT_COLUMNS.length);
         for (const [i, col] of DEFAULT_COLUMNS.entries()) await m.insert("board_columns", { board_id: boardId, name: col, sort_key: keys[i] });
         return boardId;
@@ -57,6 +64,7 @@ export function useBoardActions() {
         if (n && n !== board.name) return m.update("boards", board.id, { name: n });
       },
       setLayout: (board: Board, layout: BoardLayout) => m.update("boards", board.id, { layout }),
+      setTone: (board: Board, tone: BoardToneKey) => m.update("boards", board.id, { icon: tone }),
       /** Soft-deletes the board, its columns and its items (the UI confirms). */
       async deleteBoard(board: Board) {
         const [cols, items] = await Promise.all([columnsOf(board.id), db.items.where("board_id").equals(board.id).filter(isLive).toArray()]);

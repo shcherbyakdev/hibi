@@ -71,6 +71,9 @@ const dayLong = fmt({ weekday: "long", month: "long", day: "numeric" });
 const dayShort = fmt({ weekday: "short", month: "short", day: "numeric" });
 const weekday = fmt({ weekday: "short" });
 const monthYear = fmt({ month: "long", year: "numeric" });
+const weekdayLong = fmt({ weekday: "long" });
+const dayMonth = fmt({ month: "long", day: "numeric" });
+const monthName = fmt({ month: "long" });
 const monthDay = fmt({ month: "short", day: "numeric" });
 
 export const label = {
@@ -79,5 +82,9 @@ export const label = {
   weekday: (s: string) => weekday.format(fromISODate(s)),
   dayOfMonth: (s: string) => String(Number(s.slice(8))),
   month: (s: string) => monthYear.format(fromISODate(s)),
+  weekdayLong: (s: string) => weekdayLong.format(fromISODate(s)),
+  dayMonth: (s: string) => dayMonth.format(fromISODate(s)),
+  monthName: (s: string) => monthName.format(fromISODate(s)),
+  year: (s: string) => s.slice(0, 4),
   week: (start: string) => `${monthDay.format(fromISODate(start))} – ${monthDay.format(fromISODate(addDays(start, 6)))}`,
 };

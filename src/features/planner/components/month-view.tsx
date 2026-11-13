@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { addMonths, label, monthGrid, periodOf, weekDays } from "../periods";
 import { DateNav } from "./date-nav";
 import { PlannerBoard } from "./planner-board";
+import { PriorityIcon } from "@/features/items/components/priority-icon";
 import { usePrefs } from "@/lib/prefs";
 
 /* The month as a grid of day cells (each a drop target) beside the "This
@@ -32,7 +33,7 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
 
   return (
     <div className="flex flex-col gap-5">
-      <DateNav title={label.month(start)} onPrev={() => go(addMonths(start, -1))} onNext={() => go(addMonths(start, 1))} onToday={() => go(today)} isCurrent={date === today} />
+      <DateNav title={label.monthName(start)} sub={label.year(start)} onPrev={() => go(addMonths(start, -1))} onNext={() => go(addMonths(start, 1))} onToday={() => go(today)} isCurrent={date === today} />
       <PlannerBoard
         groups={groups}
         today={today}
@@ -62,7 +63,7 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
                       onClick={() => openDay(d)}
                       aria-label={`Open ${label.dayLong(d)}`}
                       className={cn(
-                        "hover:bg-muted focus-visible:ring-ring/40 flex size-6 items-center justify-center self-start rounded-full text-xs tabular-nums outline-none focus-visible:ring-2",
+                        "hover:bg-muted focus-visible:ring-ring/40 flex size-6 items-center justify-center self-start rounded-md text-xs tabular-nums outline-none focus-visible:ring-2",
                         d === today ? "bg-brand hover:bg-brand font-semibold text-white" : inMonth(d) ? "text-foreground" : "text-subtle",
                       )}
                     >
@@ -85,7 +86,7 @@ function DayChip({ item }: { item: Item }) {
   const done = item.status === "done";
   return (
     <div className={cn("hover:bg-muted flex items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[11.5px]", done && "text-subtle line-through")}>
-      {done ? <Check className="size-3 shrink-0" /> : <span className="bg-foreground/30 size-1.5 shrink-0 rounded-full" />}
+      {done ? <Check className="size-3 shrink-0" /> : item.priority ? <PriorityIcon priority={item.priority} className="size-3" /> : <span className="bg-foreground/30 size-1.5 shrink-0 rounded-[1px]" />}
       <span className="truncate">{item.title}</span>
     </div>
   );

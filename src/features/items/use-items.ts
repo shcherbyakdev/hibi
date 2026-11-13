@@ -8,7 +8,7 @@ import { useSync } from "@/lib/sync/provider";
 import { usePrefs } from "@/lib/prefs";
 import { toast } from "sonner";
 import { periodOf } from "@/features/planner/periods";
-import { bySortKey, INBOX, isLive, isOpen, keyBetween, type Place, type Spot } from "./model";
+import { bySortKey, INBOX, isLive, isOpen, keyBetween, parseQuickTitle, type Place, type Spot } from "./model";
 
 /* Reads are live IndexedDB queries: they re-render on every local write and
    every pulled change. `undefined` means "first read not back yet" (a few
@@ -61,15 +61,18 @@ export function useItemActions() {
   const { db, mutations: m } = useSync();
   return useMemo(
     () => ({
-      /** New item at the end of a planner list, or of a board column. */
-      async create(title: string, place: Place, spot?: Spot) {
-        const text = title.trim();
-        if (!text) return;
+      /** New item at the end of a planner list, or of a board column.
+          A picked priority wins; otherwise "!1"–"!4" in the title sets it. */
+      async create(raw: string, place: Place, spot?: Spot, picked = 0) {
+        if (!raw.trim()) return;
+        const parsed = parseQuickTitle(raw);
+        const { title } = parsed;
+        const priority = picked || parsed.priority;
         await m.insert("items", {
-          title: text.slice(0, 500),
+          title: title.slice(0, 500),
           notes: "",
           status: "todo",
-          priority: 0,
+          priority,
           ...place,
           board_id: spot?.board_id ?? null,
           column_id: spot?.column_id ?? null,

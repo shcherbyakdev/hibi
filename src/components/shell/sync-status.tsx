@@ -18,7 +18,7 @@ export function SyncStatus() {
     <span role="status" title={label} className="flex size-5 items-center justify-center">
       <span
         className={cn(
-          "size-1.5 rounded-full transition-colors duration-300",
+          "size-1.5 rounded-[1px] transition-colors duration-300",
           offline ? "bg-subtle" : busy ? "bg-kind-stay motion-safe:animate-pulse" : "bg-success/60",
         )}
       />

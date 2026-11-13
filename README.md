@@ -1,6 +1,6 @@
-# todo
+# hibi
 
-Personal day/week/month planner with boards. Plan: [docs/PLAN.md](docs/PLAN.md).
+hibi (日々, "day after day") — a personal day/week/month planner with boards. Plan: [docs/PLAN.md](docs/PLAN.md).
 
 Next 16 · React 19 · Tailwind v4 · shadcn (Base UI) · Supabase · Drizzle.
 

@@ -73,6 +73,11 @@
      colours are bright in both themes, so near-black holds AA everywhere
      white fails (white on stay orange is 2.2:1; ink is 7.8:1). */
   --color-on-kind: var(--on-kind);
+  /* Task priority signal bars: lit bars orange, urgent red. */
+  --color-priority-urgent: var(--priority-urgent);
+  --color-priority: var(--priority);
+  /* A blue for board colours (the kind palette has none). */
+  --color-blue: var(--blue);
   /* The brand accent (the appointments blue): focus rings, checked
      controls, the active nav icon. Controls themselves stay ink pills. */
   --color-brand: var(--brand);
@@ -85,10 +90,10 @@
   --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
-  /* Takeover-dialog scrim: the light world's ink, deliberately NOT theme-
+  /* Takeover-dialog scrim: black, deliberately NOT theme-
      flipped — `bg-foreground/N` turns into a white wash at night, and a
      scrim that hides the page behind must stay dark in both themes. */
-  --color-scrim: #252228;
+  --color-scrim: #000000;
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --color-status-not-started: var(--status-not-started);
@@ -105,76 +110,76 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* App tokens (from pipline-app): warm off-white ground, white cards on
-   low-alpha hairlines, ink as the only control colour. `.dark` = Linear night. */
+/* App tokens: Autumn-derived (useautumn.com) — see each block. */
 :root {
   color-scheme: light;
-  --background: #fefefe;
-  --foreground: #252228;
+  /* Autumn-derived (useautumn.com), light: white ground, near-black ink
+     #171717, neutral greys, hairlines instead of shadows, one violet. */
+  --background: #ffffff;
+  --foreground: #171717;
   --card: #ffffff;
-  --card-foreground: #252228;
+  --card-foreground: #171717;
   --popover: #ffffff;
-  --popover-foreground: #252228;
-  --primary: #252228;
+  --popover-foreground: #171717;
+  /* The one accent: hibi blue, sampled from the logo (#4858fa). Solid
+     primary actions; white on it is 5.2:1, so labels hold AA at 13px. */
+  --primary: #4858fa;
   --primary-foreground: #ffffff;
-  --secondary: #f4f2fb;
-  --secondary-foreground: #252228;
-  --muted: #f4f2fb;
-  --muted-foreground: #5c5964;
-  --subtle: #686472;
-  --accent: #eeecf8;
-  --accent-foreground: #252228;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #171717;
+  --muted: #f4f4f5;
+  --muted-foreground: #525252;
+  --subtle: #6b6b6b;
+  --accent: #f0f0f1;
+  --accent-foreground: #171717;
   --destructive: #e11d48;
-  --border: rgb(37 34 40 / 0.08);
-  /* Control edges: a whisper, as in Linear (its input border is bgBorder
-     #232325 on #111212 ≈ 9% white; light #e2e2e2 ≈ 12% ink). Ruled
-     2026-09-04 over the earlier 0.5 that cleared WCAG 1.4.11's 3:1 for a
-     boundary — the field's focus ring and its fill carry it now. The
-     fills that used to divide this alpha back down (outline buttons,
-     disabled tints) are explicit white/foreground alphas in ui/*.tsx. */
-  --input: rgb(37 34 40 / 0.12);
-  --ring: #4b5bc4;
-  --highlight: #01d062;
-  --highlight-foreground: #252228;
-  --tint: #f4f2fb;
-  --success: #01d062;
+  --border: rgb(23 23 23 / 0.1);
+  --input: rgb(23 23 23 / 0.14);
+  --ring: #4858fa;
+  --highlight: #18e299;
+  --highlight-foreground: #171717;
+  --tint: #f4f4f5;
+  --success: #12a66b;
   --kind-time: #6975e2;
   --kind-time-soft: #f1f1ff;
-  --kind-space: #01d062;
+  --kind-space: #18c27f;
   --kind-space-soft: #e3f9ec;
-  --kind-stay: #ff9500;
-  --kind-stay-soft: #fff2df;
-  --kind-class: #ff3d8f;
+  --kind-stay: #ff4d00;
+  --kind-stay-soft: #fff0e8;
+  --kind-class: #f6339a;
   --kind-class-soft: #ffe6f0;
-  --kind-embed: #8b5cf6;
-  /* Kind colours as text, darkened to hold >= 5:1 on their own soft tints
-     (the hardest surface they sit on), not just the ground. */
+  --kind-embed: #8f3cf8;
   --kind-time-text: #4b5bc4;
   --kind-space-text: #0c7039;
   --kind-class-text: #b61a60;
-  --kind-stay-text: #a04a06;
-  --on-kind: #252228;
-  /* The brand accent = the appointments blue. */
-  --brand: #6975e2;
-  --brand-text: #4b5bc4;
+  --kind-stay-text: #a03a06;
+  --on-kind: #171717;
+  --priority-urgent: #e5484d;
+  --priority: #f76b15;
+  --blue: #4040f0;
+  --brand: #4858fa;
+  --brand-text: #3a46d8;
   --danger: #e11d48;
   --danger-soft: #fde7ef;
-  --shadow-card: 0 1px 2px rgb(37 34 40 / 0.04), 0 16px 40px -20px rgb(37 34 40 / 0.18);
-  --shadow-lift: 0 1px 2px rgb(37 34 40 / 0.05), 0 6px 16px -8px rgb(37 34 40 / 0.14);
+  /* Flat, like the reference: depth comes from hairlines. Only things that
+     float (menus, a dragged row) get a lift. */
+  --shadow-card: none;
+  --shadow-lift: 0 12px 32px -16px rgb(0 0 0 / 0.25), 0 0 0 1px rgb(23 23 23 / 0.06);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: #f6f4fb;
-  --sidebar-foreground: #252228;
-  --sidebar-primary: #252228;
+  /* Square, as in the reference: 2px takes only the edge off. */
+  --radius: 0.125rem;
+  --sidebar: #fafafa;
+  --sidebar-foreground: #171717;
+  --sidebar-primary: #171717;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: rgb(37 34 40 / 0.05);
-  --sidebar-accent-foreground: #252228;
-  --sidebar-border: rgb(37 34 40 / 0.08);
-  --sidebar-ring: #4b5bc4;
+  --sidebar-accent: rgb(23 23 23 / 0.05);
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: rgb(23 23 23 / 0.1);
+  --sidebar-ring: #4858fa;
   --status-not-started: oklch(0.65 0 0);
   --status-in-progress: oklch(0.62 0.17 250);
   --status-complete: oklch(0.68 0.17 150);
@@ -184,64 +189,68 @@
 
 .dark {
   color-scheme: dark;
-  --background: #111212;
-  --foreground: #e2e3e5;
-  --card: #19191b;
-  --card-foreground: #e2e3e5;
-  --popover: #202022;
-  --popover-foreground: #e2e3e5;
-  --primary: #f7f8f8;
-  --primary-foreground: #111212;
-  --secondary: #242526;
-  --secondary-foreground: #e2e3e5;
-  --muted: #242526;
-  --muted-foreground: #949597;
-  --subtle: #8a8f98;
+  /* Autumn at night, the reference's own theme: black ground, near-black
+     panels (#0f0f0f / #1c1c1c), white text at 60% for secondary, 10%
+     white hairlines; hibi blue lifted for the black ground. */
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --card: #111111;
+  --card-foreground: #ededed;
+  --popover: #141414;
+  --popover-foreground: #ededed;
+  --primary: #4858fa;
+  --primary-foreground: #ffffff;
+  --secondary: #1c1c1c;
+  --secondary-foreground: #ededed;
+  --muted: #1c1c1c;
+  --muted-foreground: #a3a3a3;
+  --subtle: #858585;
   --accent: rgb(255 255 255 / 0.05);
-  --accent-foreground: #e2e3e5;
-  --destructive: #f34e52;
-  --border: rgb(255 255 255 / 0.09);
-  --input: rgb(255 255 255 / 0.1);
-  --ring: #6975e2;
-  --highlight: #34d16d;
-  --highlight-foreground: #111212;
-  --tint: #242526;
-  --success: #34d16d;
-  --kind-time: #6975e2;
-  --kind-time-soft: #18192c;
-  --kind-space: #34d16d;
-  --kind-space-soft: #143220;
-  --kind-stay: #ffa64d;
-  --kind-stay-soft: #3a2712;
-  --kind-class: #ff5ca2;
-  --kind-class-soft: #3d1728;
-  --kind-embed: #a78bfa;
-  --kind-time-text: #828fff;
-  --kind-space-text: #57d989;
-  --kind-class-text: #ff86b8;
-  --kind-stay-text: #ffb867;
-  /* Ink on kind colours: the new ground, so it clears 4.5:1 on the accent
-     (#252228 was 3.95:1 on #6975e2). */
-  --on-kind: #111212;
-  --brand: #6975e2;
-  --brand-text: #828fff;
-  --danger: #f34e52;
-  --danger-soft: #321617;
-  --shadow-card: 0 3px 8px rgb(0 0 0 / 0.12), 0 2px 5px rgb(0 0 0 / 0.12), 0 1px 1px rgb(0 0 0 / 0.12);
-  --shadow-lift: 0 4px 40px rgb(0 0 0 / 0.1), 0 3px 20px rgb(0 0 0 / 0.12), 0 3px 12px rgb(0 0 0 / 0.12), 0 2px 8px rgb(0 0 0 / 0.12), 0 1px 1px rgb(0 0 0 / 0.12);
+  --accent-foreground: #ededed;
+  --destructive: #ff4d5e;
+  --border: rgb(255 255 255 / 0.1);
+  --input: rgb(255 255 255 / 0.12);
+  --ring: #7d89ff;
+  --highlight: #18e299;
+  --highlight-foreground: #0a0a0a;
+  --tint: #1c1c1c;
+  --success: #18e299;
+  --kind-time: #8080f5;
+  --kind-time-soft: #17173a;
+  --kind-space: #18e299;
+  --kind-space-soft: #0f2e22;
+  --kind-stay: #ff6a2b;
+  --kind-stay-soft: #34170a;
+  --kind-class: #f860c4;
+  --kind-class-soft: #3a1030;
+  --kind-embed: #b040f8;
+  --kind-time-text: #b8b8ff;
+  --kind-space-text: #5ef0b6;
+  --kind-class-text: #fbc8e0;
+  --kind-stay-text: #ffb38a;
+  --on-kind: #0a0a0a;
+  --priority-urgent: #ff6369;
+  --priority: #ff8b3e;
+  --blue: #8080f5;
+  --brand: #6f7dff;
+  --brand-text: #a3abff;
+  --danger: #ff4d5e;
+  --danger-soft: #331418;
+  --shadow-card: none;
+  --shadow-lift: 0 16px 40px -16px rgb(0 0 0 / 0.8), 0 0 0 1px rgb(255 255 255 / 0.08);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: #09090a;
-  --sidebar-foreground: #e2e3e5;
-  --sidebar-primary: #f7f8f8;
-  --sidebar-primary-foreground: #111212;
+  --sidebar: #000000;
+  --sidebar-foreground: #ededed;
+  --sidebar-primary: #ededed;
+  --sidebar-primary-foreground: #0a0a0a;
   --sidebar-accent: rgb(255 255 255 / 0.06);
-  --sidebar-accent-foreground: #e2e3e5;
-  --sidebar-border: rgb(255 255 255 / 0.09);
-  --sidebar-ring: #6975e2;
+  --sidebar-accent-foreground: #ededed;
+  --sidebar-border: rgb(255 255 255 / 0.1);
+  --sidebar-ring: #7d89ff;
   --status-not-started: oklch(0.65 0 0);
   --status-in-progress: oklch(0.62 0.17 250);
   --status-complete: oklch(0.68 0.17 150);
@@ -251,7 +260,7 @@
 /* Text selection carries the world too — everywhere, not only on the
    landing. */
 ::selection {
-  background: rgb(37 34 40 / 0.12);
+  background: rgb(72 88 250 / 0.22);
 }
 .dark ::selection {
   background: rgb(255 255 255 / 0.2);

@@ -14,6 +14,9 @@ import { useBoard, useBoardActions, useBoardItems, useColumns } from "../use-boa
 import { BoardMenu, LayoutSwitch } from "./board-menu";
 import { ColumnHeader } from "./column-header";
 import { AddNamed, InlineName } from "./inline-name";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { DashboardSquare02Icon } from "@hugeicons/core-free-icons";
+import { boardTone } from "../tone";
 
 /** Items whose column was deleted (or never set) gather here. */
 const NONE = "none";
@@ -42,7 +45,8 @@ export function BoardView({ id }: { id: string }) {
         <LayoutSwitch board={board} />
         <BoardMenu board={board} taskCount={items.length} />
       </PageActions>
-      <h2 className="flex text-[15px] font-semibold tracking-[-0.01em]">
+      <h2 className="flex items-center gap-2 text-[22px] font-normal tracking-[-0.03em]">
+        <HugeiconsIcon icon={DashboardSquare02Icon} size={16} className={cn("shrink-0", boardTone(board))} />
         <InlineName value={board.name} label="board" maxLength={120} onSave={(n) => boardActions.renameBoard(board, n)} />
       </h2>
 
@@ -53,9 +57,14 @@ export function BoardView({ id }: { id: string }) {
         renderItem={(item, { overlay }) =>
           kanban ? (
             <div className="py-0.5">
-              <div className={cn("bg-card rounded-lg border", overlay ? "shadow-(--shadow-lift)" : "shadow-xs")}>
-                <ItemRow item={item} today={today} showPlace />
-              </div>
+              {/* The drag copy draws its own lifted card (ItemRow overlay). */}
+              {overlay ? (
+                <ItemRow item={item} today={today} showPlace density="card" overlay />
+              ) : (
+                <div className="bg-card rounded-lg border shadow-xs">
+                  <ItemRow item={item} today={today} showPlace density="card" />
+                </div>
+              )}
             </div>
           ) : (
             <ItemRow item={item} today={today} overlay={overlay} showPlace />

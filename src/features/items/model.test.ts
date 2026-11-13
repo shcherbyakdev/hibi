@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generateNKeysBetween } from "fractional-indexing";
-import { bySortKey, keyBetween, keyForStep, parsePlaceId, placeId } from "./model";
+import { bySortKey, keyBetween, keyForStep, parsePlaceId, parseQuickTitle, placeId } from "./model";
 
 describe("item model", () => {
   it("round-trips places through dnd group ids", () => {
@@ -22,6 +22,19 @@ describe("item model", () => {
     expect(keyBetween(b, null) > b).toBe(true);
     expect(keyBetween(a, a) > a).toBe(true); // equal keys from two offline devices
     expect(typeof keyBetween(null, null)).toBe("string");
+  });
+
+  it("reads a priority token (!1–!4) out of a typed title", () => {
+    expect(parseQuickTitle("Pay rent !1")).toEqual({ title: "Pay rent", priority: 1 });
+    expect(parseQuickTitle("!2 Call mum")).toEqual({ title: "Call mum", priority: 2 });
+    expect(parseQuickTitle("Plan  !4  the trip")).toEqual({ title: "Plan the trip", priority: 4 });
+    expect(parseQuickTitle("No priority")).toEqual({ title: "No priority", priority: 0 });
+    // Only a standalone token counts; the last one wins.
+    expect(parseQuickTitle("Fix bug!1 in prod")).toEqual({ title: "Fix bug!1 in prod", priority: 0 });
+    expect(parseQuickTitle("Ship !3 !1")).toEqual({ title: "Ship", priority: 1 });
+    expect(parseQuickTitle("Not a priority !5")).toEqual({ title: "Not a priority !5", priority: 0 });
+    // A title that is only the token stays as typed.
+    expect(parseQuickTitle("!1")).toEqual({ title: "!1", priority: 0 });
   });
 
   it("moves a row one step left or right, and refuses past the ends", () => {

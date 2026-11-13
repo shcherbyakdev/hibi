@@ -88,6 +88,29 @@ describe("sync stamp", () => {
   });
 });
 
+describe("time entries", () => {
+  it("are owner-only and stamped like every synced table", async () => {
+    const it_ = item();
+    await a.client.from("items").insert(it_);
+    const entry = { id: randomUUID(), item_id: it_.id, started_at: new Date().toISOString(), synced_at: "2000-01-01T00:00:00Z" };
+    const ins = await a.client.from("time_entries").insert(entry).select("user_id, synced_at").single();
+    expect(ins.error).toBeNull();
+    expect(ins.data!.user_id).toBe(a.id);
+    expect(new Date(ins.data!.synced_at).getFullYear()).toBeGreaterThan(2000);
+    expect((await b.client.from("time_entries").select("id").eq("id", entry.id)).data).toEqual([]);
+    expect((await b.client.from("time_entries").update({ ended_at: new Date().toISOString() }).eq("id", entry.id).select("id")).data).toEqual([]);
+  });
+
+  it("reject an end before the start and absurd pomodoro lengths", async () => {
+    const it_ = item();
+    await a.client.from("items").insert(it_);
+    const base = { item_id: it_.id, started_at: "2026-11-13T10:00:00Z" };
+    expect((await a.client.from("time_entries").insert({ ...base, ended_at: "2026-11-13T09:00:00Z" })).error?.code).toBe("23514");
+    expect((await a.client.from("time_entries").insert({ ...base, planned_seconds: 10 })).error?.code).toBe("23514");
+    expect((await a.client.from("time_entries").insert({ ...base, planned_seconds: 1500 })).error).toBeNull();
+  });
+});
+
 describe("constraints", () => {
   it("requires plan_scope and plan_date together", async () => {
     const res = await a.client.from("items").insert(item({ plan_scope: "day" }));

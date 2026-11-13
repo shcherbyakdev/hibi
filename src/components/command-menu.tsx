@@ -12,8 +12,12 @@ import { NAV_ITEMS } from "@/components/shell/nav";
 import { useSync } from "@/lib/sync/provider";
 import { focusQuickAdd } from "@/lib/focus-quick-add";
 import { useBoards } from "@/features/boards/use-boards";
+import { boardTone } from "@/features/boards/tone";
 import { useItemSheet } from "@/features/items/components/item-sheet";
 import { isLive, placeLabel } from "@/features/items/model";
+import { PriorityIcon } from "@/features/items/components/priority-icon";
+import { useTimer } from "@/features/time/use-timer";
+import { Pause, Play } from "lucide-react";
 
 /** Dispatched on `window` by the sidebar's search button and "/"; toggles like ⌘K. */
 export const OPEN_COMMAND_MENU_EVENT = "todo:open-command-menu";
@@ -28,6 +32,7 @@ export function CommandMenu() {
   const { db } = useSync();
   const boards = useBoards();
   const sheet = useItemSheet();
+  const timer = useTimer();
 
   // Tasks are searched in the local db, only while the menu is open and the
   // query isn't empty. Pre-filtered to a short list so cmdk ranks dozens, not
@@ -72,12 +77,22 @@ export function CommandMenu() {
               <CommandItem key={t.id} value={`task ${t.title} ${t.id}`} onSelect={() => run(() => sheet.open(t.id))}>
                 <HugeiconsIcon icon={t.status === "done" ? CheckmarkCircle02Icon : CircleIcon} size={16} />
                 <span className={t.status === "done" ? "text-muted-foreground line-through" : undefined}>{t.title}</span>
+                <PriorityIcon priority={t.priority} />
                 {t.plan_scope ? <span className="text-subtle ml-auto text-xs">{placeLabel(t)}</span> : null}
               </CommandItem>
             ))}
           </CommandGroup>
         ) : null}
         <CommandGroup heading="Actions">
+          {timer.running ? (
+            <CommandItem value="pause timer stop" onSelect={() => run(() => void timer.pause())}>
+              <Pause className="size-4" /> Pause timer
+            </CommandItem>
+          ) : timer.pausedItemId ? (
+            <CommandItem value="resume timer continue" onSelect={() => run(() => void timer.start(timer.pausedItemId!))}>
+              <Play className="size-4" /> Resume timer
+            </CommandItem>
+          ) : null}
           <CommandItem value="new task create add" onSelect={() => run(() => void focusQuickAdd(router.push))}>
             <Plus className="size-4" /> New task
           </CommandItem>
@@ -105,7 +120,7 @@ export function CommandMenu() {
           <CommandGroup heading="Boards">
             {boards.map((b) => (
               <CommandItem key={b.id} value={`board ${b.name} ${b.id}`} onSelect={() => run(() => router.push(`/boards/${b.id}`))}>
-                <HugeiconsIcon icon={DashboardSquare02Icon} size={16} /> {b.name}
+                <HugeiconsIcon icon={DashboardSquare02Icon} size={16} className={boardTone(b)} /> {b.name}
               </CommandItem>
             ))}
           </CommandGroup>

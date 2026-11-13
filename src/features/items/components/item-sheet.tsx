@@ -17,6 +17,7 @@ import { useBoards, useColumns } from "@/features/boards/use-boards";
 import { useItemActions } from "../use-items";
 import { bySortKey, INBOX, isLive } from "../model";
 import { PRIORITY_LABELS } from "./priority-icon";
+import { TimeSection } from "@/features/time/components/time-section";
 
 type Ctx = { open: (id: string) => void };
 const ItemSheetContext = React.createContext<Ctx>({ open: () => {} });
@@ -39,7 +40,7 @@ export function ItemSheetProvider({ children }: { children: React.ReactNode }) {
 }
 
 const STATUS_LABELS: Record<Item["status"], string> = { todo: "To do", doing: "Doing", done: "Done", dropped: "Dropped" };
-const fieldLabel = "text-subtle w-16 shrink-0 pt-1.5 text-xs font-medium";
+const fieldLabel = "text-subtle w-16 shrink-0 pt-2 font-mono text-[11px] uppercase tracking-[0.06em]";
 
 function ItemDetail({ id, onClose }: { id: string; onClose: () => void }) {
   const { db } = useSync();
@@ -103,7 +104,7 @@ function DetailForm({ item, today, onClose }: { item: Item; today: string; onClo
           <Segmented value={item.status} options={ITEM_STATUSES.map((s) => [s, STATUS_LABELS[s]])} onChange={(s) => actions.setStatus(item, s)} label="Status" />
         </Field>
         <Field label="Priority">
-          <Segmented value={String(item.priority)} options={PRIORITY_LABELS.map((l, i) => [String(i), l])} onChange={(p) => actions.edit(item, { priority: Number(p) })} label="Priority" />
+          <Segmented value={String(item.priority)} options={PRIORITY_LABELS.map((l, i) => [String(i), i ? l : "None"])} onChange={(p) => actions.edit(item, { priority: Number(p) })} label="Priority" />
         </Field>
         <Field label="Plan">
           <div className="flex flex-1 gap-2">
@@ -128,6 +129,8 @@ function DetailForm({ item, today, onClose }: { item: Item; today: string; onClo
         </Field>
         <BoardField item={item} />
       </div>
+
+      <TimeSection item={item} />
 
       <div className="flex min-h-0 flex-1 flex-col border-t px-5 py-4">
         <textarea

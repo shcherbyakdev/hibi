@@ -157,7 +157,7 @@ const dialogBareInputClass =
 // already know a control was there. Every dialog control now carries the
 // hairline as well, so its edge is what says "you can change this".
 const dialogPillClass =
-  "bg-secondary text-foreground border-input focus-visible:border-ring focus-visible:ring-ring/30 h-7 rounded-full border px-2.5 text-xs font-medium tabular-nums outline-none focus-visible:ring-3";
+  "bg-secondary text-foreground border-input focus-visible:border-ring focus-visible:ring-ring/30 h-7 rounded-md border px-2.5 text-xs font-medium tabular-nums outline-none focus-visible:ring-3";
 
 // A labelled field inside a dialog body: the label sits over its control,
 // quiet and small, so a form reads as named rows instead of a bag of
@@ -202,7 +202,7 @@ function DialogChip({
       data-slot="dialog-chip"
       className={cn(
         dialogChipTones[tone],
-        "inline-flex h-6 items-center rounded-full px-2.5 text-xs font-medium",
+        "inline-flex h-6 items-center rounded-md px-2.5 text-xs font-medium",
         className,
       )}
       {...props}

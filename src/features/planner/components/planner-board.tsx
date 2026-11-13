@@ -6,6 +6,7 @@ import type { Item } from "@/lib/sync/db";
 import { ItemRow } from "@/features/items/components/item-row";
 import { useItemActions } from "@/features/items/use-items";
 import { parsePlaceId } from "@/features/items/model";
+import { cn } from "@/lib/utils";
 
 /** Board whose group ids are places ("day:…", "week:…", "inbox"): dropping
     into a group plans the item there. */
@@ -38,9 +39,9 @@ export function PlannerBoard({
   );
 }
 
-export function GroupHeader({ children, count, accent }: { children: React.ReactNode; count?: number; accent?: boolean }) {
+export function GroupHeader({ children, count, accent, className }: { children: React.ReactNode; count?: number; accent?: boolean; className?: string }) {
   return (
-    <div className={`flex h-8 items-center gap-2 px-2 text-xs font-medium ${accent ? "text-danger" : "text-muted-foreground"}`}>
+    <div className={cn("flex h-8 items-center gap-2 px-2 font-mono text-[11px] uppercase tracking-[0.06em]", accent ? "text-danger" : "text-muted-foreground", className)}>
       {children}
       {count ? <span className="text-subtle tabular-nums">{count}</span> : null}
     </div>

@@ -8,7 +8,7 @@ export default async function SignupPage() {
   if (await getOptionalUser()) redirect(DEFAULT_AFTER_LOGIN);
   return (
     <div>
-      <h1 className="mb-6 text-center text-lg font-semibold tracking-tight">Create your account</h1>
+      <h1 className="mb-6 text-center text-[22px] font-normal tracking-[-0.03em]">Create your account</h1>
       <SignupForm />
       <p className="text-muted-foreground mt-7 text-center text-sm">
         Have an account?{" "}

@@ -19,6 +19,23 @@ export function keyBetween(prev: string | null, next: string | null): string {
   return generateKeyBetween(prev, next);
 }
 
+/** Quick-add shorthand: a standalone `!1`–`!4` token sets the priority
+    (1 urgent … 4 low) and is removed from the title; the last token wins.
+    A title that would be left empty keeps the text as typed. */
+export function parseQuickTitle(raw: string): { title: string; priority: number } {
+  let priority = 0;
+  const title = raw
+    .split(/\s+/)
+    .filter((word) => {
+      const m = /^!([1-4])$/.exec(word);
+      if (m) priority = Number(m[1]);
+      return !m;
+    })
+    .join(" ")
+    .trim();
+  return title ? { title, priority } : { title: raw.trim(), priority: 0 };
+}
+
 /** New key for the row at `i` after one step left (-1) or right (+1) in a
     sorted list; null when it can't move. It lands between the neighbour it
     passes and the one beyond. */

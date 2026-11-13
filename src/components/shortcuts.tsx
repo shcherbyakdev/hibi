@@ -13,17 +13,21 @@ import { INBOX, keyForStep, type Place } from "@/features/items/model";
 import { periodOf } from "@/features/planner/periods";
 import { PLAN_VIEWS } from "@/features/planner/views";
 import { focusQuickAdd } from "@/lib/focus-quick-add";
+import { useTimer } from "@/features/time/use-timer";
 
 export const SHORTCUTS: Array<[string, string]> = [
   ["J / K", "Next / previous task"],
   ["X", "Toggle done"],
   ["Enter", "Open details"],
   ["T / W / M", "Plan for today / this week / this month"],
+  ["0 – 4", "Priority: none, urgent, high, medium, low"],
   ["U", "Unplan"],
   ["⌥ ↑ / ⌥ ↓", "Move up / down in its list"],
   ["⌫", "Delete (with undo)"],
+  ["S", "Start / pause timer"],
+  ["P", "Start a 25-min pomodoro"],
   ["C", "New task"],
-  ["1 / 2 / 3", "Day / Week / Month"],
+  ["1 / 2 / 3", "Day / Week / Month (no task focused)"],
   ["← / →", "Previous / next period"],
   ["T", "Jump to today (no task focused)"],
   ["/ or ⌘K", "Search and commands"],
@@ -31,7 +35,7 @@ export const SHORTCUTS: Array<[string, string]> = [
 ];
 
 /** Keys that act on the focused task (with no modifier). */
-const ROW_KEYS = new Set(["x", "Enter", "t", "w", "m", "u", "Backspace", "Delete", "Escape"]);
+const ROW_KEYS = new Set(["x", "Enter", "t", "w", "m", "u", "s", "p", "0", "1", "2", "3", "4", "Backspace", "Delete", "Escape"]);
 
 const rows = () => [...document.querySelectorAll<HTMLElement>("[data-item-id]")];
 const idOf = (el: HTMLElement | null) => el?.dataset.itemId;
@@ -50,6 +54,7 @@ export function Shortcuts() {
   const today = useToday();
   const { weekStart } = usePrefs();
   const [help, setHelp] = React.useState(false);
+  const timer = useTimer();
 
   React.useEffect(() => {
     const onKey = async (e: KeyboardEvent) => {
@@ -99,6 +104,9 @@ export function Shortcuts() {
           return;
         }
         if (key === "x") return handled(), void actions.toggleDone(item);
+        if (/^[0-4]$/.test(key)) return void actions.edit(item, { priority: Number(key) });
+        if (key === "s") return void (timer.running?.item_id === item.id ? timer.pause() : timer.start(item.id));
+        if (key === "p") return void timer.start(item.id, { pomodoro: true });
         if (key === "Enter") return handled(), sheet.open(item.id);
         if (key === "t") return plan({ plan_scope: "day", plan_date: today });
         if (key === "w") return plan({ plan_scope: "week", plan_date: periodOf("week", today, weekStart) });
@@ -118,12 +126,17 @@ export function Shortcuts() {
       if (key === "ArrowLeft") return handled(), click("[data-nav=prev]");
       if (key === "ArrowRight") return handled(), click("[data-nav=next]");
       if (key === "t") return handled(), click("[data-nav=today]");
+      // S with no task focused: pause the running timer, or resume the paused one.
+      if (key === "s" && (timer.running || timer.pausedItemId)) {
+        handled();
+        return void (timer.running ? timer.pause() : timer.start(timer.pausedItemId!));
+      }
       if (key === "/") return handled(), window.dispatchEvent(new Event(OPEN_COMMAND_MENU_EVENT));
       if (key === "?") return handled(), setHelp(true);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [db, actions, sheet, router, pathname, today, weekStart]);
+  }, [db, actions, sheet, router, pathname, today, weekStart, timer]);
 
   return (
     <Dialog open={help} onOpenChange={setHelp}>

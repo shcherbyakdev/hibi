@@ -8,7 +8,10 @@ import type { Board } from "@/lib/sync/db";
 import type { BoardLayout } from "@/db/enums";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Check } from "lucide-react";
+import { DashboardSquare02Icon } from "@hugeicons/core-free-icons";
+import { BOARD_TONES, boardTone, type BoardToneKey } from "../tone";
 import { SEGMENTED_NAV_CLASS, segmentedItemClass } from "@/components/ui/segmented";
 import { useBoardActions } from "../use-boards";
 
@@ -42,6 +45,19 @@ export function BoardMenu({ board, taskCount }: { board: Board; taskCount: numbe
           <HugeiconsIcon icon={MoreHorizontalIcon} size={16} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-44">
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>Colour</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent className="w-40">
+              {(Object.keys(BOARD_TONES) as BoardToneKey[]).map((tone) => (
+                <DropdownMenuItem key={tone} onClick={() => actions.setTone(board, tone)}>
+                  <HugeiconsIcon icon={DashboardSquare02Icon} size={14} className={BOARD_TONES[tone]} />
+                  <span className="capitalize">{tone}</span>
+                  {boardTone(board) === BOARD_TONES[tone] ? <Check className="ml-auto size-3.5" /> : null}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+          <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onClick={() => setConfirming(true)}>
             Delete board
           </DropdownMenuItem>
