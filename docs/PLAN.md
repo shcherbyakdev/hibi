@@ -264,7 +264,7 @@ src/
    blue `primary` #4858fa in both themes; wordmark = Outfit 500 (brand-only
    font, round i-dots echo the mark), ink. Palette, unified to three roles: neutrals; one blue (logo, checked box, today, running timer, focus, primary actions — `primary` exact, `brand` the lifted tint/text variant at night); one red (`destructive`: overdue, urgent priority, delete, errors). Plus a small accent family (`--tone-*`: violet, green, teal, amber, rose) at equal OKLCH lightness/chroma per theme, so they read as one set — used only for board colours and high priority (amber). Priority: urgent red, high amber, medium/low ink. Unused tokens stay deleted. Alignment: sidebar logo on the nav grid (mark in
    the icon column, wordmark at the label line), Today heading on the rows,
-   kanban column names on the card text. Favicon `app/icon.svg`. Internal
+   kanban column names on the card text; every centred-column page (Today, Inbox, board list, Settings) starts its text on one line (12px inset, same minimal rows); filled buttons paint their full border box so they match inputs; column names use the shared uppercase-mono label style. Favicon `app/icon.svg`. Internal
    names (folder, Dexie db `todo-<user>`, storage keys) stay `todo` on
    purpose: renaming the local db would drop unsynced changes.
 8. **Ship.** GH Actions CI + deploy (migrate → promote), Vercel `fra1`,

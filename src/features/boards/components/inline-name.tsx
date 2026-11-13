@@ -31,7 +31,8 @@ export function InlineName({ value, onSave, maxLength, label, className }: { val
         if (e.key === "Enter") save();
         if (e.key === "Escape") setDraft(null);
       }}
-      className={cn("min-w-0 flex-1 bg-transparent outline-none", className)}
+      // Typing shows exactly what will be stored, even inside an uppercase label.
+      className={cn("min-w-0 flex-1 bg-transparent outline-none", className, "normal-case")}
     />
   );
 }

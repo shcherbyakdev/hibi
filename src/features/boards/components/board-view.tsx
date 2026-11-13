@@ -45,7 +45,7 @@ export function BoardView({ id }: { id: string }) {
         <LayoutSwitch board={board} />
         <BoardMenu board={board} taskCount={items.length} />
       </PageActions>
-      <h2 className="flex items-center gap-2 text-[22px] font-normal tracking-[-0.03em]">
+      <h2 className={cn("flex items-center gap-2 text-[22px] font-normal tracking-[-0.03em]", !kanban && "px-3")}>
         <HugeiconsIcon icon={DashboardSquare02Icon} size={16} className={cn("shrink-0", boardTone(board))} />
         <InlineName value={board.name} label="board" maxLength={120} onSave={(n) => boardActions.renameBoard(board, n)} />
       </h2>
@@ -58,7 +58,7 @@ export function BoardView({ id }: { id: string }) {
           kanban ? (
             <ItemCard item={item} today={today} showPlace overlay={overlay} />
           ) : (
-            <ItemRow item={item} today={today} overlay={overlay} showPlace />
+            <ItemRow item={item} today={today} overlay={overlay} showPlace density="minimal" />
           )
         }
       >
@@ -79,12 +79,12 @@ export function BoardView({ id }: { id: string }) {
             <div className="flex flex-col gap-4">
               {lanes.map((l, i) => (
                 <section key={l.id}>
-                  <ColumnHeader column={l.column} count={byColumn.get(l.id)!.length} first={i === 0} last={i === columns.length - 1} />
+                  <ColumnHeader column={l.column} count={byColumn.get(l.id)!.length} first={i === 0} last={i === columns.length - 1} className="px-3" />
                   {list(l.id)}
-                  <QuickAdd place={INBOX} spot={spot(l.id)} />
+                  <QuickAdd place={INBOX} spot={spot(l.id)} className="h-11 gap-3 px-3 text-[14px]" />
                 </section>
               ))}
-              <AddNamed label="Add section" onAdd={(n) => boardActions.addColumn(board.id, n)} />
+              <AddNamed label="Add section" className="px-3" onAdd={(n) => boardActions.addColumn(board.id, n)} />
             </div>
           )
         }

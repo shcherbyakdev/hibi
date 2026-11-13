@@ -11,8 +11,8 @@ import { cn } from "@/lib/utils";
 export function ColumnHeader({ column, count, first, last, className }: { column: BoardColumn | null; count: number; first: boolean; last: boolean; className?: string }) {
   const actions = useBoardActions();
   return (
-    <header className={cn("group/col flex h-8 items-center gap-1.5 px-2 text-xs font-medium", className)}>
-      {column ? <InlineName value={column.name} label={`column ${column.name}`} maxLength={80} onSave={(n) => actions.renameColumn(column, n)} /> : <span className="text-muted-foreground">No column</span>}
+    <header className={cn("group/col text-muted-foreground flex h-8 items-center gap-1.5 px-2 font-mono text-[11px] tracking-[0.06em] uppercase", className)}>
+      {column ? <InlineName value={column.name} label={`column ${column.name}`} maxLength={80} onSave={(n) => actions.renameColumn(column, n)} className="uppercase" /> : <span className="text-muted-foreground">No column</span>}
       <span className="text-subtle tabular-nums">{count || ""}</span>
       {column ? (
         <DropdownMenu>

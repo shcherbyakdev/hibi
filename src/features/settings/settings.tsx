@@ -30,8 +30,9 @@ export function Settings() {
     router.refresh(); // the layout re-reads it from the account
   };
 
+  // px-3: text on the same line as the Today / Inbox rows.
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-3">
       <Section title="Appearance">
         <Row label="Theme">
           <Choice
