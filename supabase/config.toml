@@ -400,8 +400,9 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 project_id = "sovcaiebdyrdxxcflets"
 
 [remotes.production.auth]
-site_url = "https://hibi-omega.vercel.app"
-additional_redirect_urls = ["https://hibi-omega.vercel.app", "https://hibi-omega.vercel.app/auth/confirm"]
+site_url = "https://hibiapp.vercel.app"
+# hibi-omega (Vercel's first alias) stays allowed so links sent from it still land.
+additional_redirect_urls = ["https://hibiapp.vercel.app", "https://hibiapp.vercel.app/auth/confirm", "https://hibi-omega.vercel.app", "https://hibi-omega.vercel.app/auth/confirm"]
 # Keep production's own values where the local-dev ones above are looser.
 [remotes.production.auth.email]
 max_frequency = "1m0s"
