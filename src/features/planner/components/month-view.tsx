@@ -1,8 +1,9 @@
 "use client";
 
-import { Check } from "lucide-react";
-import { usePlanned } from "@/features/items/use-items";
-import { placeId } from "@/features/items/model";
+import { useState } from "react";
+import { Check, Plus } from "lucide-react";
+import { useItemActions, usePlanned } from "@/features/items/use-items";
+import { placeId, type Place } from "@/features/items/model";
 import { QuickAdd } from "@/features/items/components/quick-add";
 import { ItemRow } from "@/features/items/components/item-row";
 import type { Item } from "@/lib/sync/db";
@@ -15,10 +16,12 @@ import { usePrefs } from "@/lib/prefs";
 
 /* The month as a grid of day cells (each a drop target) beside the "This
    month" bucket. Drag from the bucket onto a day to schedule it; click a
-   day's number to open that day. */
+   day's number to open that day; "+" (or double-click a cell's empty
+   space) adds a task right there. */
 export function MonthView({ date, today, go, openDay }: { date: string; today: string; go: (d: string) => void; openDay: (d: string) => void }) {
   const start = periodOf("month", date);
   const { weekStart } = usePrefs();
+  const [adding, setAdding] = useState<string | null>(null);
   const grid = monthGrid(start, weekStart);
   const bucket = usePlanned("month", start);
   const dayItems = usePlanned("day", grid[0][0], grid.at(-1)!.at(-1)!);
@@ -57,7 +60,12 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
                   </div>
                 ))}
                 {grid.flat().map((d, i) => (
-                  <div key={d} className={cn("flex min-h-24 flex-col gap-0.5 border-b p-1", i % 7 !== 6 && "border-r", !inMonth(d) && "bg-muted/40")}>
+                  <div
+                    key={d}
+                    onDoubleClick={(e) => !(e.target as HTMLElement).closest("button, input, [aria-roledescription]") && setAdding(d)}
+                    className={cn("group/cell flex min-h-24 flex-col gap-0.5 border-b p-1", i % 7 !== 6 && "border-r", !inMonth(d) && "bg-muted/40")}
+                  >
+                    <div className="flex items-center justify-between">
                     <button
                       type="button"
                       onClick={() => openDay(d)}
@@ -69,7 +77,18 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
                     >
                       {label.dayOfMonth(d)}
                     </button>
+                    <button
+                      type="button"
+                      aria-label={`Add task on ${label.dayLong(d)}`}
+                      title="Add task"
+                      onClick={() => setAdding(d)}
+                      className="text-subtle hover:text-foreground hover:bg-muted focus-visible:ring-ring/40 flex size-6 items-center justify-center rounded-md opacity-0 outline-none group-hover/cell:opacity-100 focus-visible:opacity-100 focus-visible:ring-2"
+                    >
+                      <Plus className="size-3.5" />
+                    </button>
+                    </div>
                     {list(dayId(d), "flex-1")}
+                    {adding === d ? <CellAdd place={{ plan_scope: "day", plan_date: d }} day={label.dayLong(d)} onClose={() => setAdding(null)} /> : null}
                   </div>
                 ))}
               </div>
@@ -89,5 +108,34 @@ function DayChip({ item }: { item: Item }) {
       {done ? <Check className="size-3 shrink-0" /> : item.priority ? <PriorityIcon priority={item.priority} className="size-3" /> : <span className="bg-foreground/30 size-1.5 shrink-0 rounded-[1px]" />}
       <span className="truncate">{item.title}</span>
     </div>
+  );
+}
+
+/** Inline add inside a day cell: Enter adds and stays open for the next,
+    Escape closes; leaving the field keeps what was typed (it's added). */
+function CellAdd({ place, day, onClose }: { place: Place; day: string; onClose: () => void }) {
+  const actions = useItemActions();
+  const [value, setValue] = useState("");
+  return (
+    <input
+      autoFocus
+      value={value}
+      maxLength={500}
+      placeholder="New task"
+      aria-label={`New task on ${day}`}
+      onChange={(e) => setValue(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && value.trim()) {
+          void actions.create(value, place);
+          setValue("");
+        }
+        if (e.key === "Escape") onClose();
+      }}
+      onBlur={() => {
+        if (value.trim()) void actions.create(value, place);
+        onClose();
+      }}
+      className="bg-card placeholder:text-subtle ring-ring/60 h-6 w-full rounded-sm px-1.5 text-[11.5px] ring-1 outline-none"
+    />
   );
 }
