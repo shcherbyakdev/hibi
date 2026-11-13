@@ -43,8 +43,19 @@ Set in Vercel (never locally or in CI):
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the production project |
 
 With `APP_ENV=production` the build fails if the app URL is missing,
-local or not https, or if Supabase is local. Production Supabase also
-needs: site URL + redirect URLs set to the domain, the migrations applied
-(`ALLOW_REMOTE_DB=1 npx drizzle-kit migrate` with the production
-`DATABASE_URL`), and a real SMTP provider (the built-in mailer allows
-only a couple of emails per hour).
+local or not https, or if Supabase is local.
+
+Live at https://hibiapp.vercel.app (Vercel project `hibi`, auto-deploys
+from `main`; Supabase project `sovcaiebdyrdxxcflets`, eu-central-1).
+
+- **Migrations:** `ALLOW_REMOTE_DB=1 DATABASE_URL=$PROD_DATABASE_URL npx drizzle-kit migrate`
+  (`PROD_DATABASE_URL` lives in the gitignored `.env.production.local`).
+- **Auth settings:** `supabase config push --project-ref sovcaiebdyrdxxcflets`
+  applies `config.toml` with its `[remotes.production]` overrides. Read the
+  diff before answering yes.
+- **Accounts:** sign-up is closed. Visitors leave their email at `/signup`,
+  which lands in the `access_requests` table (Supabase dashboard → Table
+  Editor). Create the account under Authentication → Users → Add user,
+  with a password and Auto Confirm, so no email is needed.
+- **Email:** the built-in mailer (a few per hour) only sends magic links.
+  Add SMTP before relying on email.

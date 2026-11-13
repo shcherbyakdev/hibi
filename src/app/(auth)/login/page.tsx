@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
       <AuthFooter>
         No account?{" "}
         <Link href="/signup" className="text-foreground hover:underline">
-          Sign up
+          Request access
         </Link>
       </AuthFooter>
     </div>

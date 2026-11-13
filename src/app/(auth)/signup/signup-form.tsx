@@ -1,23 +1,24 @@
 "use client";
 
 import { useActionState } from "react";
-import { signUp } from "@/features/auth/actions";
+import { requestAccess } from "@/features/auth/actions";
 import type { AuthState } from "@/features/auth/schema";
 import { Button } from "@/components/ui/button";
-import { EmailField, FormError, PasswordField } from "../fields";
+import { EmailField, FormError } from "../fields";
 
 const initial: AuthState = {};
 
 export function SignupForm() {
-  const [state, action, pending] = useActionState(signUp, initial);
-  if (state.sent) return <p className="text-sm">Check your email to confirm your account.</p>;
+  const [state, action, pending] = useActionState(requestAccess, initial);
+  if (state.sent) return <p className="text-sm">Thanks — you&apos;ll get an email when your account is ready.</p>;
   return (
     <form action={action} className="flex flex-col gap-4">
       <EmailField />
-      <PasswordField isNew />
+      {/* Honeypot: hidden from people, filled by naive bots. */}
+      <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
       <FormError error={state.error} />
       <Button type="submit" disabled={pending} className="h-11">
-        {pending ? "Creating…" : "Create account"}
+        {pending ? "Sending…" : "Request access"}
       </Button>
     </form>
   );

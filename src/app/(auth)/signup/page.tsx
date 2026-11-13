@@ -9,7 +9,7 @@ export default async function SignupPage() {
   if (await getOptionalUser()) redirect(DEFAULT_AFTER_LOGIN);
   return (
     <div>
-      <AuthHeading title="Create your account" sub="Plan your day, week and month." />
+      <AuthHeading title="Request access" sub="hibi is invite-only for now. Leave your email and you'll hear back." />
       <SignupForm />
       <AuthFooter>
         Have an account?{" "}
