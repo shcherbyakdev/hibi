@@ -42,12 +42,15 @@ export function PriorityPicker({
   onChange,
   quietWhenNone = false,
   className,
+  iconClassName,
 }: {
   value: number;
   onChange: (priority: number) => void;
   /** Fade the "none" icon until the parent row (group/row) is hovered or focused. */
   quietWhenNone?: boolean;
   className?: string;
+  /** Size the glyph (e.g. "size-3" in month-calendar chips). */
+  iconClassName?: string;
 }) {
   return (
     <DropdownMenu>
@@ -62,7 +65,7 @@ export function PriorityPicker({
           className,
         )}
       >
-        <PriorityIcon priority={value} />
+        <PriorityIcon priority={value} className={iconClassName} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-44">
         {/* Urgent first, "No priority" last: the order you scan for. */}
@@ -70,7 +73,7 @@ export function PriorityPicker({
           <DropdownMenuItem key={p} onClick={() => onChange(p)}>
             <PriorityIcon priority={p} />
             {PRIORITY_LABELS[p]}
-            {value === p ? <Check className="ml-auto size-3.5" /> : <span className="text-subtle ml-auto font-mono text-[11px]">{p}</span>}
+            {value === p ? <Check className="ml-auto size-3.5" /> : null}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

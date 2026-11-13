@@ -11,7 +11,8 @@ import { cn } from "@/lib/utils";
 import { addMonths, label, monthGrid, periodOf, weekDays } from "../periods";
 import { DateNav } from "./date-nav";
 import { PlannerBoard } from "./planner-board";
-import { PriorityIcon } from "@/features/items/components/priority-icon";
+import { PriorityPicker } from "@/features/items/components/priority-icon";
+import { useItemSheet } from "@/features/items/components/item-sheet";
 import { usePrefs } from "@/lib/prefs";
 
 /* The month as a grid of day cells (each a drop target) beside the "This
@@ -100,13 +101,30 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
   );
 }
 
-/** A day's item inside a month cell: one truncated line. */
+/** A day's item inside a month cell: one line. The leading icon is the
+    same priority picker as every other view (small); the title opens the
+    task's details. Still draggable to another day. */
 function DayChip({ item }: { item: Item }) {
+  const actions = useItemActions();
+  const sheet = useItemSheet();
   const done = item.status === "done";
   return (
-    <div className={cn("hover:bg-muted flex items-center gap-1 truncate rounded-md px-1.5 py-0.5 text-[11.5px]", done && "text-subtle line-through")}>
-      {done ? <Check className="size-3 shrink-0" /> : item.priority ? <PriorityIcon priority={item.priority} className="size-3" /> : <span className="bg-foreground/30 size-1.5 shrink-0 rounded-[1px]" />}
-      <span className="truncate">{item.title}</span>
+    <div className="hover:bg-muted flex min-w-0 items-center gap-0.5 rounded-md py-0.5 pr-1.5 pl-0.5 text-[11.5px]">
+      {done ? (
+        <span className="flex size-4 shrink-0 items-center justify-center">
+          <Check className="text-subtle size-3" aria-label="Done" />
+        </span>
+      ) : (
+        <PriorityPicker value={item.priority} onChange={(p) => void actions.edit(item, { priority: p })} className="size-4 rounded-sm" iconClassName="size-3" />
+      )}
+      <button
+        type="button"
+        onClick={() => sheet.open(item.id)}
+        title={item.title}
+        className={cn("min-w-0 flex-1 truncate text-left outline-none focus-visible:underline", done && "text-subtle line-through")}
+      >
+        {item.title}
+      </button>
     </div>
   );
 }

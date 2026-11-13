@@ -184,10 +184,10 @@ function HoverActions({ item, today, className }: { item: Item; today: string; c
             <DropdownMenuSubTrigger>Priority</DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="w-44">
               {[1, 2, 3, 4, 0].map((p) => (
-                <DropdownMenuItem key={p} disabled={item.priority === p} onClick={() => actions.edit(item, { priority: p })}>
+                <DropdownMenuItem key={p} onClick={() => actions.edit(item, { priority: p })}>
                   <PriorityIcon priority={p} />
                   {PRIORITY_LABELS[p]}
-                  <span className="text-subtle ml-auto font-mono text-[11px]">{p}</span>
+                  {item.priority === p ? <Check className="ml-auto size-3.5" /> : null}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuSubContent>
