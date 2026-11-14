@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SEGMENTED_NAV_CLASS, segmentedItemClass } from "@/components/ui/segmented";
 import { periodOf } from "@/features/planner/periods";
 import { useBoards, useColumns } from "@/features/boards/use-boards";
+import { useGoals } from "@/features/goals/use-goals";
 import { useItemActions } from "../use-items";
 import { bySortKey, INBOX, isLive } from "../model";
 import { PRIORITY_LABELS } from "./priority-icon";
@@ -128,6 +129,7 @@ function DetailForm({ item, today, onClose }: { item: Item; today: string; onClo
           </div>
         </Field>
         <BoardField item={item} />
+        <GoalField item={item} />
       </div>
 
       <TimeSection item={item} />
@@ -207,6 +209,24 @@ function BoardField({ item }: { item: Item }) {
     const cols = (await db.board_columns.where("board_id").equals(boardId).filter(isLive).toArray()).sort(bySortKey);
     return cols[0]?.id ?? null;
   }
+}
+
+function GoalField({ item }: { item: Item }) {
+  const actions = useItemActions();
+  const goals = useGoals();
+  if (!goals) return null;
+  return (
+    <Field label="Goal">
+      <DialogSelect aria-label="Goal" value={item.goal_id ?? ""} onChange={(e) => actions.setGoal(item, e.target.value || null)} className="h-8 w-40 text-[13px]">
+        <option value="">None</option>
+        {goals.map((g) => (
+          <option key={g.id} value={g.id}>
+            {g.name}
+          </option>
+        ))}
+      </DialogSelect>
+    </Field>
+  );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {

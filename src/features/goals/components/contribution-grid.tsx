@@ -7,7 +7,7 @@ import { usePrefs } from "@/lib/prefs";
 import { gridWeeks, level, type DayCounts } from "../model";
 
 // Fill strength per level; the colour is the goal's tone (currentColor).
-const SHADE = ["", "opacity-30", "opacity-55", "opacity-80", "opacity-100"] as const;
+const SHADE = ["", "opacity-40", "opacity-60", "opacity-80", "opacity-100"] as const;
 
 /** GitHub-style grid: one column per week, one cell per day, shaded by
     how many of the goal's tasks were done that day. Scrolls on its own,
@@ -30,8 +30,9 @@ export function ContributionGrid({ counts, today, weeks, tone }: { counts: DayCo
           const monthStart = days.find((d) => d.endsWith("-01"));
           return (
             <div key={days[0]} className="flex flex-col gap-[2px]">
-              <span aria-hidden className="text-subtle h-3 font-mono text-[9px] leading-3 whitespace-nowrap uppercase">
-                {monthStart ? label.monthName(monthStart).slice(0, 3) : ""}
+              {/* Labels overflow to the right so they never widen a column. */}
+              <span aria-hidden className="text-subtle relative h-3 font-mono text-[9px] leading-3 uppercase">
+                {monthStart ? <span className="absolute left-0 whitespace-nowrap">{label.monthName(monthStart).slice(0, 3)}</span> : null}
               </span>
               {days.map((d) => {
                 const n = counts.get(d) ?? 0;

@@ -10,7 +10,7 @@ import { PriorityPicker } from "./priority-icon";
 /** Type and Enter; focus stays for the next one. The input is the empty
     state. Once you start typing, a priority button appears beside it (it
     resets after each task); "!1"–"!4" in the text works too. */
-export function QuickAdd({ place, spot, placeholder = "Add task", className }: { place: Place; spot?: Spot; placeholder?: string; className?: string }) {
+export function QuickAdd({ place, spot, goalId = null, placeholder = "Add task", className }: { place: Place; spot?: Spot; goalId?: string | null; placeholder?: string; className?: string }) {
   const actions = useItemActions();
   const [value, setValue] = React.useState("");
   const [priority, setPriority] = React.useState(0);
@@ -30,7 +30,7 @@ export function QuickAdd({ place, spot, placeholder = "Add task", className }: {
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && value.trim()) {
-            void actions.create(value, place, spot, priority);
+            void actions.create(value, place, spot, priority, goalId);
             setValue("");
             setPriority(0);
           }

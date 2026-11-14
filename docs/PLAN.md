@@ -277,6 +277,19 @@ src/
    the email link. Remaining: GitHub repo, Supabase prod project (site URL,
    redirects, migrations, SMTP), Vercel project `fra1` + deploy workflow.
 
+9. **Goals.** Built: `goals` table (name, notes, tone key in `icon`,
+   `weekly_target` 1–7) + `items.goal_id` (`on delete set null`), same
+   RLS/sync as the rest, Dexie v4 (`goal_id` index). Progress is derived,
+   never stored: `features/goals/model.ts` (tested, incl. a Tokyo-TZ case)
+   counts a goal's tasks by the local day of `done_at` → GitHub-style grid
+   (5 levels in the goal's tone), streak (an empty today doesn't break it),
+   days done this week vs target. `/goals` lists goals with 20 weeks;
+   `/goals/[id]` has 53 weeks, rename/colour/target/notes, "Add a step for
+   today" (a day task already linked), open and recently done tasks.
+   Linking elsewhere: Goal field in the task sheet; linked rows show a tone
+   dot. Deleting a goal unlinks its tasks (they stay). Plan:
+   `docs/superpowers/plans/2026-11-14-goals.md`.
+
 Later, not now: recurring items (pipline has `features/recurrence`), weekly
 review/stats, labels, calendar layout for boards, PWA offline install.
 

@@ -1,4 +1,4 @@
-import { Calendar03Icon, InboxIcon, Settings01Icon } from "@hugeicons/core-free-icons";
+import { Calendar03Icon, InboxIcon, Settings01Icon, Target02Icon } from "@hugeicons/core-free-icons";
 import type { IconSvgElement } from "@hugeicons/react";
 
 // One list for the sidebar and the ⌘K menu, so the two can't drift.
@@ -12,6 +12,7 @@ export type NavItem = { href: string; label: string; icon: IconSvgElement; secti
 export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/plan", label: "Planner", icon: Calendar03Icon, section: "plan" },
   { href: "/inbox", label: "Inbox", icon: InboxIcon, section: "plan" },
+  { href: "/goals", label: "Goals", icon: Target02Icon, section: "plan" },
   { href: "/settings", label: "Settings", icon: Settings01Icon, section: "account" },
 ];
 

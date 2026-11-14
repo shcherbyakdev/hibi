@@ -15,6 +15,7 @@ import { placeLabel } from "../model";
 import { PlanMenuItems } from "./plan-menu";
 import { PRIORITY_LABELS, PriorityIcon, PriorityPicker } from "./priority-icon";
 import { useItemSheet } from "./item-sheet";
+import { GoalDot } from "@/features/goals/components/goal-dot";
 
 /* A task, in one of two layouts:
    - "list" (Day, Inbox, board list): one 32px line —
@@ -99,6 +100,7 @@ export function ItemRow({
 
   const meta = (
     <>
+      {item.goal_id ? <GoalDot id={item.goal_id} /> : null}
       {item.notes ? <NotebookText aria-label="Has notes" className="text-subtle size-3.5 shrink-0" /> : null}
       {overlay ? null : <RowTime item={item} />}
       {showPlace && item.plan_scope ? (
