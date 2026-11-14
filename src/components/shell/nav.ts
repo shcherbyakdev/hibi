@@ -8,13 +8,14 @@ export type NavSection = "plan" | "account";
 export const NAV_SECTIONS: readonly NavSection[] = ["plan", "account"];
 
 /** `details`: the page is a list whose items open at href/<id>; those
-    pages get a back link to it in the top bar. */
-export type NavItem = { href: string; label: string; icon: IconSvgElement; section: NavSection; details?: true };
+    pages get a back link to it in the top bar. `ownSection`: the sidebar
+    shows it as a section of its own (header + items) instead of a row. */
+export type NavItem = { href: string; label: string; icon: IconSvgElement; section: NavSection; details?: true; ownSection?: true };
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/plan", label: "Planner", icon: Calendar03Icon, section: "plan" },
   { href: "/inbox", label: "Inbox", icon: InboxIcon, section: "plan" },
-  { href: "/goals", label: "Goals", icon: Target02Icon, section: "plan", details: true },
+  { href: "/goals", label: "Goals", icon: Target02Icon, section: "plan", details: true, ownSection: true },
   { href: "/settings", label: "Settings", icon: Settings01Icon, section: "account" },
 ];
 

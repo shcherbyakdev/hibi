@@ -143,6 +143,8 @@ targets + bucket), Inbox. The viewed date is `?d=`, changed by
 `history.pushState`, so date stepping never hits the server. Each row's
 options menu is the keyboard path for moving; drag is pointer-only for now.
 
+> **Folded into goals in phase 11** — boards no longer exist; kept for history.
+
 **Built in phase 5:** sidebar Boards section (inline create), `/boards/[id]`
 with List / Board layouts (saved per board), inline rename for boards and
 columns, column menu (move left/right, delete), "No column" group for items
@@ -162,7 +164,7 @@ start saved in Supabase `user_metadata`, parsed server-side in
 `lib/prefs-data.ts`), last planner view remembered per device. Week buckets
 query a 7-day range so tasks dated under the other week-start still show.
 | `/inbox` | Unplanned items (no scope, no board). Quick capture lands here. |
-| `/boards/[id]` | `layout=list`: sortable list, grouped by column. `layout=kanban`: columns side by side, dnd across. Toggle with segmented tabs. |
+| ~~`/boards/[id]`~~ (phase 11: redirects to `/goals/[id]`) | `layout=list`: sortable list, grouped by column. `layout=kanban`: columns side by side, dnd across. Toggle with segmented tabs. |
 | `/settings` | Theme, week start, sign out. |
 
 Shared bits: `ItemRow` (checkbox, title inline-edit, priority, plan chip),
@@ -304,7 +306,21 @@ src/
    stops it), repeat icon on copies while the routine runs. Deleting a
    goal deletes its routines. Plan: `docs/superpowers/plans/2026-11-14-recurring-steps.md`.
 
-Later, not now: monthly / interval routines, recurring items (pipline has `features/recurrence`), weekly
+11. **Boards folded into goals.** One way to group tasks. Migration
+   `0011_fold_boards`: every board became a goal with the same id
+   (`/boards/:id` redirects), its tasks joined the goal and their column
+   became a status (Doing → doing, Done → done with a done_at); then
+   `boards`, `board_columns`, `items.board_id/column_id` were dropped.
+   Dexie v6 strips the gone fields from local items so upgraded devices
+   never push missing columns. `goals.layout` = list | board: Board shows
+   To do / Doing / Done (Done = last 14 days); dragging between lanes sets
+   status (done_at follows, so the grid does); each lane's quick add makes
+   an unplanned goal task. Inbox = unplanned and no goal. Sidebar lists
+   goals (section header → /goals), ⌘K searches goals. Tone and InlineName
+   moved to `src/lib/tone.ts` / `components/shared`. Plan:
+   `docs/superpowers/plans/2026-11-14-fold-boards-into-goals.md`.
+
+Later, not now: custom goal columns (stages), monthly / interval routines, recurring items (pipline has `features/recurrence`), weekly
 review/stats, labels, calendar layout for boards, PWA offline install.
 
 ---

@@ -13,6 +13,7 @@ import { SyncStatus } from "./sync-status";
 import { HibiMark, HibiWordmark } from "@/components/brand/hibi-logo";
 import { activeClass, iconClass, idleClass, itemClass } from "./sidebar-styles";
 import { usePlannerHref } from "@/features/planner/last-view";
+import { SidebarGoals } from "@/features/goals/components/sidebar-goals";
 
 
 export function SidebarBody({ userEmail, onNavigate }: { userEmail: string; onNavigate?: () => void }) {
@@ -49,8 +50,9 @@ export function SidebarBody({ userEmail, onNavigate }: { userEmail: string; onNa
       <nav aria-label="Main" className="mt-5 flex min-h-0 flex-1 flex-col gap-5">
         {NAV_SECTIONS.map((section) => (
           <React.Fragment key={section}>
+          {section === "account" ? <SidebarGoals onNavigate={onNavigate} /> : null}
           <div className={cn("flex flex-col gap-0.5", section === "account" && "mt-auto")}>
-            {NAV_ITEMS.filter((i) => i.section === section).map(({ href, label, icon }) => {
+            {NAV_ITEMS.filter((i) => i.section === section && !i.ownSection).map(({ href, label, icon }) => {
               const active = isActive(href);
               return (
                 <Link
