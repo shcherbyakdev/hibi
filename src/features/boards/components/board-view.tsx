@@ -13,10 +13,10 @@ import { useItemActions } from "@/features/items/use-items";
 import { useBoard, useBoardActions, useBoardItems, useColumns } from "../use-boards";
 import { BoardMenu, LayoutSwitch } from "./board-menu";
 import { ColumnHeader } from "./column-header";
-import { AddNamed, InlineName } from "./inline-name";
+import { AddNamed, InlineName } from "@/components/shared/inline-name";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { DashboardSquare02Icon } from "@hugeicons/core-free-icons";
-import { boardTone } from "../tone";
+import { toneClass } from "@/lib/tone";
 
 /** Items whose column was deleted (or never set) gather here. */
 const NONE = "none";
@@ -46,7 +46,7 @@ export function BoardView({ id }: { id: string }) {
         <BoardMenu board={board} taskCount={items.length} />
       </PageActions>
       <h2 className={cn("flex items-center gap-2 text-[22px] font-normal tracking-[-0.03em]", !kanban && "px-3")}>
-        <HugeiconsIcon icon={DashboardSquare02Icon} size={16} className={cn("shrink-0", boardTone(board))} />
+        <HugeiconsIcon icon={DashboardSquare02Icon} size={16} className={cn("shrink-0", toneClass(board))} />
         <InlineName value={board.name} label="board" maxLength={120} onSave={(n) => boardActions.renameBoard(board, n)} />
       </h2>
 

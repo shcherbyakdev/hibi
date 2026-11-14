@@ -5,7 +5,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import type { Goal, Item } from "@/lib/sync/db";
 import { useSync } from "@/lib/sync/provider";
 import { bySortKey, isLive, keyBetween } from "@/features/items/model";
-import { nextTone } from "@/features/boards/tone";
+import { nextTone } from "@/lib/tone";
 
 export function useGoals(): Goal[] | undefined {
   const { db } = useSync();

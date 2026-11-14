@@ -13,8 +13,8 @@ import { PageActions } from "@/components/shell/page-actions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { BOARD_TONES, boardTone, type BoardToneKey } from "@/features/boards/tone";
-import { AddNamed, InlineName } from "@/features/boards/components/inline-name";
+import { TONES, toneClass, type ToneKey } from "@/lib/tone";
+import { AddNamed, InlineName } from "@/components/shared/inline-name";
 import { DayPicker } from "@/features/routines/components/day-picker";
 import { useGoalRoutines, useRoutineActions } from "@/features/routines/use-routines";
 import { GroupHeader } from "@/features/planner/components/planner-board";
@@ -48,7 +48,7 @@ export function GoalView({ id }: { id: string }) {
       </PageActions>
       <div className="flex flex-col gap-1 px-3">
         <h2 className="flex items-center gap-2 text-[22px] font-normal tracking-[-0.03em]">
-          <span aria-hidden className={cn("size-2.5 shrink-0 rounded-[1px] bg-current", boardTone(goal))} />
+          <span aria-hidden className={cn("size-2.5 shrink-0 rounded-[1px] bg-current", toneClass(goal))} />
           <InlineName value={goal.name} label="goal" maxLength={120} onSave={(n) => actions.edit(goal, { name: n })} />
         </h2>
         <GoalStats goal={goal} counts={counts} today={today} />
@@ -57,7 +57,7 @@ export function GoalView({ id }: { id: string }) {
       <WeeklyAim goal={goal} done={weekCount(counts, today, weekStart)} />
 
       <div className="px-3">
-        <ContributionGrid counts={counts} today={today} weeks={53} tone={boardTone(goal)} />
+        <ContributionGrid counts={counts} today={today} weeks={53} tone={toneClass(goal)} />
       </div>
 
       <Notes key={goal.id} goal={goal} />
@@ -88,7 +88,7 @@ function WeeklyAim({ goal, done }: { goal: Goal; done: number }) {
       <span aria-hidden className="text-subtle w-full font-mono text-[11px] tracking-[0.06em] uppercase">
         Weekly aim
       </span>
-      <div className={cn("flex gap-1", boardTone(goal))}>
+      <div className={cn("flex gap-1", toneClass(goal))}>
         {DAYS.map((n) => (
           <label key={n} className="cursor-pointer" onMouseEnter={() => setHover(n)}>
             <input
@@ -205,11 +205,11 @@ function GoalMenu({ goal, taskCount }: { goal: Goal; taskCount: number }) {
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>Colour</DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="w-40">
-              {(Object.keys(BOARD_TONES) as BoardToneKey[]).map((tone) => (
+              {(Object.keys(TONES) as ToneKey[]).map((tone) => (
                 <DropdownMenuItem key={tone} onClick={() => actions.edit(goal, { icon: tone })}>
-                  <span aria-hidden className={cn("size-2 rounded-[1px] bg-current", BOARD_TONES[tone].cls)} />
-                  {BOARD_TONES[tone].label}
-                  {boardTone(goal) === BOARD_TONES[tone].cls ? <Check className="ml-auto size-3.5" /> : null}
+                  <span aria-hidden className={cn("size-2 rounded-[1px] bg-current", TONES[tone].cls)} />
+                  {TONES[tone].label}
+                  {toneClass(goal) === TONES[tone].cls ? <Check className="ml-auto size-3.5" /> : null}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuSubContent>

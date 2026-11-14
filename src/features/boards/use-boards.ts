@@ -7,7 +7,7 @@ import type { BoardLayout } from "@/db/enums";
 import type { Board, BoardColumn, Item } from "@/lib/sync/db";
 import { useSync } from "@/lib/sync/provider";
 import { bySortKey, isLive, keyBetween, keyForStep } from "@/features/items/model";
-import { nextTone, type BoardToneKey } from "./tone";
+import { nextTone, type ToneKey } from "@/lib/tone";
 
 export const DEFAULT_COLUMNS = ["To do", "Doing", "Done"];
 
@@ -64,7 +64,7 @@ export function useBoardActions() {
         if (n && n !== board.name) return m.update("boards", board.id, { name: n });
       },
       setLayout: (board: Board, layout: BoardLayout) => m.update("boards", board.id, { layout }),
-      setTone: (board: Board, tone: BoardToneKey) => m.update("boards", board.id, { icon: tone }),
+      setTone: (board: Board, tone: ToneKey) => m.update("boards", board.id, { icon: tone }),
       /** Soft-deletes the board, its columns and its items (the UI confirms). */
       async deleteBoard(board: Board) {
         const [cols, items] = await Promise.all([columnsOf(board.id), db.items.where("board_id").equals(board.id).filter(isLive).toArray()]);

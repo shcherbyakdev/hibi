@@ -5,7 +5,7 @@ import { MoreHorizontalIcon } from "@hugeicons/core-free-icons";
 import type { BoardColumn } from "@/lib/sync/db";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useBoardActions } from "../use-boards";
-import { InlineName } from "./inline-name";
+import { InlineName } from "@/components/shared/inline-name";
 import { cn } from "@/lib/utils";
 
 export function ColumnHeader({ column, count, first, last, className }: { column: BoardColumn | null; count: number; first: boolean; last: boolean; className?: string }) {

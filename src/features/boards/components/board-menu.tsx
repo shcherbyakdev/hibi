@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Check } from "lucide-react";
 import { DashboardSquare02Icon } from "@hugeicons/core-free-icons";
-import { BOARD_TONES, boardTone, type BoardToneKey } from "../tone";
+import { TONES, toneClass, type ToneKey } from "@/lib/tone";
 import { SEGMENTED_NAV_CLASS, segmentedItemClass } from "@/components/ui/segmented";
 import { useBoardActions } from "../use-boards";
 
@@ -48,11 +48,11 @@ export function BoardMenu({ board, taskCount }: { board: Board; taskCount: numbe
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>Colour</DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="w-40">
-              {(Object.keys(BOARD_TONES) as BoardToneKey[]).map((tone) => (
+              {(Object.keys(TONES) as ToneKey[]).map((tone) => (
                 <DropdownMenuItem key={tone} onClick={() => actions.setTone(board, tone)}>
-                  <HugeiconsIcon icon={DashboardSquare02Icon} size={14} className={BOARD_TONES[tone].cls} />
-                  {BOARD_TONES[tone].label}
-                  {boardTone(board) === BOARD_TONES[tone].cls ? <Check className="ml-auto size-3.5" /> : null}
+                  <HugeiconsIcon icon={DashboardSquare02Icon} size={14} className={TONES[tone].cls} />
+                  {TONES[tone].label}
+                  {toneClass(board) === TONES[tone].cls ? <Check className="ml-auto size-3.5" /> : null}
                 </DropdownMenuItem>
               ))}
             </DropdownMenuSubContent>

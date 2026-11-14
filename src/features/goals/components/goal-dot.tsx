@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { boardTone } from "@/features/boards/tone";
+import { toneClass } from "@/lib/tone";
 import { useGoal } from "../use-goals";
 
 /** A small square in the goal's colour, in a task's metadata. Nothing if
@@ -9,5 +9,5 @@ import { useGoal } from "../use-goals";
 export function GoalDot({ id }: { id: string }) {
   const goal = useGoal(id);
   if (!goal) return null;
-  return <span role="img" aria-label={`Goal: ${goal.name}`} title={goal.name} className={cn("size-1.5 shrink-0 rounded-[1px] bg-current", boardTone(goal))} />;
+  return <span role="img" aria-label={`Goal: ${goal.name}`} title={goal.name} className={cn("size-1.5 shrink-0 rounded-[1px] bg-current", toneClass(goal))} />;
 }

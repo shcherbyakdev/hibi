@@ -6,8 +6,8 @@ import type { Goal } from "@/lib/sync/db";
 import { useToday } from "@/lib/use-today";
 import { usePrefs } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
-import { boardTone } from "@/features/boards/tone";
-import { AddNamed } from "@/features/boards/components/inline-name";
+import { toneClass } from "@/lib/tone";
+import { AddNamed } from "@/components/shared/inline-name";
 import { dayCounts, streak, weekCount, type DayCounts } from "../model";
 import { useAllGoalItems, useGoalActions, useGoals } from "../use-goals";
 import { ContributionGrid } from "./contribution-grid";
@@ -55,12 +55,12 @@ function GoalCard({ goal, counts, today }: { goal: Goal; counts: DayCounts; toda
     <section className="flex flex-col gap-3 border-b px-3 pb-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <Link href={`/goals/${goal.id}`} className="flex min-w-0 items-center gap-2 text-[15px] outline-none hover:underline focus-visible:underline">
-          <span aria-hidden className={cn("size-2 shrink-0 rounded-[1px] bg-current", boardTone(goal))} />
+          <span aria-hidden className={cn("size-2 shrink-0 rounded-[1px] bg-current", toneClass(goal))} />
           <span className="truncate">{goal.name}</span>
         </Link>
         <GoalStats goal={goal} counts={counts} today={today} />
       </div>
-      <ContributionGrid counts={counts} today={today} weeks={20} tone={boardTone(goal)} />
+      <ContributionGrid counts={counts} today={today} weeks={20} tone={toneClass(goal)} />
     </section>
   );
 }

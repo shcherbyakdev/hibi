@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { BOARD_TONES, boardTone, nextTone } from "./tone";
+import { TONES, toneClass, nextTone } from "@/lib/tone";
 
 describe("board tones", () => {
   it("uses the stored colour, else a stable one from the id", () => {
-    expect(boardTone({ id: "x", icon: "green" })).toBe(BOARD_TONES.green.cls);
-    expect(boardTone({ id: "abc", icon: null })).toBe(boardTone({ id: "abc", icon: "not-a-tone" }));
+    expect(toneClass({ id: "x", icon: "green" })).toBe(TONES.green.cls);
+    expect(toneClass({ id: "abc", icon: null })).toBe(toneClass({ id: "abc", icon: "not-a-tone" }));
   });
   it("gives a new board the least-used colour", () => {
     expect(nextTone([])).toBe("periwinkle");
