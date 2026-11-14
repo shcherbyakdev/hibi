@@ -21,7 +21,6 @@ import { QuickAdd } from "@/features/items/components/quick-add";
 import { isOpen } from "@/features/items/model";
 import { dayCounts, weekCount } from "../model";
 import { usePrefs } from "@/lib/prefs";
-import { SEGMENTED_NAV_CLASS, segmentedItemClass } from "@/components/ui/segmented";
 import { useGoal, useGoalActions, useGoalItems } from "../use-goals";
 import { ContributionGrid } from "./contribution-grid";
 import { GoalStats } from "./goals-page";
@@ -71,40 +70,46 @@ export function GoalView({ id }: { id: string }) {
 }
 
 const DAYS = [1, 2, 3, 4, 5, 6, 7] as const;
+const daysLabel = (n: number) => (n === 7 ? "Every day" : `${n} ${n === 1 ? "day" : "days"} a week`);
 
-/** Days a week to aim for (1–7), with this week's progress under it: one
-    segment per aimed day, filled in the goal's tone as days get done. */
+/** The weekly aim as seven day squares: click one to aim for that many
+    days. Aimed days are tinted in the goal's colour and fill solid as this
+    week's days get done, so the control is also the week's progress.
+    Native radios underneath: arrow keys and screen readers work as usual. */
 function WeeklyAim({ goal, done }: { goal: Goal; done: number }) {
   const actions = useGoalActions();
+  const [hover, setHover] = React.useState<number | null>(null);
+  const shown = hover ?? goal.weekly_target;
   return (
-    <div className="flex flex-col gap-2 px-3">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span id="weekly-aim" className="text-subtle font-mono text-[11px] tracking-[0.06em] uppercase">
-          Weekly aim
-        </span>
-        <div role="radiogroup" aria-labelledby="weekly-aim" className={SEGMENTED_NAV_CLASS}>
-          {DAYS.map((n) => (
-            <button
-              key={n}
-              type="button"
-              role="radio"
-              aria-checked={n === goal.weekly_target}
-              aria-label={`${n} ${n === 1 ? "day" : "days"} a week`}
-              onClick={() => actions.edit(goal, { weekly_target: n })}
-              className={segmentedItemClass(n === goal.weekly_target, "h-6 w-7 justify-center px-0 text-xs tabular-nums")}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-        <span className="text-subtle text-[12px]">{goal.weekly_target === 7 ? "every day" : "days a week"}</span>
-      </div>
-      <div aria-hidden className={cn("flex gap-[3px]", boardTone(goal))}>
-        {Array.from({ length: goal.weekly_target }, (_, i) => (
-          <span key={i} className={cn("h-1 flex-1 rounded-[1px]", i < done ? "bg-current" : "bg-foreground/[0.07]")} />
+    <fieldset className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3" onMouseLeave={() => setHover(null)}>
+      <legend className="sr-only">Weekly aim</legend>
+      <span aria-hidden className="text-subtle w-full font-mono text-[11px] tracking-[0.06em] uppercase">
+        Weekly aim
+      </span>
+      <div className={cn("flex gap-1", boardTone(goal))}>
+        {DAYS.map((n) => (
+          <label key={n} className="cursor-pointer" onMouseEnter={() => setHover(n)}>
+            <input
+              type="radio"
+              name={`aim-${goal.id}`}
+              value={n}
+              checked={n === goal.weekly_target}
+              onChange={() => actions.edit(goal, { weekly_target: n })}
+              aria-label={daysLabel(n)}
+              className="peer sr-only"
+            />
+            <span
+              aria-hidden
+              className={cn(
+                "peer-focus-visible:ring-ring/60 block size-6 rounded-[2px] transition-colors duration-100 peer-focus-visible:ring-2",
+                n <= done ? "bg-current" : n <= shown ? "bg-current/25" : "bg-foreground/[0.07] hover:bg-foreground/[0.12]",
+              )}
+            />
+          </label>
         ))}
       </div>
-    </div>
+      <span className={cn("text-[13px] tabular-nums", hover === null ? "text-muted-foreground" : "text-foreground")}>{daysLabel(shown)}</span>
+    </fieldset>
   );
 }
 

@@ -7,12 +7,14 @@ import type { IconSvgElement } from "@hugeicons/react";
 export type NavSection = "plan" | "account";
 export const NAV_SECTIONS: readonly NavSection[] = ["plan", "account"];
 
-export type NavItem = { href: string; label: string; icon: IconSvgElement; section: NavSection };
+/** `details`: the page is a list whose items open at href/<id>; those
+    pages get a back link to it in the top bar. */
+export type NavItem = { href: string; label: string; icon: IconSvgElement; section: NavSection; details?: true };
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/plan", label: "Planner", icon: Calendar03Icon, section: "plan" },
   { href: "/inbox", label: "Inbox", icon: InboxIcon, section: "plan" },
-  { href: "/goals", label: "Goals", icon: Target02Icon, section: "plan" },
+  { href: "/goals", label: "Goals", icon: Target02Icon, section: "plan", details: true },
   { href: "/settings", label: "Settings", icon: Settings01Icon, section: "account" },
 ];
 
@@ -21,4 +23,9 @@ export function titleForPath(pathname: string): string {
   if (hit) return hit.label;
   const seg = pathname.split("/").filter(Boolean)[0] ?? "";
   return seg ? seg.charAt(0).toUpperCase() + seg.slice(1) : "";
+}
+
+/** The list page a detail page belongs to (/goals/<id> → Goals), if any. */
+export function parentFor(pathname: string): NavItem | null {
+  return NAV_ITEMS.find((i) => i.details && pathname.startsWith(i.href + "/")) ?? null;
 }
