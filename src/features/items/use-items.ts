@@ -63,7 +63,7 @@ export function useItemActions() {
     () => ({
       /** New item at the end of a planner list, or of a board column.
           A picked priority wins; otherwise "!1"–"!4" in the title sets it. */
-      async create(raw: string, place: Place, spot?: Spot, picked = 0) {
+      async create(raw: string, place: Place, spot?: Spot, picked = 0, goalId: string | null = null) {
         if (!raw.trim()) return;
         const parsed = parseQuickTitle(raw);
         const { title } = parsed;
@@ -76,7 +76,7 @@ export function useItemActions() {
           ...place,
           board_id: spot?.board_id ?? null,
           column_id: spot?.column_id ?? null,
-          goal_id: null,
+          goal_id: goalId,
           sort_key: keyBetween(await lastKey(db, place, spot), null),
           done_at: null,
         });
@@ -91,6 +91,7 @@ export function useItemActions() {
         return m.update("items", item.id, { status, done_at: status === "done" ? new Date().toISOString() : null });
       },
       edit: (item: Item, patch: Pick<Partial<Item>, "notes" | "priority">) => m.update("items", item.id, patch),
+      setGoal: (item: Item, goalId: string | null) => m.update("items", item.id, { goal_id: goalId }),
       /** Onto a board column (end of it), or off boards with null. */
       async moveToBoard(item: Item, spot: Spot | null) {
         if (!spot) return m.update("items", item.id, { board_id: null, column_id: null });
