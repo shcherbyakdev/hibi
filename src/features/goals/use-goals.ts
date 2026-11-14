@@ -51,7 +51,7 @@ export function useGoalActions() {
           sort_key: keyBetween(existing.at(-1)?.sort_key ?? null, null),
         });
       },
-      edit(goal: Goal, patch: Partial<Pick<Goal, "name" | "notes" | "icon" | "weekly_target">>) {
+      edit(goal: Goal, patch: Partial<Pick<Goal, "name" | "notes" | "icon" | "weekly_target" | "layout">>) {
         if (patch.name !== undefined) {
           patch = { ...patch, name: patch.name.trim().slice(0, 120) };
           if (!patch.name) return;

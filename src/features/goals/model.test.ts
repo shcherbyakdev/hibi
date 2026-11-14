@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { dayCounts, gridWeeks, level, openSteps, streak, weekCount } from "./model";
+import { dayCounts, gridWeeks, laneMove, lanes, level, openSteps, streak, weekCount } from "./model";
 
 const done = (at: string, over = {}) => ({ goal_id: "g", done_at: at, deleted_at: null, ...over });
 const realTZ = process.env.TZ;
@@ -64,5 +64,33 @@ describe("goal progress", () => {
       "2026-11-14",
     );
     expect(open.map((i) => i.id)).toEqual(["plain", "old-plain", "today-copy"]);
+  });
+
+  it("lays a goal's tasks out in To do / Doing / Done lanes", () => {
+    const t = (id: string, over = {}) => ({ id, status: "todo" as const, routine_id: null, plan_date: null, done_at: null, sort_key: id, ...over });
+    const l = lanes(
+      [
+        t("b"),
+        t("a"),
+        t("dropped", { status: "dropped" as const }),
+        t("missed-copy", { routine_id: "r", plan_date: "2026-11-13" }),
+        t("doing", { status: "doing" as const }),
+        t("old-done", { status: "done" as const, done_at: "2026-10-01T10:00:00" }),
+        t("done-1", { status: "done" as const, done_at: "2026-11-10T10:00:00" }),
+        t("done-2", { status: "done" as const, done_at: "2026-11-14T09:00:00" }),
+      ],
+      "2026-11-14",
+    );
+    expect(l.todo.map((i) => i.id)).toEqual(["a", "b"]);
+    expect(l.doing.map((i) => i.id)).toEqual(["doing"]);
+    expect(l.done.map((i) => i.id)).toEqual(["done-2", "done-1"]);
+  });
+
+  it("moves between lanes, keeping done_at in step with Done", () => {
+    const at = (s: string) => ({ status: s as "todo" | "doing" | "done", done_at: s === "done" ? "2026-11-14T09:00:00Z" : null });
+    expect(laneMove(at("todo"), "done")).toMatchObject({ status: "done", done_at: expect.any(String) });
+    expect(laneMove(at("done"), "todo")).toEqual({ status: "todo", done_at: null });
+    expect(laneMove(at("doing"), "todo")).toEqual({ status: "todo" });
+    expect(laneMove(at("done"), "done")).toEqual({ status: "done" });
   });
 });

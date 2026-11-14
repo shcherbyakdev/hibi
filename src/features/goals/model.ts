@@ -52,3 +52,34 @@ export function weekCount(counts: DayCounts, today: string, weekStart: 0 | 1): n
 export function openSteps<T extends Pick<Item, "status" | "routine_id" | "plan_date">>(items: T[], today: string): T[] {
   return items.filter((i) => (i.status === "todo" || i.status === "doing") && !(i.routine_id && i.plan_date && i.plan_date < today));
 }
+
+export const LANES = ["todo", "doing", "done"] as const;
+export type Lane = (typeof LANES)[number];
+type LaneItem = Pick<Item, "status" | "routine_id" | "plan_date" | "done_at" | "sort_key">;
+
+/** How far back the Done lane reaches; older done tasks live in the grid
+    and "Done recently". ponytail: a fixed window, a "show all" if missed. */
+const DONE_WINDOW_DAYS = 14;
+
+/** A goal's tasks as a board: To do and Doing in list order (missed routine
+    days left out, as in openSteps), Done for the last two weeks, newest
+    first. Dropped tasks don't show. */
+export function lanes<T extends LaneItem>(items: T[], today: string): Record<Lane, T[]> {
+  const since = addDays(today, -DONE_WINDOW_DAYS);
+  const open = openSteps(items, today).sort((a, b) => (a.sort_key < b.sort_key ? -1 : a.sort_key > b.sort_key ? 1 : 0));
+  return {
+    todo: open.filter((i) => i.status === "todo"),
+    doing: open.filter((i) => i.status === "doing"),
+    done: items
+      .filter((i) => i.status === "done" && i.done_at && toISODate(new Date(i.done_at)) >= since)
+      .sort((a, b) => (a.done_at! < b.done_at! ? 1 : -1)),
+  };
+}
+
+/** The patch for dropping a task into a lane: done_at is set entering Done
+    and cleared leaving it, so the grid follows the board. */
+export function laneMove(item: Pick<Item, "status">, lane: Lane): Partial<Pick<Item, "status" | "done_at">> {
+  if (lane === "done" && item.status !== "done") return { status: lane, done_at: new Date().toISOString() };
+  if (lane !== "done" && item.status === "done") return { status: lane, done_at: null };
+  return { status: lane };
+}

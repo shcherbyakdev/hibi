@@ -18,9 +18,14 @@ import { AddNamed, InlineName } from "@/components/shared/inline-name";
 import { DayPicker } from "@/features/routines/components/day-picker";
 import { useGoalRoutines, useRoutineActions } from "@/features/routines/use-routines";
 import { GroupHeader } from "@/features/planner/components/planner-board";
-import { ItemRow } from "@/features/items/components/item-row";
+import { ItemCard, ItemRow } from "@/features/items/components/item-row";
+import { Board } from "@/components/board";
+import { SEGMENTED_NAV_CLASS, segmentedItemClass } from "@/components/ui/segmented";
+import { useSync } from "@/lib/sync/provider";
+import { INBOX, keyBetween } from "@/features/items/model";
+import type { GoalLayout } from "@/db/enums";
 import { QuickAdd } from "@/features/items/components/quick-add";
-import { dayCounts, openSteps, weekCount } from "../model";
+import { dayCounts, laneMove, lanes, LANES, openSteps, weekCount, type Lane } from "../model";
 import { usePrefs } from "@/lib/prefs";
 import { useGoal, useGoalActions, useGoalItems } from "../use-goals";
 import { ContributionGrid } from "./contribution-grid";
@@ -41,33 +46,90 @@ export function GoalView({ id }: { id: string }) {
   const open = openSteps(items, today);
   const done = items.filter((i) => i.done_at).sort((a, b) => (a.done_at! < b.done_at! ? 1 : -1)).slice(0, RECENT);
 
+  const board = goal.layout === "board";
+
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
+    <div className="flex w-full flex-col gap-5">
       <PageActions>
+        <LayoutSwitch goal={goal} />
         <GoalMenu goal={goal} taskCount={items.length} />
       </PageActions>
-      <div className="flex flex-col gap-1 px-3">
-        <h2 className="flex items-center gap-2 text-[22px] font-normal tracking-[-0.03em]">
-          <span aria-hidden className={cn("size-2.5 shrink-0 rounded-[1px] bg-current", toneClass(goal))} />
-          <InlineName value={goal.name} label="goal" maxLength={120} onSave={(n) => actions.edit(goal, { name: n })} />
-        </h2>
-        <GoalStats goal={goal} counts={counts} today={today} />
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
+        <div className="flex flex-col gap-1 px-3">
+          <h2 className="flex items-center gap-2 text-[22px] font-normal tracking-[-0.03em]">
+            <span aria-hidden className={cn("size-2.5 shrink-0 rounded-[1px] bg-current", toneClass(goal))} />
+            <InlineName value={goal.name} label="goal" maxLength={120} onSave={(n) => actions.edit(goal, { name: n })} />
+          </h2>
+          <GoalStats goal={goal} counts={counts} today={today} />
+        </div>
+
+        <WeeklyAim goal={goal} done={weekCount(counts, today, weekStart)} />
+
+        <div className="px-3">
+          <ContributionGrid counts={counts} today={today} weeks={53} tone={toneClass(goal)} />
+        </div>
+
+        <Notes key={goal.id} goal={goal} />
+
+        <QuickAdd place={{ plan_scope: "day", plan_date: today }} goalId={goal.id} placeholder="Add a step for today" className="h-11 gap-3 px-3 text-[14px]" />
+
+        <Routines goalId={goal.id} />
+        {board ? null : <TaskList title="Open" items={open} today={today} />}
+        {!board && done.length ? <TaskList title="Done recently" items={done} today={today} /> : null}
       </div>
-
-      <WeeklyAim goal={goal} done={weekCount(counts, today, weekStart)} />
-
-      <div className="px-3">
-        <ContributionGrid counts={counts} today={today} weeks={53} tone={toneClass(goal)} />
-      </div>
-
-      <Notes key={goal.id} goal={goal} />
-
-      <QuickAdd place={{ plan_scope: "day", plan_date: today }} goalId={goal.id} placeholder="Add a step for today" className="h-11 gap-3 px-3 text-[14px]" />
-
-      <Routines goalId={goal.id} />
-      <TaskList title="Open" items={open} today={today} />
-      {done.length ? <TaskList title="Done recently" items={done} today={today} /> : null}
+      {board ? <GoalBoard goalId={goal.id} items={items} today={today} /> : null}
     </div>
+  );
+}
+
+const LAYOUTS: Array<[GoalLayout, string]> = [
+  ["list", "List"],
+  ["board", "Board"],
+];
+
+/** List / Board, saved on the goal (every device opens it the same way). */
+function LayoutSwitch({ goal }: { goal: Goal }) {
+  const actions = useGoalActions();
+  return (
+    <div role="group" aria-label="Layout" className={SEGMENTED_NAV_CLASS}>
+      {LAYOUTS.map(([value, name]) => (
+        <button key={value} type="button" aria-pressed={goal.layout === value} onClick={() => actions.edit(goal, { layout: value })} className={segmentedItemClass(goal.layout === value)}>
+          {name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+const LANE_LABELS: Record<Lane, string> = { todo: "To do", doing: "Doing", done: "Done" };
+
+/** The goal's tasks as To do / Doing / Done. Dragging a card to another lane
+    changes its status (done_at follows, so the grid does too); each lane's
+    quick add makes an unplanned task with that status. */
+function GoalBoard({ goalId, items, today }: { goalId: string; items: Item[]; today: string }) {
+  const { mutations: m } = useSync();
+  const byLane = lanes(items, today);
+  return (
+    <Board
+      groups={LANES.map((id) => ({ id, items: byLane[id] }))}
+      itemLabel={(i) => i.title}
+      onMove={(item, lane, prev, next) => void m.update("items", item.id, { ...laneMove(item, lane as Lane), sort_key: keyBetween(prev, next) })}
+      renderItem={(item, { overlay }) => <ItemCard item={item} today={today} showPlace overlay={overlay} />}
+    >
+      {(list) => (
+        <div className="mx-auto flex w-full max-w-5xl items-start gap-3 overflow-x-auto pb-2">
+          {LANES.map((lane) => (
+            <section key={lane} className="bg-muted/60 flex w-72 shrink-0 flex-col rounded-xl p-1 md:w-auto md:min-w-56 md:flex-1">
+              <GroupHeader count={byLane[lane].length} className="px-[11px]">
+                {LANE_LABELS[lane]}
+              </GroupHeader>
+              <div className="px-0.5">{list(lane)}</div>
+              <QuickAdd place={INBOX} goalId={goalId} status={lane} placeholder="Add" />
+            </section>
+          ))}
+        </div>
+      )}
+    </Board>
   );
 }
 
