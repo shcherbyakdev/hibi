@@ -19,7 +19,9 @@ import { GroupHeader } from "@/features/planner/components/planner-board";
 import { ItemRow } from "@/features/items/components/item-row";
 import { QuickAdd } from "@/features/items/components/quick-add";
 import { isOpen } from "@/features/items/model";
-import { dayCounts } from "../model";
+import { dayCounts, weekCount } from "../model";
+import { usePrefs } from "@/lib/prefs";
+import { SEGMENTED_NAV_CLASS, segmentedItemClass } from "@/components/ui/segmented";
 import { useGoal, useGoalActions, useGoalItems } from "../use-goals";
 import { ContributionGrid } from "./contribution-grid";
 import { GoalStats } from "./goals-page";
@@ -30,6 +32,7 @@ export function GoalView({ id }: { id: string }) {
   const goal = useGoal(id);
   const items = useGoalItems(id);
   const today = useToday();
+  const { weekStart } = usePrefs();
   const actions = useGoalActions();
   if (goal === undefined || !items || !today) return null;
   if (goal === null) return <EmptyState title="Goal not found">It may have been deleted, or it hasn&apos;t synced to this device yet.</EmptyState>;
@@ -48,25 +51,10 @@ export function GoalView({ id }: { id: string }) {
           <span aria-hidden className={cn("size-2.5 shrink-0 rounded-[1px] bg-current", boardTone(goal))} />
           <InlineName value={goal.name} label="goal" maxLength={120} onSave={(n) => actions.edit(goal, { name: n })} />
         </h2>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <GoalStats goal={goal} counts={counts} today={today} />
-          <label className="text-subtle flex items-center gap-1.5 text-[12px]">
-            Aim for
-            <select
-              value={goal.weekly_target}
-              onChange={(e) => actions.edit(goal, { weekly_target: Number(e.target.value) })}
-              className="text-foreground bg-transparent outline-none focus-visible:underline"
-            >
-              {[1, 2, 3, 4, 5, 6, 7].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-            days a week
-          </label>
-        </div>
+        <GoalStats goal={goal} counts={counts} today={today} />
       </div>
+
+      <WeeklyAim goal={goal} done={weekCount(counts, today, weekStart)} />
 
       <div className="px-3">
         <ContributionGrid counts={counts} today={today} weeks={53} tone={boardTone(goal)} />
@@ -78,6 +66,44 @@ export function GoalView({ id }: { id: string }) {
 
       <TaskList title="Open" items={open} today={today} />
       {done.length ? <TaskList title="Done recently" items={done} today={today} /> : null}
+    </div>
+  );
+}
+
+const DAYS = [1, 2, 3, 4, 5, 6, 7] as const;
+
+/** Days a week to aim for (1–7), with this week's progress under it: one
+    segment per aimed day, filled in the goal's tone as days get done. */
+function WeeklyAim({ goal, done }: { goal: Goal; done: number }) {
+  const actions = useGoalActions();
+  return (
+    <div className="flex flex-col gap-2 px-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span id="weekly-aim" className="text-subtle font-mono text-[11px] tracking-[0.06em] uppercase">
+          Weekly aim
+        </span>
+        <div role="radiogroup" aria-labelledby="weekly-aim" className={SEGMENTED_NAV_CLASS}>
+          {DAYS.map((n) => (
+            <button
+              key={n}
+              type="button"
+              role="radio"
+              aria-checked={n === goal.weekly_target}
+              aria-label={`${n} ${n === 1 ? "day" : "days"} a week`}
+              onClick={() => actions.edit(goal, { weekly_target: n })}
+              className={segmentedItemClass(n === goal.weekly_target, "h-6 w-7 justify-center px-0 text-xs tabular-nums")}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+        <span className="text-subtle text-[12px]">{goal.weekly_target === 7 ? "every day" : "days a week"}</span>
+      </div>
+      <div aria-hidden className={cn("flex gap-[3px]", boardTone(goal))}>
+        {Array.from({ length: goal.weekly_target }, (_, i) => (
+          <span key={i} className={cn("h-1 flex-1 rounded-[1px]", i < done ? "bg-current" : "bg-foreground/[0.07]")} />
+        ))}
+      </div>
     </div>
   );
 }
