@@ -57,12 +57,15 @@ export function useGoalActions() {
         }
         return m.update("goals", goal.id, patch);
       },
-      /** Soft-deletes the goal; its tasks stay, unlinked (the UI confirms). */
-      async remove(goal: Goal) {
-        const items = await db.items.where("goal_id").equals(goal.id).toArray();
-        for (const i of items) await m.update("items", i.id, { goal_id: null });
-        await m.remove("goals", goal.id);
-      },
+      /** Soft-deletes the goal; its tasks stay, unlinked (the UI confirms).
+          One transaction: the mutations' own transactions nest in it, so a
+          crash can't leave a live goal with half its tasks unlinked. */
+      remove: (goal: Goal) =>
+        db.transaction("rw", db.items, db.goals, db.outbox, async () => {
+          const items = await db.items.where("goal_id").equals(goal.id).toArray();
+          for (const i of items) await m.update("items", i.id, { goal_id: null });
+          await m.remove("goals", goal.id);
+        }),
     }),
     [db, m],
   );

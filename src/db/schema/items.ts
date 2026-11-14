@@ -22,6 +22,9 @@ export const items = pgTable(
     planDate: date("plan_date"),
     boardId: uuid("board_id").references(() => boards.id, { onDelete: "set null" }),
     columnId: uuid("column_id").references(() => boardColumns.id, { onDelete: "set null" }),
+    // ponytail: like board_id (0001), this FK bypasses RLS, so a crafted write
+    // could point at another user's goal id. It leaks nothing (that goal stays
+    // invisible); add composite (id, user_id) FKs if goals are ever shared.
     goalId: uuid("goal_id").references(() => goals.id, { onDelete: "set null" }),
     sortKey: text("sort_key").notNull(),
     doneAt: timestamp("done_at", { withTimezone: true }),

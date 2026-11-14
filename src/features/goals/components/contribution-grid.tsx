@@ -26,13 +26,14 @@ export function ContributionGrid({ counts, today, weeks, tone }: { counts: DayCo
   return (
     <div ref={scroller} className="overflow-x-auto">
       <div role="img" aria-label={`${total} ${total === 1 ? "task" : "tasks"} done in the last ${weeks} weeks`} className={cn("flex w-max gap-[2px]", tone)}>
-        {cols.map((days) => {
+        {cols.map((days, i) => {
           const monthStart = days.find((d) => d.endsWith("-01"));
           return (
             <div key={days[0]} className="flex flex-col gap-[2px]">
-              {/* Labels overflow to the right so they never widen a column. */}
+              {/* Labels overflow sideways so they never widen a column — leftward in
+                  the last two columns, so they can't widen the grid either. */}
               <span aria-hidden className="text-subtle relative h-3 font-mono text-[9px] leading-3 uppercase">
-                {monthStart ? <span className="absolute left-0 whitespace-nowrap">{label.monthName(monthStart).slice(0, 3)}</span> : null}
+                {monthStart ? <span className={cn("absolute whitespace-nowrap", i >= cols.length - 2 ? "right-0" : "left-0")}>{label.monthName(monthStart).slice(0, 3)}</span> : null}
               </span>
               {days.map((d) => {
                 const n = counts.get(d) ?? 0;

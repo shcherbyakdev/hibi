@@ -219,6 +219,8 @@ function GoalField({ item }: { item: Item }) {
     <Field label="Goal">
       <DialogSelect aria-label="Goal" value={item.goal_id ?? ""} onChange={(e) => actions.setGoal(item, e.target.value || null)} className="h-8 w-40 text-[13px]">
         <option value="">None</option>
+        {/* Linked to a goal deleted elsewhere: show it, so "None" can unlink. */}
+        {item.goal_id && !goals.some((g) => g.id === item.goal_id) ? <option value={item.goal_id}>Deleted goal</option> : null}
         {goals.map((g) => (
           <option key={g.id} value={g.id}>
             {g.name}
