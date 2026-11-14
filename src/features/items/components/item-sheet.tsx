@@ -15,6 +15,8 @@ import { SEGMENTED_NAV_CLASS, segmentedItemClass } from "@/components/ui/segment
 import { periodOf } from "@/features/planner/periods";
 import { useBoards, useColumns } from "@/features/boards/use-boards";
 import { useGoals } from "@/features/goals/use-goals";
+import { DayPicker } from "@/features/routines/components/day-picker";
+import { useRoutine, useRoutineActions } from "@/features/routines/use-routines";
 import { useItemActions } from "../use-items";
 import { bySortKey, INBOX, isLive } from "../model";
 import { PRIORITY_LABELS } from "./priority-icon";
@@ -130,6 +132,7 @@ function DetailForm({ item, today, onClose }: { item: Item; today: string; onClo
         </Field>
         <BoardField item={item} />
         <GoalField item={item} />
+        <RepeatField item={item} />
       </div>
 
       <TimeSection item={item} />
@@ -209,6 +212,30 @@ function BoardField({ item }: { item: Item }) {
     const cols = (await db.board_columns.where("board_id").equals(boardId).filter(isLive).toArray()).sort(bySortKey);
     return cols[0]?.id ?? null;
   }
+}
+
+/** Never, or the weekdays its routine repeats on. On a plain task,
+    "Repeats" turns it into a routine (it becomes today's copy). */
+function RepeatField({ item }: { item: Item }) {
+  const routine = useRoutine(item.routine_id);
+  const actions = useRoutineActions();
+  if (routine === undefined) return null;
+  return (
+    <Field label="Repeat">
+      <div className="flex flex-1 flex-wrap items-center gap-2">
+        <DialogSelect
+          aria-label="Repeat"
+          value={routine ? "repeats" : ""}
+          onChange={(e) => void (e.target.value ? actions.fromTask(item) : routine && actions.remove(routine))}
+          className="h-8 w-28 text-[13px]"
+        >
+          <option value="">Never</option>
+          <option value="repeats">Repeats</option>
+        </DialogSelect>
+        {routine ? <DayPicker days={routine.days} onChange={(d) => actions.setDays(routine, d)} label="Repeat on" /> : null}
+      </div>
+    </Field>
+  );
 }
 
 function GoalField({ item }: { item: Item }) {

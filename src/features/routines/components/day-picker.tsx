@@ -21,7 +21,7 @@ export function DayPicker({ days, onChange, label }: { days: number; onChange: (
             onClick={() => onChange(toggleDay(days, d))}
             className={cn(
               "focus-visible:ring-ring/60 size-6 shrink-0 rounded-[2px] font-mono text-[10px] transition-colors duration-100 outline-none focus-visible:ring-2",
-              on ? "bg-foreground text-background" : "bg-foreground/[0.07] text-subtle hover:bg-foreground/[0.12]",
+              on ? "bg-foreground/[0.14] text-foreground" : "text-subtle/60 hover:bg-foreground/[0.06] hover:text-subtle",
             )}
           >
             {DAY_LETTERS[d]}

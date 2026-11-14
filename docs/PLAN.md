@@ -290,7 +290,21 @@ src/
    dot. Deleting a goal unlinks its tasks (they stay). Plan:
    `docs/superpowers/plans/2026-11-14-goals.md`.
 
-Later, not now: recurring items (pipline has `features/recurrence`), weekly
+10. **Recurring steps (routines).** Built: `routines` table (title,
+   priority, goal_id?, `days` weekday bitmask, bit 0 = Sunday, 127 = every
+   day) + `items.routine_id`, Dexie v5. `features/routines/`: the client
+   makes only **today's** copy of each due routine (`ensureToday`, run by
+   `RoutineRunner` after this session's first sync or when offline, at
+   midnight, and on routine edits). Copies get an id derived from
+   (routine, date) — two devices make one row — and `updated_at` =
+   2000-01-01, so a real edit always wins LWW (a lagging device can't
+   un-tick). A deleted copy = skipped day. Routine copies never show as
+   Overdue. UI: Routines section on a goal (day picker, rename, delete),
+   Repeat field in the task sheet (turns a task into a routine; Never
+   stops it), repeat icon on copies while the routine runs. Deleting a
+   goal deletes its routines. Plan: `docs/superpowers/plans/2026-11-14-recurring-steps.md`.
+
+Later, not now: monthly / interval routines, recurring items (pipline has `features/recurrence`), weekly
 review/stats, labels, calendar layout for boards, PWA offline install.
 
 ---

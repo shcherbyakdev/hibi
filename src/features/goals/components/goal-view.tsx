@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { MoreHorizontalIcon } from "@hugeicons/core-free-icons";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import type { Goal, Item } from "@/lib/sync/db";
 import { useToday } from "@/lib/use-today";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { BOARD_TONES, boardTone, type BoardToneKey } from "@/features/boards/tone";
-import { InlineName } from "@/features/boards/components/inline-name";
+import { AddNamed, InlineName } from "@/features/boards/components/inline-name";
+import { DayPicker } from "@/features/routines/components/day-picker";
+import { useGoalRoutines, useRoutineActions } from "@/features/routines/use-routines";
 import { GroupHeader } from "@/features/planner/components/planner-board";
 import { ItemRow } from "@/features/items/components/item-row";
 import { QuickAdd } from "@/features/items/components/quick-add";
@@ -63,6 +65,7 @@ export function GoalView({ id }: { id: string }) {
 
       <QuickAdd place={{ plan_scope: "day", plan_date: today }} goalId={goal.id} placeholder="Add a step for today" className="h-11 gap-3 px-3 text-[14px]" />
 
+      <Routines goalId={goal.id} />
       <TaskList title="Open" items={open} today={today} />
       {done.length ? <TaskList title="Done recently" items={done} today={today} /> : null}
     </div>
@@ -110,6 +113,30 @@ function WeeklyAim({ goal, done }: { goal: Goal; done: number }) {
       </div>
       <span className={cn("text-[13px] tabular-nums", hover === null ? "text-muted-foreground" : "text-foreground")}>{daysLabel(shown)}</span>
     </fieldset>
+  );
+}
+
+/** Steps that come back on their own; each due day's copy lands in Today. */
+function Routines({ goalId }: { goalId: string }) {
+  const routines = useGoalRoutines(goalId);
+  const actions = useRoutineActions();
+  if (!routines) return null;
+  return (
+    <section>
+      <GroupHeader count={routines.length} className="px-3">
+        Routines
+      </GroupHeader>
+      {routines.map((r) => (
+        <div key={r.id} className="group/routine flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1 border-b px-3 py-1.5 text-[14px]">
+          <InlineName value={r.title} label="routine" maxLength={500} onSave={(t) => actions.rename(r, t)} className="min-w-0 flex-1" />
+          <DayPicker days={r.days} onChange={(d) => actions.setDays(r, d)} label={`Days for ${r.title}`} />
+          <Button variant="ghost" size="icon-sm" aria-label={`Delete routine ${r.title}`} onClick={() => actions.remove(r)} className="text-subtle">
+            <X />
+          </Button>
+        </div>
+      ))}
+      <AddNamed label="Add a routine" maxLength={500} className="px-3" onAdd={(title) => void actions.create({ title, goal_id: goalId })} />
+    </section>
   );
 }
 
@@ -199,7 +226,7 @@ function GoalMenu({ goal, taskCount }: { goal: Goal; taskCount: number }) {
           <DialogHeader>
             <DialogTitle>Delete “{goal.name}”?</DialogTitle>
             <DialogDescription>
-              {taskCount ? `Its ${taskCount} task${taskCount === 1 ? "" : "s"} will stay, no longer linked to a goal. Its progress grid is lost.` : "The goal will be deleted."}
+              {taskCount ? `Its ${taskCount} task${taskCount === 1 ? "" : "s"} will stay, no longer linked to a goal. Its routines stop and its progress grid is lost.` : "The goal and its routines will be deleted."}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
