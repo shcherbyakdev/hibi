@@ -20,8 +20,7 @@ import { useGoalRoutines, useRoutineActions } from "@/features/routines/use-rout
 import { GroupHeader } from "@/features/planner/components/planner-board";
 import { ItemRow } from "@/features/items/components/item-row";
 import { QuickAdd } from "@/features/items/components/quick-add";
-import { isOpen } from "@/features/items/model";
-import { dayCounts, weekCount } from "../model";
+import { dayCounts, openSteps, weekCount } from "../model";
 import { usePrefs } from "@/lib/prefs";
 import { useGoal, useGoalActions, useGoalItems } from "../use-goals";
 import { ContributionGrid } from "./contribution-grid";
@@ -39,7 +38,7 @@ export function GoalView({ id }: { id: string }) {
   if (goal === null) return <EmptyState title="Goal not found">It may have been deleted, or it hasn&apos;t synced to this device yet.</EmptyState>;
 
   const counts = dayCounts(items, goal.id);
-  const open = items.filter(isOpen);
+  const open = openSteps(items, today);
   const done = items.filter((i) => i.done_at).sort((a, b) => (a.done_at! < b.done_at! ? 1 : -1)).slice(0, RECENT);
 
   return (

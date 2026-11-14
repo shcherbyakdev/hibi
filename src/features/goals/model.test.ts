@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { dayCounts, gridWeeks, level, streak, weekCount } from "./model";
+import { dayCounts, gridWeeks, level, openSteps, streak, weekCount } from "./model";
 
 const done = (at: string, over = {}) => ({ goal_id: "g", done_at: at, deleted_at: null, ...over });
 const realTZ = process.env.TZ;
@@ -49,5 +49,20 @@ describe("goal progress", () => {
     const c = new Map([["2026-11-09", 3], ["2026-11-14", 1], ["2026-11-08", 1]]);
     expect(weekCount(c, "2026-11-14", 1)).toBe(2);
     expect(weekCount(c, "2026-11-14", 0)).toBe(3); // Sunday week Nov 8–14 holds all three
+  });
+
+  it("lists open steps without piling up missed routine days", () => {
+    const step = (id: string, over = {}) => ({ id, status: "todo" as const, routine_id: null, plan_date: null, ...over });
+    const open = openSteps(
+      [
+        step("plain"),
+        step("old-plain", { plan_date: "2026-11-01" }),
+        step("done", { status: "done" as const }),
+        step("missed-copy", { routine_id: "r", plan_date: "2026-11-13" }),
+        step("today-copy", { routine_id: "r", plan_date: "2026-11-14" }),
+      ],
+      "2026-11-14",
+    );
+    expect(open.map((i) => i.id)).toEqual(["plain", "old-plain", "today-copy"]);
   });
 });

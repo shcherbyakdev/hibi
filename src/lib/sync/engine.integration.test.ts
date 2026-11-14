@@ -6,7 +6,7 @@ import { LocalDb } from "./db";
 import { createSyncEngine, type Rejection, type SyncEngine } from "./engine";
 import { createMutations, type Mutations } from "./mutate";
 import { toISODate } from "@/features/planner/periods";
-import { ensureToday } from "@/features/routines/generate";
+import { ensureToday, routineFromTask } from "@/features/routines/generate";
 import { occurrenceId } from "@/features/routines/model";
 
 // Two "devices" of one user: separate IndexedDB, separate session, separate
@@ -188,6 +188,15 @@ describe("sync engine", () => {
       const { data } = await a.client.from("items").select("status").eq("id", id).single();
       expect(data?.status).toBe("done");
       expect(b.rejected).toEqual([]);
+    });
+
+    it("turns an unplanned task into today's copy instead of adding a second one", async () => {
+      const id = await a.m.insert("items", newItem("From the inbox"));
+      const r = await routineFromTask(a.db, a.m, (await a.db.items.get(id))!, today);
+      expect(await ensureToday(a.db, a.m, today)).toBe(0);
+      const copies = await copiesOf(a, r);
+      expect(copies.map((c) => c.id)).toEqual([id]);
+      expect(copies[0]).toMatchObject({ plan_scope: "day", plan_date: today, routine_id: r });
     });
 
     it("leaves a skipped (deleted) copy or a converted task alone", async () => {

@@ -6,6 +6,8 @@ import type { Item, Routine } from "@/lib/sync/db";
 import { useSync } from "@/lib/sync/provider";
 import { isLive } from "@/features/items/model";
 import { EVERY_DAY } from "./model";
+import { routineFromTask } from "./generate";
+import { toISODate } from "@/features/planner/periods";
 
 /** undefined = still reading; null = none (or deleted). */
 export function useRoutine(id: string | null): Routine | null | undefined {
@@ -28,7 +30,7 @@ export function useGoalRoutines(goalId: string): Routine[] | undefined {
 const titleOf = (s: string) => s.trim().slice(0, 500);
 
 export function useRoutineActions() {
-  const { mutations: m } = useSync();
+  const { db, mutations: m } = useSync();
   return useMemo(
     () => ({
       /** The runner makes today's copy once the write lands. */
@@ -45,12 +47,8 @@ export function useRoutineActions() {
       /** Stops future copies; past ones stay. */
       remove: (r: Routine) => m.remove("routines", r.id),
       /** Turns a task into a routine; the task counts as today's copy. */
-      async fromTask(item: Item, days = EVERY_DAY): Promise<string> {
-        const id = await m.insert("routines", { title: item.title, priority: item.priority, goal_id: item.goal_id, days });
-        await m.update("items", item.id, { routine_id: id });
-        return id;
-      },
+      fromTask: (item: Item, days = EVERY_DAY) => routineFromTask(db, m, item, toISODate(new Date()), days),
     }),
-    [m],
+    [db, m],
   );
 }

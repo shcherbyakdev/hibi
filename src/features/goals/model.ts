@@ -46,3 +46,9 @@ export function weekCount(counts: DayCounts, today: string, weekStart: 0 | 1): n
   for (let d = start; d <= today; d = addDays(d, 1)) if (counts.has(d)) n++;
   return n;
 }
+
+/** A goal's open tasks, minus routine copies from past days: a missed
+    habit day is an empty cell, not another row to clear (as in Overdue). */
+export function openSteps<T extends Pick<Item, "status" | "routine_id" | "plan_date">>(items: T[], today: string): T[] {
+  return items.filter((i) => (i.status === "todo" || i.status === "doing") && !(i.routine_id && i.plan_date && i.plan_date < today));
+}
