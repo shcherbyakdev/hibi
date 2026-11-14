@@ -121,19 +121,40 @@ function TaskList({ title, items, today }: { title: string; items: Item[]; today
   );
 }
 
-/** Why this goal matters, saved on blur. */
+/** Why this goal matters. Saves as you pause typing, on blur and on
+    leaving the page. While not being edited it shows the synced value, so
+    an edit from another device appears (and isn't overwritten by a blur). */
 function Notes({ goal }: { goal: Goal }) {
   const actions = useGoalActions();
-  const [notes, setNotes] = React.useState(goal.notes);
+  const [draft, setDraft] = React.useState<string | null>(null); // null = not editing
+  const latest = React.useRef({ goal, draft });
+  React.useEffect(() => {
+    latest.current = { goal, draft };
+    if (draft === null || draft === goal.notes) return;
+    const t = setTimeout(() => void actions.edit(goal, { notes: draft }), 600);
+    return () => clearTimeout(t);
+  }, [draft, goal, actions]);
+  // Unmount: flush the last keystrokes.
+  React.useEffect(
+    () => () => {
+      const { goal, draft } = latest.current;
+      if (draft !== null && draft !== goal.notes) void actions.edit(goal, { notes: draft });
+    },
+    [actions],
+  );
   return (
     <textarea
-      value={notes}
+      value={draft ?? goal.notes}
       maxLength={20000}
       rows={2}
       placeholder="Why this matters"
       aria-label="Goal notes"
-      onChange={(e) => setNotes(e.target.value)}
-      onBlur={() => notes !== goal.notes && void actions.edit(goal, { notes })}
+      onFocus={() => setDraft(goal.notes)}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={() => {
+        if (draft !== null && draft !== goal.notes) void actions.edit(goal, { notes: draft });
+        setDraft(null);
+      }}
       className="placeholder:text-subtle field-sizing-content resize-none bg-transparent px-3 text-[14px] outline-none"
     />
   );
