@@ -61,6 +61,19 @@ describe("sync engine", () => {
     expect(after?.title).toBe("Written on the train");
   });
 
+  it("pushes a goal before the offline task that links to it", async () => {
+    a.online = false;
+    // Item first on purpose: push order, not write order, must satisfy the FK.
+    const goalId = crypto.randomUUID();
+    const itemId = await a.m.insert("items", { ...newItem("Anki 20 cards"), goal_id: goalId });
+    await a.m.insert("goals", { id: goalId, name: "Learn Japanese", notes: "", icon: null, weekly_target: 5, sort_key: "a0" });
+    a.online = true;
+    a.engine.sync();
+    await waitFor(async () => (await b.db.items.get(itemId))?.goal_id === goalId);
+    expect((await b.db.goals.get(goalId))?.name).toBe("Learn Japanese");
+    expect(a.rejected).toEqual([]);
+  });
+
   it("delivers an edit from one device to the other via realtime", async () => {
     const id = await a.m.insert("items", newItem("Shared"));
     // B never asks: realtime tells it something changed, it pulls.

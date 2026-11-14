@@ -8,12 +8,13 @@ export type Item = Omit<Tables<"items">, "status" | "plan_scope"> & { status: It
 export type Board = Omit<Tables<"boards">, "layout"> & { layout: BoardLayout };
 export type BoardColumn = Tables<"board_columns">;
 export type TimeEntry = Tables<"time_entries">;
+export type Goal = Tables<"goals">;
 
 /** Push order = FK order: a column's board before the column, an item
-    before its time entries. */
-export const SYNCED_TABLES = ["boards", "board_columns", "items", "time_entries"] as const;
+    before its time entries, a goal before the items linked to it. */
+export const SYNCED_TABLES = ["boards", "board_columns", "goals", "items", "time_entries"] as const;
 export type SyncedTable = (typeof SYNCED_TABLES)[number];
-export type RowOf<T extends SyncedTable> = { boards: Board; board_columns: BoardColumn; items: Item; time_entries: TimeEntry }[T];
+export type RowOf<T extends SyncedTable> = { boards: Board; board_columns: BoardColumn; goals: Goal; items: Item; time_entries: TimeEntry }[T];
 
 /** One per local write; drained by the engine. Only the id is queued: the
     push sends the row's CURRENT state, so ten edits cost one upsert. */
@@ -25,6 +26,7 @@ export class LocalDb extends Dexie {
   board_columns!: Table<BoardColumn, string>;
   items!: Table<Item, string>;
   time_entries!: Table<TimeEntry, string>;
+  goals!: Table<Goal, string>;
   outbox!: Table<OutboxEntry, number>;
   meta!: Table<Meta, string>;
 
@@ -47,6 +49,11 @@ export class LocalDb extends Dexie {
     // v3: timer sessions.
     this.version(3).stores({
       time_entries: "id, item_id",
+    });
+    // v4: goals, and items by goal.
+    this.version(4).stores({
+      goals: "id",
+      items: "id, [plan_scope+plan_date], board_id, status, goal_id",
     });
   }
 }
