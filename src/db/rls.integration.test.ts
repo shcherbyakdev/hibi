@@ -131,6 +131,26 @@ describe("goals", () => {
   });
 });
 
+describe("routines", () => {
+  const routine = (over: Record<string, unknown> = {}) => ({ id: randomUUID(), title: "Stretch", ...over });
+
+  it("are owner-only and can be linked from items", async () => {
+    const r = routine();
+    const ins = await a.client.from("routines").insert(r).select("user_id, days").single();
+    expect(ins.error).toBeNull();
+    expect(ins.data).toEqual({ user_id: a.id, days: 127 });
+    expect((await b.client.from("routines").select("id").eq("id", r.id)).data).toEqual([]);
+    expect((await b.client.from("routines").update({ title: "hijacked" }).eq("id", r.id).select("id")).data).toEqual([]);
+    expect((await a.client.from("items").insert(item({ routine_id: r.id }))).error).toBeNull();
+  });
+
+  it("reject empty day masks, out-of-range masks and empty titles", async () => {
+    expect((await a.client.from("routines").insert(routine({ days: 0 }))).error?.code).toBe("23514");
+    expect((await a.client.from("routines").insert(routine({ days: 128 }))).error?.code).toBe("23514");
+    expect((await a.client.from("routines").insert(routine({ title: "" }))).error?.code).toBe("23514");
+  });
+});
+
 describe("constraints", () => {
   it("requires plan_scope and plan_date together", async () => {
     const res = await a.client.from("items").insert(item({ plan_scope: "day" }));

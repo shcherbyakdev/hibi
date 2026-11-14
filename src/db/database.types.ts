@@ -190,6 +190,7 @@ export type Database = {
           plan_date: string | null
           plan_scope: string | null
           priority: number
+          routine_id: string | null
           sort_key: string
           status: string
           synced_at: string
@@ -209,6 +210,7 @@ export type Database = {
           plan_date?: string | null
           plan_scope?: string | null
           priority?: number
+          routine_id?: string | null
           sort_key: string
           status?: string
           synced_at?: string
@@ -228,6 +230,7 @@ export type Database = {
           plan_date?: string | null
           plan_scope?: string | null
           priority?: number
+          routine_id?: string | null
           sort_key?: string
           status?: string
           synced_at?: string
@@ -252,6 +255,60 @@ export type Database = {
           },
           {
             foreignKeyName: "items_goal_id_goals_id_fk"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_routine_id_routines_id_fk"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      routines: {
+        Row: {
+          created_at: string
+          days: number
+          deleted_at: string | null
+          goal_id: string | null
+          id: string
+          priority: number
+          synced_at: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          days?: number
+          deleted_at?: string | null
+          goal_id?: string | null
+          id?: string
+          priority?: number
+          synced_at?: string
+          title: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          days?: number
+          deleted_at?: string | null
+          goal_id?: string | null
+          id?: string
+          priority?: number
+          synced_at?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routines_goal_id_goals_id_fk"
             columns: ["goal_id"]
             isOneToOne: false
             referencedRelation: "goals"

@@ -40,6 +40,18 @@ export function createMutations(db: LocalDb, userId: string, kick: () => void) {
       return write(table, id, () => ({ ...row, id, user_id: userId, created_at: now, updated_at: now, synced_at: NEVER, deleted_at: null }) as unknown as RowOf<T>).then(() => id);
     },
 
+    /** Create-if-missing with a given updated_at (routine copies use an
+        old one, so real edits always win). True if it wrote. */
+    async ensure<T extends SyncedTable>(table: T, row: NewRow<T> & { id: string }, stamp: string): Promise<boolean> {
+      let wrote = false;
+      await write(table, row.id, (prev) => {
+        if (prev) return null;
+        wrote = true;
+        return { ...row, user_id: userId, created_at: nextStamp(), updated_at: stamp, synced_at: NEVER, deleted_at: null } as unknown as RowOf<T>;
+      });
+      return wrote;
+    },
+
     update<T extends SyncedTable>(table: T, id: string, patch: Patch<T>): Promise<void> {
       return write(table, id, (prev) => (prev ? { ...prev, ...patch, updated_at: nextStamp(prev.updated_at) } : null));
     },

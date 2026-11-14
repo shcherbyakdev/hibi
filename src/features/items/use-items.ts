@@ -77,6 +77,7 @@ export function useItemActions() {
           board_id: spot?.board_id ?? null,
           column_id: spot?.column_id ?? null,
           goal_id: goalId,
+          routine_id: null,
           sort_key: keyBetween(await lastKey(db, place, spot), null),
           done_at: null,
         });

@@ -5,6 +5,9 @@ import { createUser, signIn, waitFor, type TestUser } from "@/test/supabase";
 import { LocalDb } from "./db";
 import { createSyncEngine, type Rejection, type SyncEngine } from "./engine";
 import { createMutations, type Mutations } from "./mutate";
+import { toISODate } from "@/features/planner/periods";
+import { ensureToday } from "@/features/routines/generate";
+import { occurrenceId } from "@/features/routines/model";
 
 // Two "devices" of one user: separate IndexedDB, separate session, separate
 // engine. Device A's network can be cut. Runs against the local stack.
@@ -28,7 +31,7 @@ async function device(name: string): Promise<Device> {
 
 const newItem = (title: string) => ({
   title, notes: "", status: "todo" as const, priority: 0, plan_scope: null, plan_date: null,
-  board_id: null, column_id: null, goal_id: null, sort_key: "a0", done_at: null,
+  board_id: null, column_id: null, goal_id: null, routine_id: null, sort_key: "a0", done_at: null,
 });
 
 beforeAll(async () => {
@@ -140,5 +143,62 @@ describe("sync engine", () => {
     const count = await waitFor(async () => (await c.db.items.count()) || 0);
     expect(count).toBe(await a.db.items.count());
     c.engine.stop();
+  });
+
+  describe("routines", () => {
+    const today = toISODate(new Date());
+    const newRoutine = (title: string) => ({ title, priority: 0, goal_id: null, days: 127 });
+    const copiesOf = async (d: Device, routineId: string) => (await d.db.items.where("routine_id").equals(routineId).toArray()).filter((i) => i.plan_date === today);
+
+    it("makes today's copy once per device", async () => {
+      const r = await a.m.insert("routines", newRoutine("Once"));
+      expect(await ensureToday(a.db, a.m, today)).toBeGreaterThanOrEqual(1);
+      expect(await ensureToday(a.db, a.m, today)).toBe(0);
+      expect((await copiesOf(a, r)).length).toBe(1);
+    });
+
+    it("makes one server row when two offline devices both make it", async () => {
+      const r = await a.m.insert("routines", newRoutine("Both"));
+      await waitFor(async () => (await b.db.routines.get(r)) !== undefined);
+      a.online = false;
+      b.online = false;
+      await ensureToday(a.db, a.m, today);
+      await ensureToday(b.db, b.m, today);
+      a.online = b.online = true;
+      a.engine.sync();
+      b.engine.sync();
+      await waitFor(async () => (await a.db.outbox.count()) === 0 && (await b.db.outbox.count()) === 0);
+      const { data } = await a.client.from("items").select("id").eq("routine_id", r).eq("plan_date", today);
+      expect(data).toEqual([{ id: await occurrenceId(r, today) }]);
+    });
+
+    it("never undoes a tick when a lagging device makes the copy later", async () => {
+      const r = await a.m.insert("routines", newRoutine("Tick"));
+      await waitFor(async () => (await b.db.routines.get(r)) !== undefined);
+      b.online = false;
+      await ensureToday(a.db, a.m, today);
+      const id = await occurrenceId(r, today);
+      await a.m.update("items", id, { status: "done", done_at: new Date().toISOString() });
+      await waitFor(async () => (await a.db.outbox.count()) === 0);
+
+      expect(await ensureToday(b.db, b.m, today)).toBeGreaterThanOrEqual(1); // B never saw A's copy
+      b.online = true;
+      b.engine.sync();
+      await waitFor(async () => (await b.db.items.get(id))?.status === "done");
+      const { data } = await a.client.from("items").select("status").eq("id", id).single();
+      expect(data?.status).toBe("done");
+      expect(b.rejected).toEqual([]);
+    });
+
+    it("leaves a skipped (deleted) copy or a converted task alone", async () => {
+      const r1 = await a.m.insert("routines", newRoutine("Skipped"));
+      await ensureToday(a.db, a.m, today);
+      await a.m.remove("items", await occurrenceId(r1, today));
+      const r2 = await a.m.insert("routines", newRoutine("Converted"));
+      await a.m.insert("items", { ...newItem("Converted"), plan_scope: "day", plan_date: today, routine_id: r2 });
+      expect(await ensureToday(a.db, a.m, today)).toBe(0);
+      expect((await copiesOf(a, r1)).length).toBe(1);
+      expect((await copiesOf(a, r2)).length).toBe(1);
+    });
   });
 });

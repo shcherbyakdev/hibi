@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { syncColumns } from "./sync";
 import { boardColumns, boards } from "./boards";
 import { goals } from "./goals";
+import { routines } from "./routines";
 
 import { ITEM_STATUSES, PLAN_SCOPES } from "../enums";
 
@@ -26,6 +27,8 @@ export const items = pgTable(
     // could point at another user's goal id. It leaks nothing (that goal stays
     // invisible); add composite (id, user_id) FKs if goals are ever shared.
     goalId: uuid("goal_id").references(() => goals.id, { onDelete: "set null" }),
+    // Set on a routine's daily copy (features/routines).
+    routineId: uuid("routine_id").references(() => routines.id, { onDelete: "set null" }),
     sortKey: text("sort_key").notNull(),
     doneAt: timestamp("done_at", { withTimezone: true }),
   },
@@ -34,6 +37,7 @@ export const items = pgTable(
     index("items_board_id_idx").on(t.boardId),
     index("items_column_id_idx").on(t.columnId),
     index("items_goal_id_idx").on(t.goalId),
+    index("items_routine_id_idx").on(t.routineId),
     check("items_title_len", sql`char_length(${t.title}) between 1 and 500`),
     check("items_notes_len", sql`char_length(${t.notes}) <= 20000`),
     check("items_status_valid", sql`${t.status} in ('todo', 'doing', 'done', 'dropped')`),
