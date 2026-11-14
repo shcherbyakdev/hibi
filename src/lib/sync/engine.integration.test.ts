@@ -221,9 +221,13 @@ describe("sync engine", () => {
       items: "id, [plan_scope+plan_date], board_id, status, goal_id, routine_id",
     });
     const id = crypto.randomUUID();
+    const boardId = crypto.randomUUID(); // the migration made a goal with this id
+    const doneCol = crypto.randomUUID();
+    await a.client.from("goals").insert({ id: boardId, name: "Was a board", sort_key: "a0" });
     const now = new Date().toISOString();
+    await legacy.table("board_columns").put({ id: doneCol, board_id: boardId, name: " Done ", deleted_at: null });
     await legacy.table("items").put({
-      ...newItem("Old device task"), id, user_id: user.id, board_id: crypto.randomUUID(), column_id: crypto.randomUUID(),
+      ...newItem("Old device task"), id, user_id: user.id, board_id: boardId, column_id: doneCol,
       created_at: now, updated_at: now, synced_at: "1970-01-01T00:00:00.000Z", deleted_at: null,
     });
     await legacy.table("outbox").bulkAdd([{ table: "boards", id: "gone" }, { table: "items", id }]);
@@ -232,10 +236,13 @@ describe("sync engine", () => {
     const dev = await device("legacy");
     await waitFor(async () => (await dev.db.outbox.count()) === 0 && dev.engine.getPhase() === "idle");
     expect(dev.rejected.map((r) => r.error.code + " " + r.error.message)).toEqual([]);
-    expect(Object.keys((await dev.db.items.get(id))!)).not.toContain("board_id");
-    expect(dev.rejected).toEqual([]);
-    const { data } = await dev.client.from("items").select("title").eq("id", id).single();
-    expect(data?.title).toBe("Old device task");
+    // The upgrade folds locally too, so its push can't undo the server's fold.
+    const local = (await dev.db.items.get(id))!;
+    expect(Object.keys(local)).not.toContain("board_id");
+    expect(local).toMatchObject({ goal_id: boardId, status: "done" });
+    expect(local.done_at).not.toBeNull();
+    const { data } = await dev.client.from("items").select("title, goal_id, status").eq("id", id).single();
+    expect(data).toEqual({ title: "Old device task", goal_id: boardId, status: "done" });
     dev.engine.stop();
   });
 });

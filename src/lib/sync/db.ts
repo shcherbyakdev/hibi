@@ -58,26 +58,46 @@ export class LocalDb extends Dexie {
       routines: "id",
       items: "id, [plan_scope+plan_date], board_id, status, goal_id, routine_id",
     });
-    // v6: boards folded into goals. Drop their tables and strip the gone
-    // fields from local items, so a push never sends columns the server
-    // no longer has. Stale outbox entries for the dropped tables are
-    // skipped by the engine (not in SYNCED_TABLES) and cleared with the rest.
+    // v6: boards folded into goals (migration 0011). Apply the same fold to
+    // local items — goal from the board, status from the column — so a push
+    // of a local copy can't undo the server's, then strip the gone fields
+    // so a push never sends columns the server no longer has. Dropped
+    // tables are still readable here (Dexie deletes them after upgraders).
+    // Stale outbox entries for them are skipped by the engine and cleared.
     this.version(6)
       .stores({
         boards: null,
         board_columns: null,
         items: "id, [plan_scope+plan_date], status, goal_id, routine_id",
       })
-      .upgrade((tx) =>
-        tx
+      .upgrade(async (tx) => {
+        const columns = new Map(
+          (await tx.table("board_columns").toArray())
+            .filter((c) => !c.deleted_at)
+            .map((c) => [c.id as string, String(c.name).trim().toLowerCase()]),
+        );
+        await tx
           .table("items")
           .toCollection()
           .modify((i: Record<string, unknown>) => {
+            if (i.board_id) Object.assign(i, foldBoardItem(i, columns.get(i.column_id as string)));
             delete i.board_id;
             delete i.column_id;
-          }),
-      );
+          });
+      });
   }
+}
+
+/** Migration 0011's fold for one board item, given its live column's
+    lowercased name: its own goal wins, else the board's (same id); a "done"
+    column marks it done (keeping or stamping done_at), "doing" moves a todo
+    to doing; dropped tasks stay dropped. Exported for the test. */
+export function foldBoardItem(i: Record<string, unknown>, column: string | undefined): Record<string, unknown> {
+  const out: Record<string, unknown> = { goal_id: i.goal_id ?? i.board_id };
+  if (i.status === "dropped") return out;
+  if (column === "done") Object.assign(out, { status: "done", done_at: i.done_at ?? i.updated_at });
+  else if (column === "doing" && i.status === "todo") out.status = "doing";
+  return out;
 }
 
 /** One database per user, so a second account on this browser never sees
