@@ -74,6 +74,21 @@ describe("sync engine", () => {
     expect(a.rejected).toEqual([]);
   });
 
+  it("keeps parents before children even when the outbox spans pages", async () => {
+    a.online = false;
+    const itemId = await a.m.insert("items", newItem("Long offline stretch"));
+    // More queued writes than one push page (500) between the child and its parent.
+    for (let i = 0; i < 510; i++) await a.m.update("items", itemId, { notes: `edit ${i}` });
+    const goalId = await a.m.insert("goals", { name: "Late goal", notes: "", icon: null, weekly_target: 5, sort_key: "a0" });
+    await a.m.update("items", itemId, { goal_id: goalId });
+    a.online = true;
+    a.engine.sync();
+    await waitFor(async () => (await a.db.outbox.count()) === 0 && a.engine.getPhase() === "idle", 20_000);
+    expect(a.rejected.map((r) => r.error.code)).toEqual([]);
+    expect((await a.db.items.get(itemId))?.goal_id).toBe(goalId);
+    await waitFor(async () => (await b.db.items.get(itemId))?.goal_id === goalId);
+  }, 30_000);
+
   it("delivers an edit from one device to the other via realtime", async () => {
     const id = await a.m.insert("items", newItem("Shared"));
     // B never asks: realtime tells it something changed, it pulls.

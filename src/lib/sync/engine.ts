@@ -93,11 +93,15 @@ export function createSyncEngine({
 
   async function push() {
     for (;;) {
-      const entries = await db.outbox.orderBy("seq").limit(PAGE).toArray();
+      // The whole outbox at once, so FK order (parents' tables first) holds
+      // across everything queued — paging it could send a child whose parent
+      // sits on a later page, and the server would refuse it (23503).
+      // ponytail: entries are {table, id} only; fine to ~100k queued writes.
+      const entries = await db.outbox.orderBy("seq").toArray();
       if (!entries.length) return;
       for (const table of SYNCED_TABLES) {
         const ids = [...new Set(entries.filter((e) => e.table === table).map((e) => e.id))];
-        if (ids.length) await pushTable(table, ids);
+        for (let i = 0; i < ids.length; i += PAGE) await pushTable(table, ids.slice(i, i + PAGE));
       }
       // Only what was read: edits queued meanwhile have higher seqs and stay.
       await db.outbox.where("seq").belowOrEqual(entries[entries.length - 1].seq!).delete();
