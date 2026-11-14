@@ -6,12 +6,13 @@ import { useTheme } from "next-themes";
 import { useLiveQuery } from "dexie-react-hooks";
 import { Moon, Plus, Sun } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkCircle02Icon, CircleIcon, DashboardSquare02Icon } from "@hugeicons/core-free-icons";
+import { CheckmarkCircle02Icon, CircleIcon } from "@hugeicons/core-free-icons";
+import { cn } from "@/lib/utils";
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { NAV_ITEMS } from "@/components/shell/nav";
 import { useSync } from "@/lib/sync/provider";
 import { focusQuickAdd } from "@/lib/focus-quick-add";
-import { useBoards } from "@/features/boards/use-boards";
+import { useGoals } from "@/features/goals/use-goals";
 import { toneClass } from "@/lib/tone";
 import { useItemSheet } from "@/features/items/components/item-sheet";
 import { isLive, placeLabel } from "@/features/items/model";
@@ -30,7 +31,7 @@ export function CommandMenu() {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const { db } = useSync();
-  const boards = useBoards();
+  const goals = useGoals();
   const sheet = useItemSheet();
   const timer = useTimer();
 
@@ -68,7 +69,7 @@ export function CommandMenu() {
 
   return (
     <CommandDialog open={open} onOpenChange={(o) => (setOpen(o), o || setQuery(""))}>
-      <CommandInput placeholder="Search tasks, boards, commands…" value={query} onValueChange={setQuery} />
+      <CommandInput placeholder="Search tasks, goals, commands…" value={query} onValueChange={setQuery} />
       <CommandList>
         <CommandEmpty>No results.</CommandEmpty>
         {tasks.length ? (
@@ -116,11 +117,11 @@ export function CommandMenu() {
             </CommandItem>
           ))}
         </CommandGroup>
-        {boards?.length ? (
-          <CommandGroup heading="Boards">
-            {boards.map((b) => (
-              <CommandItem key={b.id} value={`board ${b.name} ${b.id}`} onSelect={() => run(() => router.push(`/boards/${b.id}`))}>
-                <HugeiconsIcon icon={DashboardSquare02Icon} size={16} className={toneClass(b)} /> {b.name}
+        {goals?.length ? (
+          <CommandGroup heading="Goals">
+            {goals.map((g) => (
+              <CommandItem key={g.id} value={`goal ${g.name} ${g.id}`} onSelect={() => run(() => router.push(`/goals/${g.id}`))}>
+                <span aria-hidden className={cn("size-2.5 rounded-[1px] bg-current", toneClass(g))} /> {g.name}
               </CommandItem>
             ))}
           </CommandGroup>

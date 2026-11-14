@@ -13,12 +13,11 @@ import { DialogSelect } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SEGMENTED_NAV_CLASS, segmentedItemClass } from "@/components/ui/segmented";
 import { periodOf } from "@/features/planner/periods";
-import { useBoards, useColumns } from "@/features/boards/use-boards";
 import { useGoals } from "@/features/goals/use-goals";
 import { DayPicker } from "@/features/routines/components/day-picker";
 import { useRoutine, useRoutineActions } from "@/features/routines/use-routines";
 import { useItemActions } from "../use-items";
-import { bySortKey, INBOX, isLive } from "../model";
+import { INBOX, isLive } from "../model";
 import { PRIORITY_LABELS } from "./priority-icon";
 import { TimeSection } from "@/features/time/components/time-section";
 
@@ -130,7 +129,6 @@ function DetailForm({ item, today, onClose }: { item: Item; today: string; onClo
             ) : null}
           </div>
         </Field>
-        <BoardField item={item} />
         <GoalField item={item} />
         <RepeatField item={item} />
       </div>
@@ -166,52 +164,6 @@ function DetailForm({ item, today, onClose }: { item: Item; today: string; onClo
       </div>
     </div>
   );
-}
-
-function BoardField({ item }: { item: Item }) {
-  const { db } = useSync();
-  const actions = useItemActions();
-  const boards = useBoards();
-  const columns = useColumns(item.board_id ?? "");
-  if (!boards) return null;
-  return (
-    <Field label="Board">
-      <div className="flex flex-1 gap-2">
-        <DialogSelect
-          aria-label="Board"
-          value={item.board_id ?? ""}
-          onChange={(e) => {
-            const boardId = e.target.value;
-            // A new board starts in its first column (looked up on write).
-            void (boardId ? firstColumn(boardId).then((col) => actions.moveToBoard(item, { board_id: boardId, column_id: col })) : actions.moveToBoard(item, null));
-          }}
-          className="h-8 w-40 text-[13px]"
-        >
-          <option value="">None</option>
-          {boards.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.name}
-            </option>
-          ))}
-        </DialogSelect>
-        {item.board_id && columns ? (
-          <DialogSelect aria-label="Column" value={item.column_id ?? ""} onChange={(e) => actions.moveToBoard(item, { board_id: item.board_id!, column_id: e.target.value || null })} className="h-8 flex-1 text-[13px]">
-            <option value="">No column</option>
-            {columns.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </DialogSelect>
-        ) : null}
-      </div>
-    </Field>
-  );
-
-  async function firstColumn(boardId: string): Promise<string | null> {
-    const cols = (await db.board_columns.where("board_id").equals(boardId).filter(isLive).toArray()).sort(bySortKey);
-    return cols[0]?.id ?? null;
-  }
 }
 
 /** Never, or the weekdays its routine repeats on. On a plain task,

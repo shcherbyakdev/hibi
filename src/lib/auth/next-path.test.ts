@@ -24,7 +24,7 @@ describe("safeNextPath", () => {
 
 describe("isProtectedPath", () => {
   it("protects the app", () => {
-    for (const p of ["/", "/plan/week", "/boards/abc", "/settings"]) expect(isProtectedPath(p), p).toBe(true);
+    for (const p of ["/", "/plan/week", "/goals/abc", "/settings"]) expect(isProtectedPath(p), p).toBe(true);
   });
   it("leaves auth surfaces public", () => {
     for (const p of ["/login", "/signup", "/invite", "/auth/confirm"]) expect(isProtectedPath(p), p).toBe(false);

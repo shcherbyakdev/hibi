@@ -1,14 +1,13 @@
 import { check, date, index, pgTable, smallint, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { syncColumns } from "./sync";
-import { boardColumns, boards } from "./boards";
 import { goals } from "./goals";
 import { routines } from "./routines";
 
 import { ITEM_STATUSES, PLAN_SCOPES } from "../enums";
 
-// One table for everything: the planner is a view by plan_scope/plan_date,
-// a board is a view by board_id. An item can be on a board AND planned.
+// One table for every task: the planner is a view by plan_scope/plan_date,
+// a goal is a view by goal_id. A task can belong to a goal AND be planned.
 export const items = pgTable(
   "items",
   {
@@ -21,9 +20,7 @@ export const items = pgTable(
     planScope: text("plan_scope", { enum: PLAN_SCOPES }),
     // The day, the first day of the week, or the 1st of the month.
     planDate: date("plan_date"),
-    boardId: uuid("board_id").references(() => boards.id, { onDelete: "set null" }),
-    columnId: uuid("column_id").references(() => boardColumns.id, { onDelete: "set null" }),
-    // ponytail: like board_id (0001), this FK bypasses RLS, so a crafted write
+    // ponytail: like every cross-row FK here, this bypasses RLS, so a crafted write
     // could point at another user's goal id. It leaks nothing (that goal stays
     // invisible); add composite (id, user_id) FKs if goals are ever shared.
     goalId: uuid("goal_id").references(() => goals.id, { onDelete: "set null" }),
@@ -34,8 +31,6 @@ export const items = pgTable(
   },
   (t) => [
     index("items_user_synced_idx").on(t.userId, t.syncedAt),
-    index("items_board_id_idx").on(t.boardId),
-    index("items_column_id_idx").on(t.columnId),
     index("items_goal_id_idx").on(t.goalId),
     index("items_routine_id_idx").on(t.routineId),
     check("items_title_len", sql`char_length(${t.title}) between 1 and 500`),

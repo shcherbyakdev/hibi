@@ -47,16 +47,10 @@ export function keyForStep(list: { sort_key: string }[], i: number, dir: -1 | 1)
     : keyBetween(list[j - 1]?.sort_key ?? null, list[j].sort_key);
 }
 
-/** Where an item is planned. null scope = unplanned (the Inbox, if it's on
-    no board either). */
+/** Where an item is planned. null scope = unplanned (the Inbox, if it's in
+    no goal either). */
 export type Place = { plan_scope: PlanScope | null; plan_date: string | null };
 export const INBOX: Place = { plan_scope: null, plan_date: null };
-
-/** Where an item sits on a board. column_id null = the "No column" group.
-    ponytail: an item has ONE sort_key, shared by its planner list and its
-    board column, so reordering in one can shuffle it in the other. Split
-    into two keys if that ever feels wrong. */
-export type Spot = { board_id: string; column_id: string | null };
 
 /** Drag-and-drop group ids are places: "day:2026-11-13", "week:…", "inbox". */
 export const placeId = (p: Place) => (p.plan_scope ? `${p.plan_scope}:${p.plan_date}` : "inbox");

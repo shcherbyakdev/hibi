@@ -52,95 +52,13 @@ export type Database = {
         }
         Relationships: []
       }
-      board_columns: {
-        Row: {
-          board_id: string
-          created_at: string
-          deleted_at: string | null
-          id: string
-          name: string
-          sort_key: string
-          synced_at: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          board_id: string
-          created_at?: string
-          deleted_at?: string | null
-          id?: string
-          name: string
-          sort_key: string
-          synced_at?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Update: {
-          board_id?: string
-          created_at?: string
-          deleted_at?: string | null
-          id?: string
-          name?: string
-          sort_key?: string
-          synced_at?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "board_columns_board_id_boards_id_fk"
-            columns: ["board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      boards: {
-        Row: {
-          created_at: string
-          deleted_at: string | null
-          icon: string | null
-          id: string
-          layout: string
-          name: string
-          sort_key: string
-          synced_at: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          deleted_at?: string | null
-          icon?: string | null
-          id?: string
-          layout?: string
-          name: string
-          sort_key: string
-          synced_at?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Update: {
-          created_at?: string
-          deleted_at?: string | null
-          icon?: string | null
-          id?: string
-          layout?: string
-          name?: string
-          sort_key?: string
-          synced_at?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       goals: {
         Row: {
           created_at: string
           deleted_at: string | null
           icon: string | null
           id: string
+          layout: string
           name: string
           notes: string
           sort_key: string
@@ -154,6 +72,7 @@ export type Database = {
           deleted_at?: string | null
           icon?: string | null
           id?: string
+          layout?: string
           name: string
           notes?: string
           sort_key: string
@@ -167,6 +86,7 @@ export type Database = {
           deleted_at?: string | null
           icon?: string | null
           id?: string
+          layout?: string
           name?: string
           notes?: string
           sort_key?: string
@@ -179,8 +99,6 @@ export type Database = {
       }
       items: {
         Row: {
-          board_id: string | null
-          column_id: string | null
           created_at: string
           deleted_at: string | null
           done_at: string | null
@@ -199,8 +117,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          board_id?: string | null
-          column_id?: string | null
           created_at?: string
           deleted_at?: string | null
           done_at?: string | null
@@ -219,8 +135,6 @@ export type Database = {
           user_id?: string
         }
         Update: {
-          board_id?: string | null
-          column_id?: string | null
           created_at?: string
           deleted_at?: string | null
           done_at?: string | null
@@ -239,20 +153,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "items_board_id_boards_id_fk"
-            columns: ["board_id"]
-            isOneToOne: false
-            referencedRelation: "boards"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "items_column_id_board_columns_id_fk"
-            columns: ["column_id"]
-            isOneToOne: false
-            referencedRelation: "board_columns"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "items_goal_id_goals_id_fk"
             columns: ["goal_id"]

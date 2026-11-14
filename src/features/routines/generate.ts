@@ -28,8 +28,6 @@ export async function ensureToday(db: LocalDb, m: Mutations, today: string): Pro
         priority: r.priority,
         plan_scope: "day",
         plan_date: today,
-        board_id: null,
-        column_id: null,
         goal_id: r.goal_id,
         routine_id: r.id,
         sort_key,

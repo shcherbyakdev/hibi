@@ -1,4 +1,3 @@
-export * from "./boards";
 export * from "./goals";
 export * from "./routines";
 export * from "./items";

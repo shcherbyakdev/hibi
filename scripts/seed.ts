@@ -45,22 +45,17 @@ async function demoUserId(): Promise<string> {
 
 async function main() {
   const userId = await demoUserId();
-  // Boards cascade to columns; items go explicitly (their board FK is set null).
-  for (const table of ["items", "boards"] as const) {
+  // Items first: their goal FK is set null, routines' too.
+  for (const table of ["items", "routines", "goals"] as const) {
     const { error } = await admin.from(table).delete().eq("user_id", userId);
     if (error) throw error;
   }
 
-  const boardId = crypto.randomUUID();
-  const colKeys = generateNKeysBetween(null, null, 3);
-  const cols = ["Backlog", "Doing", "Done"].map((name, i) => ({
-    id: crypto.randomUUID(), user_id: userId, board_id: boardId, name, sort_key: colKeys[i],
-  }));
+  const goalId = crypto.randomUUID();
   const must = <T>(r: { error: unknown; data?: T }) => {
     if (r.error) throw r.error;
   };
-  must(await admin.from("boards").insert({ id: boardId, user_id: userId, name: "Side project", layout: "kanban", sort_key: "a0" }));
-  must(await admin.from("board_columns").insert(cols));
+  must(await admin.from("goals").insert({ id: goalId, user_id: userId, name: "Side project", icon: "purple", layout: "board", sort_key: "a0" }));
 
   const items: Array<Record<string, unknown>> = [
     { title: "Morning run", plan_scope: "day", plan_date: addDays(0), priority: 3 },
@@ -70,9 +65,9 @@ async function main() {
     { title: "Groceries", plan_scope: "day", plan_date: addDays(1) },
     { title: "Plan the trip", plan_scope: "week", plan_date: weekStart, priority: 2 },
     { title: "Finish online course module", plan_scope: "month", plan_date: monthStart },
-    { title: "Sketch landing page", board_id: boardId, column_id: cols[1].id },
-    { title: "Set up analytics", board_id: boardId, column_id: cols[0].id },
-    { title: "Buy a domain", board_id: boardId, column_id: cols[2].id, status: "done", done_at: new Date().toISOString() },
+    { title: "Sketch landing page", goal_id: goalId, status: "doing" },
+    { title: "Set up analytics", goal_id: goalId },
+    { title: "Buy a domain", goal_id: goalId, status: "done", done_at: new Date().toISOString() },
     { title: "Someday: learn piano" },
   ];
   const keys = generateNKeysBetween(null, null, items.length);
@@ -81,7 +76,7 @@ async function main() {
     defaultToNull: false,
   }));
 
-  console.log(`  ✓ seeded ${EMAIL} / ${PASSWORD} — 1 board, ${cols.length} columns, ${items.length} items`);
+  console.log(`  ✓ seeded ${EMAIL} / ${PASSWORD} — 1 goal, ${items.length} items`);
 }
 
 main().catch((e) => {

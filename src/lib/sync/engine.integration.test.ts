@@ -1,4 +1,5 @@
 import "fake-indexeddb/auto";
+import Dexie from "dexie";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createUser, signIn, waitFor, type TestUser } from "@/test/supabase";
@@ -31,7 +32,7 @@ async function device(name: string): Promise<Device> {
 
 const newItem = (title: string) => ({
   title, notes: "", status: "todo" as const, priority: 0, plan_scope: null, plan_date: null,
-  board_id: null, column_id: null, goal_id: null, routine_id: null, sort_key: "a0", done_at: null,
+  goal_id: null, routine_id: null, sort_key: "a0", done_at: null,
 });
 
 beforeAll(async () => {
@@ -69,7 +70,7 @@ describe("sync engine", () => {
     // Item first on purpose: push order, not write order, must satisfy the FK.
     const goalId = crypto.randomUUID();
     const itemId = await a.m.insert("items", { ...newItem("Anki 20 cards"), goal_id: goalId });
-    await a.m.insert("goals", { id: goalId, name: "Learn Japanese", notes: "", icon: null, weekly_target: 5, sort_key: "a0" });
+    await a.m.insert("goals", { id: goalId, name: "Learn Japanese", notes: "", icon: null, weekly_target: 5, layout: "list" as const, sort_key: "a0" });
     a.online = true;
     a.engine.sync();
     await waitFor(async () => (await b.db.items.get(itemId))?.goal_id === goalId);
@@ -82,7 +83,7 @@ describe("sync engine", () => {
     const itemId = await a.m.insert("items", newItem("Long offline stretch"));
     // More queued writes than one push page (500) between the child and its parent.
     for (let i = 0; i < 510; i++) await a.m.update("items", itemId, { notes: `edit ${i}` });
-    const goalId = await a.m.insert("goals", { name: "Late goal", notes: "", icon: null, weekly_target: 5, sort_key: "a0" });
+    const goalId = await a.m.insert("goals", { name: "Late goal", notes: "", icon: null, weekly_target: 5, layout: "list" as const, sort_key: "a0" });
     await a.m.update("items", itemId, { goal_id: goalId });
     a.online = true;
     a.engine.sync();
@@ -209,5 +210,32 @@ describe("sync engine", () => {
       expect((await copiesOf(a, r1)).length).toBe(1);
       expect((await copiesOf(a, r2)).length).toBe(1);
     });
+  });
+
+  it("upgrades a device whose local rows still carry board fields", async () => {
+    // A device last opened before boards were folded into goals (Dexie v5).
+    const name = `test-legacy-${user.id}`;
+    const legacy = new Dexie(name);
+    legacy.version(5).stores({
+      boards: "id", board_columns: "id, board_id", outbox: "++seq", meta: "key", time_entries: "id, item_id", goals: "id", routines: "id",
+      items: "id, [plan_scope+plan_date], board_id, status, goal_id, routine_id",
+    });
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+    await legacy.table("items").put({
+      ...newItem("Old device task"), id, user_id: user.id, board_id: crypto.randomUUID(), column_id: crypto.randomUUID(),
+      created_at: now, updated_at: now, synced_at: "1970-01-01T00:00:00.000Z", deleted_at: null,
+    });
+    await legacy.table("outbox").bulkAdd([{ table: "boards", id: "gone" }, { table: "items", id }]);
+    legacy.close();
+
+    const dev = await device("legacy");
+    await waitFor(async () => (await dev.db.outbox.count()) === 0 && dev.engine.getPhase() === "idle");
+    expect(dev.rejected.map((r) => r.error.code + " " + r.error.message)).toEqual([]);
+    expect(Object.keys((await dev.db.items.get(id))!)).not.toContain("board_id");
+    expect(dev.rejected).toEqual([]);
+    const { data } = await dev.client.from("items").select("title").eq("id", id).single();
+    expect(data?.title).toBe("Old device task");
+    dev.engine.stop();
   });
 });

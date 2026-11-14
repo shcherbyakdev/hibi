@@ -47,6 +47,7 @@ export function useGoalActions() {
           notes: "",
           icon: nextTone(existing.map((g) => g.icon)),
           weekly_target: 5,
+          layout: "list",
           sort_key: keyBetween(existing.at(-1)?.sort_key ?? null, null),
         });
       },

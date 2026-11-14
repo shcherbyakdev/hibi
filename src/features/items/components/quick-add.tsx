@@ -3,14 +3,15 @@
 import * as React from "react";
 import { Plus } from "lucide-react";
 import { useItemActions } from "../use-items";
-import type { Place, Spot } from "../model";
+import type { Place } from "../model";
+import type { ItemStatus } from "@/db/enums";
 import { cn } from "@/lib/utils";
 import { PriorityPicker } from "./priority-icon";
 
 /** Type and Enter; focus stays for the next one. The input is the empty
     state. Once you start typing, a priority button appears beside it (it
     resets after each task); "!1"–"!4" in the text works too. */
-export function QuickAdd({ place, spot, goalId = null, placeholder = "Add task", className }: { place: Place; spot?: Spot; goalId?: string | null; placeholder?: string; className?: string }) {
+export function QuickAdd({ place, goalId = null, status, placeholder = "Add task", className }: { place: Place; goalId?: string | null; status?: ItemStatus; placeholder?: string; className?: string }) {
   const actions = useItemActions();
   const [value, setValue] = React.useState("");
   const [priority, setPriority] = React.useState(0);
@@ -30,7 +31,7 @@ export function QuickAdd({ place, spot, goalId = null, placeholder = "Add task",
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === "Enter" && value.trim()) {
-            void actions.create(value, place, spot, priority, goalId);
+            void actions.create(value, place, priority, { goalId, status });
             setValue("");
             setPriority(0);
           }

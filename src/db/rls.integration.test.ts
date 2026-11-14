@@ -47,15 +47,6 @@ describe("ownership (RLS)", () => {
     expect(still.data!.title).toBe("Write the plan");
   });
 
-  it("applies to boards and columns too", async () => {
-    const board = { id: randomUUID(), name: "Home", sort_key: "a0" };
-    expect((await a.client.from("boards").insert(board)).error).toBeNull();
-    const col = { id: randomUUID(), board_id: board.id, name: "Doing", sort_key: "a0" };
-    expect((await a.client.from("board_columns").insert(col)).error).toBeNull();
-
-    expect((await b.client.from("boards").select("id").eq("id", board.id)).data).toEqual([]);
-    expect((await b.client.from("board_columns").select("id").eq("id", col.id)).data).toEqual([]);
-  });
 });
 
 describe("sync stamp", () => {
@@ -122,6 +113,11 @@ describe("goals", () => {
     expect((await b.client.from("goals").select("id").eq("id", g.id)).data).toEqual([]);
     expect((await b.client.from("goals").update({ name: "hijacked" }).eq("id", g.id).select("id")).data).toEqual([]);
     expect((await a.client.from("items").insert(item({ goal_id: g.id }))).error).toBeNull();
+  });
+
+  it("accept a list or board layout and nothing else", async () => {
+    expect((await a.client.from("goals").insert(goal({ layout: "board" }))).error).toBeNull();
+    expect((await a.client.from("goals").insert(goal({ layout: "kanban" }))).error?.code).toBe("23514");
   });
 
   it("reject weekly targets outside 1–7 and empty names", async () => {

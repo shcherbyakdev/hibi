@@ -1,21 +1,19 @@
 import Dexie, { type Table } from "dexie";
 import type { Tables } from "@/db/database.types";
-import type { BoardLayout, ItemStatus, PlanScope } from "@/db/enums";
+import type { GoalLayout, ItemStatus, PlanScope } from "@/db/enums";
 
 // Local rows are exactly the server's rows (snake_case, ISO strings): no
 // mapping layer between IndexedDB and PostgREST.
 export type Item = Omit<Tables<"items">, "status" | "plan_scope"> & { status: ItemStatus; plan_scope: PlanScope | null };
-export type Board = Omit<Tables<"boards">, "layout"> & { layout: BoardLayout };
-export type BoardColumn = Tables<"board_columns">;
 export type TimeEntry = Tables<"time_entries">;
-export type Goal = Tables<"goals">;
+export type Goal = Omit<Tables<"goals">, "layout"> & { layout: GoalLayout };
 export type Routine = Tables<"routines">;
 
-/** Push order = FK order: a column's board before the column, an item
-    before its time entries, a goal before the items linked to it, a routine before its copies. */
-export const SYNCED_TABLES = ["boards", "board_columns", "goals", "routines", "items", "time_entries"] as const;
+/** Push order = FK order: a goal before its routines and items, a routine
+    before its copies, an item before its time entries. */
+export const SYNCED_TABLES = ["goals", "routines", "items", "time_entries"] as const;
 export type SyncedTable = (typeof SYNCED_TABLES)[number];
-export type RowOf<T extends SyncedTable> = { boards: Board; board_columns: BoardColumn; goals: Goal; routines: Routine; items: Item; time_entries: TimeEntry }[T];
+export type RowOf<T extends SyncedTable> = { goals: Goal; routines: Routine; items: Item; time_entries: TimeEntry }[T];
 
 /** One per local write; drained by the engine. Only the id is queued: the
     push sends the row's CURRENT state, so ten edits cost one upsert. */
@@ -23,8 +21,6 @@ export type OutboxEntry = { seq?: number; table: SyncedTable; id: string };
 export type Meta = { key: string; value: string };
 
 export class LocalDb extends Dexie {
-  boards!: Table<Board, string>;
-  board_columns!: Table<BoardColumn, string>;
   items!: Table<Item, string>;
   time_entries!: Table<TimeEntry, string>;
   goals!: Table<Goal, string>;
@@ -62,6 +58,25 @@ export class LocalDb extends Dexie {
       routines: "id",
       items: "id, [plan_scope+plan_date], board_id, status, goal_id, routine_id",
     });
+    // v6: boards folded into goals. Drop their tables and strip the gone
+    // fields from local items, so a push never sends columns the server
+    // no longer has. Stale outbox entries for the dropped tables are
+    // skipped by the engine (not in SYNCED_TABLES) and cleared with the rest.
+    this.version(6)
+      .stores({
+        boards: null,
+        board_columns: null,
+        items: "id, [plan_scope+plan_date], status, goal_id, routine_id",
+      })
+      .upgrade((tx) =>
+        tx
+          .table("items")
+          .toCollection()
+          .modify((i: Record<string, unknown>) => {
+            delete i.board_id;
+            delete i.column_id;
+          }),
+      );
   }
 }
 

@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // HMR handshake fails at 127.0.0.1 otherwise (same host, different name).
   allowedDevOrigins: ["127.0.0.1"],
+  // Boards were folded into goals with the same ids (migration 0011).
+  async redirects() {
+    return [{ source: "/boards/:id", destination: "/goals/:id", permanent: true }];
+  },
   async headers() {
     return [
       {

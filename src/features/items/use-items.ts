@@ -2,13 +2,13 @@
 
 import { useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import type { PlanScope } from "@/db/enums";
+import type { ItemStatus, PlanScope } from "@/db/enums";
 import type { Item, LocalDb } from "@/lib/sync/db";
 import { useSync } from "@/lib/sync/provider";
 import { usePrefs } from "@/lib/prefs";
 import { toast } from "sonner";
 import { periodOf } from "@/features/planner/periods";
-import { bySortKey, INBOX, isLive, isOpen, keyBetween, parseQuickTitle, type Place, type Spot } from "./model";
+import { bySortKey, isLive, isOpen, keyBetween, parseQuickTitle, type Place } from "./model";
 
 /* Reads are live IndexedDB queries: they re-render on every local write and
    every pulled change. `undefined` means "first read not back yet" (a few
@@ -36,24 +36,24 @@ export function useOverdue(today: string | null): Item[] | undefined {
   }, [db, today, weekStart]);
 }
 
-/** Unplanned and on no board. ponytail: a filtered scan (IndexedDB can't
+/** Unplanned and in no goal (goal tasks live on their goal). ponytail: a filtered scan (IndexedDB can't
     index nulls); fine to tens of thousands of rows. */
 export function useInbox(): Item[] | undefined {
   const { db } = useSync();
   return useLiveQuery(
-    async () => (await db.items.filter((i) => isLive(i) && !i.plan_scope && !i.board_id).toArray()).sort(bySortKey),
+    async () => (await db.items.filter((i) => isLive(i) && !i.plan_scope && !i.goal_id).toArray()).sort(bySortKey),
     [db],
   );
 }
 
-/** Last key of the list a place (or a board column) shows, so new and moved
-    items go to its end. */
-async function lastKey(db: LocalDb, p: Place, spot?: Spot): Promise<string | null> {
-  const rows = spot
-    ? await db.items.where("board_id").equals(spot.board_id).filter((i) => isLive(i) && i.column_id === spot.column_id).toArray()
-    : p.plan_scope
+/** Last key of the list a place shows (a goal's unplanned tasks when a goal
+    is given), so new and moved items go to its end. */
+async function lastKey(db: LocalDb, p: Place, goalId: string | null = null): Promise<string | null> {
+  const rows = p.plan_scope
     ? await planned(db, p.plan_scope, p.plan_date!, p.plan_date!)
-    : await db.items.filter((i) => isLive(i) && !i.plan_scope && !i.board_id).toArray();
+    : goalId
+    ? await db.items.where("goal_id").equals(goalId).filter((i) => isLive(i) && !i.plan_scope).toArray()
+    : await db.items.filter((i) => isLive(i) && !i.plan_scope && !i.goal_id).toArray();
   return rows.reduce<string | null>((max, r) => (max === null || r.sort_key > max ? r.sort_key : max), null);
 }
 
@@ -61,9 +61,9 @@ export function useItemActions() {
   const { db, mutations: m } = useSync();
   return useMemo(
     () => ({
-      /** New item at the end of a planner list, or of a board column.
-          A picked priority wins; otherwise "!1"–"!4" in the title sets it. */
-      async create(raw: string, place: Place, spot?: Spot, picked = 0, goalId: string | null = null) {
+      /** New item at the end of a planner list (or of a goal's unplanned
+          tasks). A picked priority wins; otherwise "!1"–"!4" in the title. */
+      async create(raw: string, place: Place, picked = 0, { goalId = null, status = "todo" }: { goalId?: string | null; status?: ItemStatus } = {}) {
         if (!raw.trim()) return;
         const parsed = parseQuickTitle(raw);
         const { title } = parsed;
@@ -71,15 +71,13 @@ export function useItemActions() {
         await m.insert("items", {
           title: title.slice(0, 500),
           notes: "",
-          status: "todo",
+          status,
           priority,
           ...place,
-          board_id: spot?.board_id ?? null,
-          column_id: spot?.column_id ?? null,
           goal_id: goalId,
           routine_id: null,
-          sort_key: keyBetween(await lastKey(db, place, spot), null),
-          done_at: null,
+          sort_key: keyBetween(await lastKey(db, place, goalId), null),
+          done_at: status === "done" ? new Date().toISOString() : null,
         });
       },
       rename(item: Item, title: string) {
@@ -93,12 +91,6 @@ export function useItemActions() {
       },
       edit: (item: Item, patch: Pick<Partial<Item>, "notes" | "priority">) => m.update("items", item.id, patch),
       setGoal: (item: Item, goalId: string | null) => m.update("items", item.id, { goal_id: goalId }),
-      /** Onto a board column (end of it), or off boards with null. */
-      async moveToBoard(item: Item, spot: Spot | null) {
-        if (!spot) return m.update("items", item.id, { board_id: null, column_id: null });
-        if (item.board_id === spot.board_id && item.column_id === spot.column_id) return;
-        await m.update("items", item.id, { ...spot, sort_key: keyBetween(await lastKey(db, INBOX, spot), null) });
-      },
       toggleDone(item: Item) {
         const done = item.status !== "done";
         return m.update("items", item.id, { status: done ? "done" : "todo", done_at: done ? new Date().toISOString() : null });
@@ -114,10 +106,6 @@ export function useItemActions() {
       },
       /** A new position within the same list (keyboard reorder). */
       reorder: (item: Item, sort_key: string) => m.update("items", item.id, { sort_key }),
-      /** Drop into a board column (null = "No column") between two neighbours. */
-      moveToColumn(item: Item, column_id: string | null, prev: string | null, next: string | null) {
-        return m.update("items", item.id, { column_id, sort_key: keyBetween(prev, next) });
-      },
       /** Soft delete with an Undo toast. */
       async remove(item: Item) {
         await m.remove("items", item.id);
