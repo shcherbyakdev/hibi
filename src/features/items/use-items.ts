@@ -30,7 +30,7 @@ export function useOverdue(today: string | null): Item[] | undefined {
   return useLiveQuery(async () => {
     if (!today) return [];
     const ranges = (["day", "week", "month"] as const).map((s) =>
-      db.items.where("[plan_scope+plan_date]").between([s, ""], [s, periodOf(s, today, weekStart)], true, false).filter((i) => isLive(i) && isOpen(i)).toArray(),
+      db.items.where("[plan_scope+plan_date]").between([s, ""], [s, periodOf(s, today, weekStart)], true, false).filter((i) => isLive(i) && isOpen(i) && !i.routine_id).toArray(), // missed routine days don't pile up
     );
     return (await Promise.all(ranges)).flat().sort((a, b) => (a.plan_date! < b.plan_date! ? -1 : a.plan_date! > b.plan_date! ? 1 : bySortKey(a, b)));
   }, [db, today, weekStart]);
