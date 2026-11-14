@@ -28,7 +28,7 @@ async function device(name: string): Promise<Device> {
 
 const newItem = (title: string) => ({
   title, notes: "", status: "todo" as const, priority: 0, plan_scope: null, plan_date: null,
-  board_id: null, column_id: null, sort_key: "a0", done_at: null,
+  board_id: null, column_id: null, goal_id: null, sort_key: "a0", done_at: null,
 });
 
 beforeAll(async () => {

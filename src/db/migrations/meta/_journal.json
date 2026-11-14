@@ -50,6 +50,20 @@
       "when": 1794597247151,
       "tag": "0006_access_requests_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794669421621,
+      "tag": "0007_goals",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794669422073,
+      "tag": "0008_goals_rls",
+      "breakpoints": true
     }
   ]
 }

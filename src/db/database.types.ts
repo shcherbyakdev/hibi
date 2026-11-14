@@ -135,6 +135,48 @@ export type Database = {
         }
         Relationships: []
       }
+      goals: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          icon: string | null
+          id: string
+          name: string
+          notes: string
+          sort_key: string
+          synced_at: string
+          updated_at: string
+          user_id: string
+          weekly_target: number
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          notes?: string
+          sort_key: string
+          synced_at?: string
+          updated_at?: string
+          user_id?: string
+          weekly_target?: number
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          notes?: string
+          sort_key?: string
+          synced_at?: string
+          updated_at?: string
+          user_id?: string
+          weekly_target?: number
+        }
+        Relationships: []
+      }
       items: {
         Row: {
           board_id: string | null
@@ -142,6 +184,7 @@ export type Database = {
           created_at: string
           deleted_at: string | null
           done_at: string | null
+          goal_id: string | null
           id: string
           notes: string
           plan_date: string | null
@@ -160,6 +203,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           done_at?: string | null
+          goal_id?: string | null
           id?: string
           notes?: string
           plan_date?: string | null
@@ -178,6 +222,7 @@ export type Database = {
           created_at?: string
           deleted_at?: string | null
           done_at?: string | null
+          goal_id?: string | null
           id?: string
           notes?: string
           plan_date?: string | null
@@ -203,6 +248,13 @@ export type Database = {
             columns: ["column_id"]
             isOneToOne: false
             referencedRelation: "board_columns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_goal_id_goals_id_fk"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "goals"
             referencedColumns: ["id"]
           },
         ]

@@ -111,6 +111,26 @@ describe("time entries", () => {
   });
 });
 
+describe("goals", () => {
+  const goal = (over: Record<string, unknown> = {}) => ({ id: randomUUID(), name: "Learn Japanese", sort_key: "a0", ...over });
+
+  it("are owner-only and can be linked from items", async () => {
+    const g = goal();
+    const ins = await a.client.from("goals").insert(g).select("user_id, weekly_target").single();
+    expect(ins.error).toBeNull();
+    expect(ins.data).toEqual({ user_id: a.id, weekly_target: 5 });
+    expect((await b.client.from("goals").select("id").eq("id", g.id)).data).toEqual([]);
+    expect((await b.client.from("goals").update({ name: "hijacked" }).eq("id", g.id).select("id")).data).toEqual([]);
+    expect((await a.client.from("items").insert(item({ goal_id: g.id }))).error).toBeNull();
+  });
+
+  it("reject weekly targets outside 1–7 and empty names", async () => {
+    expect((await a.client.from("goals").insert(goal({ weekly_target: 0 }))).error?.code).toBe("23514");
+    expect((await a.client.from("goals").insert(goal({ weekly_target: 8 }))).error?.code).toBe("23514");
+    expect((await a.client.from("goals").insert(goal({ name: "" }))).error?.code).toBe("23514");
+  });
+});
+
 describe("constraints", () => {
   it("requires plan_scope and plan_date together", async () => {
     const res = await a.client.from("items").insert(item({ plan_scope: "day" }));
