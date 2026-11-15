@@ -39,6 +39,23 @@ local or not https, or if Supabase is local.
 - **Email:** the built-in mailer (a few per hour) only sends magic links.
   Add SMTP before relying on email.
 
+### Security notes
+
+- **CSP:** built per request in `src/lib/csp.ts` and sent by `src/proxy.hosted.ts`:
+  scripts by nonce only (`'strict-dynamic'`), connect-src limited to Supabase
+  and its realtime websocket. A new third-party script or API origin needs an
+  entry there. zod runs `jitless` (`src/lib/zod.ts`) so it never probes `eval`.
+- **Access requests** are capped at 30 an hour by a trigger (migration 0012).
+  The form says "try again in an hour" when the cap is full.
+- **Links between rows stay within one owner:** composite `(id, user_id)` FKs
+  (migration 0013), mirrored in `desktop/syncsvc/store.go`.
+- **Auth:** 12-character passwords, password changes need a recent sign-in,
+  TOTP off until the app has a 2FA screen (`supabase/config.toml`).
+- **Accepted advisories (dev-only):** drizzle-kit's old esbuild (affects
+  esbuild's dev server, which drizzle-kit never starts) and the shadcn CLI's
+  deepmerge. `npm audit --omit=dev` must stay at 0.
+- **Not done:** Apple notarization of the Mac app (needs a Developer ID).
+
 ## Desktop releases
 
 Push a tag `desktop-v<x.y.z>`. `.github/workflows/desktop-release.yml` then:
