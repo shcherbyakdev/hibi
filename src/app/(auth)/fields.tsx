@@ -27,7 +27,7 @@ export function PasswordField({ isNew = false, aside }: { isNew?: boolean; aside
         autoComplete={isNew ? "new-password" : "current-password"}
         className="h-11 rounded-xl"
       />
-      {isNew ? <p className="text-muted-foreground text-xs">At least 8 characters.</p> : null}
+      {isNew ? <p className="text-muted-foreground text-xs">At least 12 characters.</p> : null}
     </div>
   );
 }
