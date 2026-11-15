@@ -1,0 +1,11 @@
+# Actions are pinned to commit SHAs (supply-chain hardening); Dependabot
+# keeps those pins current with weekly PRs, which CI checks like any other.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directories: ["/", "/.github/actions/*"]
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
