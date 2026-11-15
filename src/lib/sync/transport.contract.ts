@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { waitFor } from "@/test/supabase";
 import type { SyncRow, SyncTransport } from "./transport";
+import type { SyncedTable } from "./db";
 
 export type ContractSetup = () => Promise<{
   /** Two clients of one user's data. */
@@ -10,7 +11,36 @@ export type ContractSetup = () => Promise<{
   newItem: () => SyncRow;
   /** An item row the server must refuse (e.g. an empty title). */
   refusedItem: () => SyncRow;
+  /** Opt in to the refusal fixture: servers that enforce the schema's
+      checks and FKs (Supabase, the desktop service). `extra` is merged
+      into every fixture row (e.g. user_id). */
+  refusals?: { extra: Record<string, unknown> };
 }>;
+
+/** One rule per table plus the FKs, with the Postgres code every
+    enforcing server must answer. A schema change touches Postgres,
+    desktop/syncsvc/rules.go and this list (AGENTS.md). */
+const REFUSALS: Array<{ name: string; table: SyncedTable; over: Record<string, unknown>; code: string; withItem?: boolean }> = [
+  { name: "goal with an empty name", table: "goals", over: { name: "" }, code: "23514" },
+  { name: "goal aiming for 9 days a week", table: "goals", over: { weekly_target: 9 }, code: "23514" },
+  { name: "goal with an unknown layout", table: "goals", over: { layout: "kanban" }, code: "23514" },
+  { name: "routine on no days", table: "routines", over: { days: 0 }, code: "23514" },
+  { name: "routine with a missing goal", table: "routines", over: { goal_id: crypto.randomUUID() }, code: "23503" },
+  { name: "item with an unknown status", table: "items", over: { status: "maybe" }, code: "23514" },
+  { name: "item planned for a month mid-month", table: "items", over: { plan_scope: "month", plan_date: "2026-11-15" }, code: "23514" },
+  { name: "item with a scope but no date", table: "items", over: { plan_scope: "day" }, code: "23514" },
+  { name: "item with a missing goal", table: "items", over: { goal_id: crypto.randomUUID() }, code: "23503" },
+  { name: "time entry with a missing item", table: "time_entries", over: { item_id: crypto.randomUUID() }, code: "23503" },
+  { name: "time entry ending before it starts", table: "time_entries", over: { ended_at: "2026-11-15T09:00:00Z" }, code: "23514", withItem: true },
+  { name: "time entry of 10 seconds planned", table: "time_entries", over: { planned_seconds: 10 }, code: "23514", withItem: true },
+];
+
+const VALID: Record<SyncedTable, Record<string, unknown>> = {
+  goals: { name: "Goal", sort_key: "a0" },
+  routines: { title: "Stretch" },
+  items: { title: "Task", sort_key: "a0" },
+  time_entries: { started_at: "2026-11-15T10:00:00Z" },
+};
 
 const later = (iso: string, ms: number) => new Date(Date.parse(iso) + ms).toISOString();
 
@@ -97,6 +127,24 @@ export function describeTransportContract(name: string, setup: ContractSetup) {
       await a.upsert("items", [newItem()]);
       await new Promise((r) => setTimeout(r, 1000));
       expect(changed).toBe(seen);
+    });
+
+    it.each(REFUSALS)("refuses: $name ($code)", async ({ table, over, code, withItem }) => {
+      const { a, refusals, newItem } = await setup();
+      if (!refusals) return; // this server doesn't enforce the schema
+      const now = new Date().toISOString();
+      const row = (t: SyncedTable, o: Record<string, unknown>): SyncRow => ({ id: crypto.randomUUID(), updated_at: now, synced_at: now, ...refusals.extra, ...VALID[t], ...o });
+      let parent: Record<string, unknown> = {};
+      if (withItem) {
+        const it = newItem();
+        expect(await a.upsert("items", [it])).toBeNull();
+        parent = { item_id: it.id };
+      }
+      expect((await a.upsert(table, [row(table, { ...parent, ...over })]))?.code).toBe(code);
+      if (table === "time_entries" && !withItem) return;
+      // …and the same row without the bad value is accepted.
+      const ok = row(table, parent);
+      expect(await a.upsert(table, [ok])).toBeNull();
     });
 
     it("hints other clients", async () => {

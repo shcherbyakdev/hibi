@@ -54,6 +54,18 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
           NEXT_PUBLIC_APP_URL: http://localhost:3100
 
+  go:
+    # The desktop's sync service (desktop/syncsvc).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: desktop/go.mod
+          cache-dependency-path: desktop/go.sum
+      - run: go vet ./... && go test ./...
+        working-directory: desktop
+
   db:
     runs-on: ubuntu-latest
     env:
@@ -64,6 +76,11 @@ jobs:
 
       # Pinned to the local CLI version: `latest` would change the toolchain
       # with no diff in this repo.
+      # The HTTP contract tests build and start the desktop's Go service.
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: desktop/go.mod
+          cache-dependency-path: desktop/go.sum
       - uses: supabase/setup-cli@v3
         with:
           version: 2.75.0
@@ -100,7 +117,7 @@ jobs:
     # One required status for branch protection: adding a job above never
     # means editing the rule.
     if: always()
-    needs: [lint, typecheck, test, build, db]
+    needs: [lint, typecheck, test, build, go, db]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all checks passed

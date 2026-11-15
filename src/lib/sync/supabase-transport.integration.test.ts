@@ -19,4 +19,5 @@ describeTransportContract("supabase", async () => ({
   b: createSupabaseTransport(await signIn(user), user.id),
   newItem: () => item(),
   refusedItem: () => item({ title: "" }),
+  refusals: { extra: { user_id: user.id } },
 }));
