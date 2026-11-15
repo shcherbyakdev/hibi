@@ -16,6 +16,23 @@ describe("access_requests", () => {
     expect((await anon.from("access_requests").insert({ email: "not-an-email" })).error).not.toBeNull();
   });
 
+  // The REST API takes inserts straight from the public anon key, skipping
+  // the form's honeypot, so the database caps the list at 30 an hour.
+  it("caps requests at 30 an hour, for everyone", async () => {
+    const admin = adminClient();
+    const hourAgo = new Date(Date.now() - 3600_000).toISOString();
+    // Local test database only: clear the hour, keeping this file's own row.
+    await admin.from("access_requests").delete().gt("created_at", hourAgo).neq("email", email);
+    const { count } = await admin.from("access_requests").select("*", { count: "exact", head: true }).gt("created_at", hourAgo);
+    const cap = () => ({ email: `cap-${randomUUID()}@todo.local` });
+    try {
+      expect((await admin.from("access_requests").insert(Array.from({ length: 30 - (count ?? 0) }, cap))).error).toBeNull();
+      expect((await anonClient().from("access_requests").insert(cap())).error?.code).toBe("54000");
+    } finally {
+      await admin.from("access_requests").delete().like("email", "cap-%");
+    }
+  });
+
   it("never lets the API read, change or delete the list", async () => {
     const { client } = await signedInUser();
     for (const c of [anonClient(), client]) {
