@@ -24,6 +24,38 @@ npm run dev      # preflight: starts Supabase, fills .env.local, migrates
 Ports are pipline-app's +60 (app on 3100), so both run side by side.
 `npm run verify` = lint + typecheck + test.
 
+## hibi for Mac
+
+A desktop app with no account: your data stays in one file on your Mac.
+
+**Install:** download `hibi-<version>.dmg` from the
+[latest release](https://github.com/shcherbyakdev/hibi/releases/latest),
+open it and drag hibi to Applications. hibi isn't notarized, so the first
+launch is blocked: open **System Settings → Privacy & Security**, scroll
+to "hibi was blocked", click **Open Anyway**, then confirm. Later
+launches open normally.
+
+**Updates:** hibi checks on launch and daily and shows "Update available"
+with a Restart button. Updates are signed; a bad download never replaces
+the installed app. If hibi isn't in Applications, it links to the
+download instead.
+
+**Your data:** `~/Library/Application Support/app.hibi.desktop/hibi.sqlite`.
+Updates and reinstalls never touch it. Back it up by copying that folder
+while hibi is closed.
+
+**Uninstall:** quit hibi, delete it from Applications, and delete the
+folder above if you want your data gone too.
+
+**Build it yourself:** `npm run desktop:build` (needs Go and
+[Wails](https://wails.io) v2.17.1) → `desktop/build/bin/hibi.app`.
+**Release:** push tag `desktop-v<x.y.z>`. The workflow runs
+`scripts/release-desktop.sh` (try it locally first: it writes `dist/`) and
+publishes the dmg, the signed zip and `latest.json`. It signs with the
+`HIBI_UPDATE_PRIVATE_KEY` repo secret, which must match
+`desktop/update/pubkey.txt`; the private key also lives in
+`~/.config/hibi/update.key`, never in the repo.
+
 ## CI
 
 `.github/workflows/ci.yml` on every PR and push to `main`: lint, typecheck,

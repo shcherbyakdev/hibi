@@ -3,6 +3,7 @@
 //
 //	hibi-sign keygen [-o key]   write a new private key (0600), print the public key
 //	hibi-sign sign [-k key] f   print the signature of file f
+//	hibi-sign verify f sigfile  check f against the public key compiled into the app
 //
 // sign reads the key from $HIBI_UPDATE_PRIVATE_KEY when set (CI), else from
 // the key file. The default key file is ~/.config/hibi/update.key.
@@ -18,6 +19,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/shcherbyakdev/hibi/desktop/update"
 )
 
 func main() {
@@ -29,7 +32,7 @@ func main() {
 
 func run(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: hibi-sign keygen [-o key] | sign [-k key] <file>")
+		return errors.New("usage: hibi-sign keygen [-o key] | sign [-k key] <file> | verify <file> <sigfile>")
 	}
 	home, _ := os.UserHomeDir()
 	def := filepath.Join(home, ".config", "hibi", "update.key")
@@ -85,6 +88,28 @@ func run(args []string) error {
 			return err
 		}
 		fmt.Println(base64.StdEncoding.EncodeToString(ed25519.Sign(ed25519.PrivateKey(priv), data)))
+		return nil
+	case "verify":
+		if len(args) != 3 {
+			return errors.New("usage: hibi-sign verify <file> <sigfile>")
+		}
+		pub := update.PublicKey()
+		if pub == nil {
+			return errors.New("desktop/update/pubkey.txt has no key")
+		}
+		data, err := os.ReadFile(args[1])
+		if err != nil {
+			return err
+		}
+		sigB64, err := os.ReadFile(args[2])
+		if err != nil {
+			return err
+		}
+		sig, err := base64.StdEncoding.DecodeString(strings.TrimSpace(string(sigB64)))
+		if err != nil || !ed25519.Verify(pub, data, sig) {
+			return errors.New("signature does NOT match the compiled-in public key")
+		}
+		fmt.Println("signature OK")
 		return nil
 	}
 	return fmt.Errorf("unknown command %q", args[0])

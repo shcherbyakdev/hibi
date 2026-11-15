@@ -1,0 +1,31 @@
+name: Desktop release
+
+# Push a tag desktop-v<x.y.z> to build hibi.app and publish a GitHub Release
+# with the dmg, the signed .app.zip and latest.json (the updater's feed:
+# releases/latest/download/latest.json).
+on:
+  push:
+    tags: ["desktop-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: desktop/go.mod
+          cache-dependency-path: desktop/go.sum
+      - run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.1
+      # The tag reaches the shell as an env var, never spliced into the
+      # script; release-desktop.sh refuses anything but x.y.z.
+      - run: scripts/release-desktop.sh "${GITHUB_REF_NAME#desktop-v}"
+        env:
+          HIBI_UPDATE_PRIVATE_KEY: ${{ secrets.HIBI_UPDATE_PRIVATE_KEY }}
+      - run: gh release create "$GITHUB_REF_NAME" dist/* --title "hibi for Mac ${GITHUB_REF_NAME#desktop-v}" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

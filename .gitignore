@@ -18,3 +18,4 @@ next-env.d.ts
 # supabase cli local state
 supabase/.branches
 supabase/.temp
+/dist/

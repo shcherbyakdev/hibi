@@ -330,6 +330,19 @@ src/
    goals (section header → /goals), ⌘K searches goals. Tone and InlineName
    moved to `src/lib/tone.ts` / `components/shared`. Plan:
    `docs/superpowers/plans/2026-11-14-fold-boards-into-goals.md`.
+12. **hibi Desktop.** A Mac app with no account: a Wails window on a Go
+   sync service (`desktop/syncsvc`) that serves the static desktop export
+   (`NEXT_PUBLIC_EDITION=desktop`) and the sync API on `127.0.0.1:47321`,
+   storing everything in one SQLite file in Application Support. The same
+   `SyncTransport` contract runs against Supabase and the Go service, so
+   the rules in `rules.go` can't drift from Postgres. Requests pass Host,
+   Origin and JSON guards plus a per-launch token cookie. Updates are our
+   own: `latest.json` from the latest GitHub Release, an Ed25519-signed
+   `.app.zip` swapped in place with rollback. Releases: push tag
+   `desktop-v<x.y.z>` (`.github/workflows/desktop-release.yml` runs
+   `scripts/release-desktop.sh`). Spec and plan:
+   `docs/superpowers/specs/2026-11-15-hibi-desktop-design.md`,
+   `docs/superpowers/plans/2026-11-15-hibi-desktop.md`.
 
 Later, not now: custom goal columns (stages), monthly / interval routines, recurring items (pipline has `features/recurrence`), weekly
 review/stats, labels, calendar layout for boards, PWA offline install.
