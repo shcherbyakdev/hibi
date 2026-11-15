@@ -143,8 +143,10 @@ func Cleanup(appPath string) error {
 
 // Relaunch opens appPath once this process has exited (the single-instance
 // lock would otherwise hand the launch back to us). The caller then quits.
+// open is retried: right after we exit, LaunchServices can still be tearing
+// down our old instance and fail the launch with -600 (seen on macOS 26).
 func Relaunch(appPath string) error {
-	cmd := exec.Command("/bin/sh", "-c", `while kill -0 "$1" 2>/dev/null; do sleep 0.2; done; exec /usr/bin/open "$2"`,
+	cmd := exec.Command("/bin/sh", "-c", `while kill -0 "$1" 2>/dev/null; do sleep 0.2; done; for i in 1 2 3 4 5 6; do /usr/bin/open "$2" && exit 0; sleep 0.5; done; exit 1`,
 		"sh", strconv.Itoa(os.Getpid()), appPath)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	return cmd.Start()
