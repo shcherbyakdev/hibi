@@ -28,8 +28,9 @@ Ports are pipline-app's +60 (app on 3100), so both run side by side.
 
 A desktop app with no account: your data stays in one file on your Mac.
 
-**Install:** download `hibi-<version>.dmg` from the
-[latest release](https://github.com/shcherbyakdev/hibi/releases/latest),
+**Install:** download
+[hibi.dmg](https://github.com/shcherbyakdev/hibi/releases/latest/download/hibi.dmg)
+(always the latest release),
 open it and drag hibi to Applications. hibi isn't notarized, so the first
 launch is blocked: open **System Settings → Privacy & Security**, scroll
 to "hibi was blocked", click **Open Anyway**, then confirm. Later

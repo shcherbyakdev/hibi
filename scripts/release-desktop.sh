@@ -2,7 +2,7 @@
 # Builds a hibi.app release into dist/ in two stages, so the signing key
 # never shares a machine with npm or the web build:
 #
-#   scripts/release-desktop.sh build 0.1.0   # dmg + unsigned .app.zip (needs npm, Wails; no key)
+#   scripts/release-desktop.sh build 0.1.0   # hibi.dmg + unsigned .app.zip (needs npm, Wails; no key)
 #   scripts/release-desktop.sh sign  0.1.0   # .sig + latest.json (needs only Go and the key)
 #
 # CI runs them in separate jobs (.github/workflows/desktop-release.yml); run
@@ -45,7 +45,9 @@ if [[ $MODE == build ]]; then
   STAGE=$(mktemp -d)
   ditto "$APP" "$STAGE/hibi.app"
   ln -s /Applications "$STAGE/Applications"
-  hdiutil create -quiet -volname hibi -srcfolder "$STAGE" -format UDZO -ov "dist/hibi-$V.dmg"
+  # Unversioned on purpose: releases/latest/download/hibi.dmg is the
+  # landing page's direct download link.
+  hdiutil create -quiet -volname hibi -srcfolder "$STAGE" -format UDZO -ov dist/hibi.dmg
   rm -rf "$STAGE"
 else
   [ -f "dist/$ZIP" ] || { echo "dist/$ZIP is missing: run the build stage first" >&2; exit 1; }
