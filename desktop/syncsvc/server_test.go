@@ -16,6 +16,11 @@ import (
 
 func newServer(t *testing.T) (*httptest.Server, string) {
 	t.Helper()
+	return newServerWithToken(t, "")
+}
+
+func newServerWithToken(t *testing.T, token string) (*httptest.Server, string) {
+	t.Helper()
 	s := openTemp(t)
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -31,7 +36,7 @@ func newServer(t *testing.T) (*httptest.Server, string) {
 		"goals/__next._tree.txt":   {Data: []byte("goals list tree")},
 		"404.html":         {Data: []byte("not found")},
 	}
-	srv := httptest.NewUnstartedServer(Handler(s, Options{Port: port, UI: ui}))
+	srv := httptest.NewUnstartedServer(Handler(s, Options{Port: port, UI: ui, Token: token}))
 	srv.Listener.Close()
 	srv.Listener = ln
 	srv.Start()
@@ -79,6 +84,51 @@ func TestGuards(t *testing.T) {
 	}
 	if _, body := do(t, "GET", base+"/sync/items/a", "", "", nil); body == "" {
 		t.Fatal("unreachable")
+	}
+}
+
+// Another macOS account on the same Mac can reach 127.0.0.1 too: with a
+// token set, nothing is served without the cookie that /auth hands out.
+func TestTokenGuard(t *testing.T) {
+	_, base := newServerWithToken(t, "s3cret")
+	for _, path := range []string{"/sync/items/a", "/prefs", "/plan/day", "/sync/events"} {
+		if res, _ := do(t, "GET", base+path, "", "", nil); res.StatusCode != 403 {
+			t.Fatalf("GET %s without cookie: want 403, got %d", path, res.StatusCode)
+		}
+	}
+	if res, _ := do(t, "POST", base+"/sync/items", "application/json", itemJSON, map[string]string{"Cookie": "hibi_token=wrong"}); res.StatusCode != 403 {
+		t.Fatalf("POST with a wrong cookie: want 403, got %d", res.StatusCode)
+	}
+	if res, _ := do(t, "GET", base+"/auth?t=wrong", "", "", nil); res.StatusCode != 403 {
+		t.Fatalf("/auth with a wrong token: want 403, got %d", res.StatusCode)
+	}
+
+	// Not a 303: a redirect would still count as the wails:// start page's
+	// cross-site navigation, and WebKit wouldn't send the Strict cookie.
+	res, body := do(t, "GET", base+"/auth?t=s3cret", "", "", nil)
+	if res.StatusCode != 200 || !strings.Contains(body, `location.replace("/plan/day")`) {
+		t.Fatalf("/auth: want 200 with a same-origin hop to /plan/day, got %d %q", res.StatusCode, body)
+	}
+	var c *http.Cookie
+	for _, k := range res.Cookies() {
+		if k.Name == "hibi_token" {
+			c = k
+		}
+	}
+	if c == nil || c.Value != "s3cret" || !c.HttpOnly || c.SameSite != http.SameSiteStrictMode || c.Path != "/" {
+		t.Fatalf("/auth cookie: want hibi_token=s3cret HttpOnly SameSite=Strict Path=/, got %+v", c)
+	}
+
+	cookie := map[string]string{"Cookie": "hibi_token=s3cret"}
+	if res, _ := do(t, "POST", base+"/sync/items", "application/json", itemJSON, cookie); res.StatusCode != 204 {
+		t.Fatalf("POST with the cookie: want 204, got %d", res.StatusCode)
+	}
+	if res, body := do(t, "GET", base+"/plan/day", "", "", cookie); res.StatusCode != 200 || body != "day" {
+		t.Fatalf("UI with the cookie: want 200 day, got %d %q", res.StatusCode, body)
+	}
+	// The Host guard still runs first: /auth is no way around DNS rebinding.
+	if res, _ := do(t, "GET", base+"/auth?t=s3cret", "", "", map[string]string{"Host": "evil.example:80"}); res.StatusCode != 403 {
+		t.Fatalf("/auth with a foreign Host: want 403, got %d", res.StatusCode)
 	}
 }
 

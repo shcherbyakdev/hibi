@@ -2,9 +2,11 @@ package syncsvc
 
 import (
 	"bytes"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"mime"
@@ -21,6 +23,10 @@ import (
 type Options struct {
 	Port int   // the loopback port it's served on (for the Host/Origin guards)
 	UI   fs.FS // the static web UI (Next.js desktop export); nil = none
+	// Token, when set, is required on every request as the hibi_token
+	// cookie, which GET /auth?t=<token> hands out. The app always sets one;
+	// "" (no check) is for the dev binary and tests only.
+	Token string
 }
 
 // Handler serves the sync API (the HTTP mirror of SyncTransport in
@@ -30,7 +36,9 @@ type Options struct {
 // to 127.0.0.1. Every request therefore passes three guards: Host must be
 // our own (defeats DNS rebinding), a present Origin must be our own, and
 // writes must be application/json (forces a CORS preflight, which we never
-// answer). Project 3 adds device tokens before anything listens beyond
+// answer). Loopback isn't per-user either: other accounts on the Mac can
+// reach it, so the app also requires a per-launch token (Options.Token).
+// Project 3 adds device tokens before anything listens beyond
 // loopback.
 func Handler(store *Store, opts Options) http.Handler {
 	hub := &hub{subs: map[chan struct{}]struct{}{}}
@@ -128,10 +136,10 @@ func Handler(store *Store, opts Options) http.Handler {
 	if opts.UI != nil {
 		mux.Handle("GET /", uiHandler(opts.UI))
 	}
-	return guard(opts.Port, mux)
+	return guard(opts.Port, opts.Token, mux)
 }
 
-func guard(port int, next http.Handler) http.Handler {
+func guard(port int, token string, next http.Handler) http.Handler {
 	hosts := map[string]bool{fmt.Sprintf("127.0.0.1:%d", port): true, fmt.Sprintf("localhost:%d", port): true}
 	origins := map[string]bool{fmt.Sprintf("http://127.0.0.1:%d", port): true, fmt.Sprintf("http://localhost:%d", port): true}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -149,8 +157,34 @@ func guard(port int, next http.Handler) http.Handler {
 				return
 			}
 		}
+		if token != "" {
+			if r.URL.Path == "/auth" {
+				if !sameSecret(r.URL.Query().Get("t"), token) {
+					http.Error(w, "forbidden", http.StatusForbidden)
+					return
+				}
+				http.SetCookie(w, &http.Cookie{Name: tokenCookie, Value: token, Path: "/", HttpOnly: true, SameSite: http.SameSiteStrictMode})
+				// A same-origin hop, not a 303: a redirect still counts as the
+				// wails:// start page's cross-site navigation, and WebKit
+				// wouldn't send the Strict cookie with it.
+				w.Header().Set("Content-Type", "text/html; charset=utf-8")
+				w.Header().Set("Cache-Control", "no-store")
+				_, _ = io.WriteString(w, `<!doctype html><meta charset="utf-8"><title>hibi</title><script>location.replace("/plan/day")</script>`)
+				return
+			}
+			if c, err := r.Cookie(tokenCookie); err != nil || !sameSecret(c.Value, token) {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+const tokenCookie = "hibi_token"
+
+func sameSecret(got, want string) bool {
+	return subtle.ConstantTimeCompare([]byte(got), []byte(want)) == 1
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

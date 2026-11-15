@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"embed"
 	"errors"
 	"fmt"
@@ -29,13 +30,8 @@ import (
 //go:embed all:ui
 var uiFiles embed.FS
 
-// Wails' own start page: a redirect to the sync service, so the window's
-// origin is http://127.0.0.1:<Port> — the same origin phones will use.
-//
-//go:embed all:frontend/dist
-var shellFiles embed.FS
-
 type app struct {
+	token  string // per launch; other accounts on this Mac can reach the port but not this
 	ctx    context.Context
 	store  *syncsvc.Store
 	server *http.Server
@@ -43,15 +39,21 @@ type app struct {
 }
 
 func main() {
-	a := &app{}
+	a := &app{token: rand.Text()}
 	err := wails.Run(&options.App{
-		Title:       "hibi",
-		Width:       1280,
-		Height:      820,
-		MinWidth:    420,
-		MinHeight:   480,
-		AssetServer: &assetserver.Options{Assets: shellFiles},
-		Menu:        menu.NewMenuFromItems(menu.AppMenu(), menu.EditMenu(), menu.WindowMenu()),
+		Title:     "hibi",
+		Width:     1280,
+		Height:    820,
+		MinWidth:  420,
+		MinHeight: 480,
+		// Wails' own start page sends the window to the sync service via
+		// /auth, which sets the token cookie; the window's origin is then
+		// http://127.0.0.1:<Port>, the same origin phones will use.
+		AssetServer: &assetserver.Options{Handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			fmt.Fprintf(w, `<!doctype html><meta charset="utf-8"><title>hibi</title><script>location.replace("http://127.0.0.1:%d/auth?t=%s")</script>`, Port, a.token)
+		})},
+		Menu: menu.NewMenuFromItems(menu.AppMenu(), menu.EditMenu(), menu.WindowMenu()),
 		SingleInstanceLock: &options.SingleInstanceLock{
 			UniqueId: bundleID,
 			// Wails only calls this; bringing the window forward is ours.
@@ -100,7 +102,7 @@ func (a *app) startup(ctx context.Context) {
 	base, stop := context.WithCancel(context.Background())
 	a.stop = stop
 	a.server = &http.Server{
-		Handler:           syncsvc.Handler(a.store, syncsvc.Options{Port: Port, UI: ui}),
+		Handler:           syncsvc.Handler(a.store, syncsvc.Options{Port: Port, UI: ui, Token: a.token}),
 		ReadHeaderTimeout: 10 * time.Second,
 		BaseContext:       func(net.Listener) context.Context { return base },
 	}
