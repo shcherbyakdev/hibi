@@ -83,6 +83,22 @@ export function describeTransportContract(name: string, setup: ContractSetup) {
       expect(await a.get("items", crypto.randomUUID())).toBeNull();
     });
 
+    it("stops hinting after unsubscribe", async () => {
+      const { a, b, newItem } = await setup();
+      let ready = false;
+      let changed = 0;
+      const off = b.subscribe(
+        () => changed++,
+        () => (ready = true),
+      );
+      await waitFor(() => ready);
+      off();
+      const seen = changed;
+      await a.upsert("items", [newItem()]);
+      await new Promise((r) => setTimeout(r, 1000));
+      expect(changed).toBe(seen);
+    });
+
     it("hints other clients", async () => {
       const { a, b, newItem } = await setup();
       let ready = false;

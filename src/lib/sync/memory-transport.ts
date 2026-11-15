@@ -47,7 +47,7 @@ export function createMemoryServer({ refuse = () => null }: { refuse?: (table: S
       async pull(table, from: PullFrom, limit) {
         check("pull");
         const key = (r: { synced_at: string; id: string }) => `${r.synced_at}|${r.id}`;
-        const past = (r: SyncRow) => ("since" in from ? r.synced_at > from.since : key(r) > key(from.after));
+        const past = (r: SyncRow) => ("since" in from ? Date.parse(r.synced_at) > Date.parse(from.since) : key(r) > key(from.after));
         return [...tableOf(table).values()].filter(past).sort((x, y) => (key(x) < key(y) ? -1 : 1)).slice(0, limit).map(copy);
       },
       subscribe(onChange, onReady) {
