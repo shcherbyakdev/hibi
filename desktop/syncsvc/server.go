@@ -27,6 +27,7 @@ type Options struct {
 	// cookie, which GET /auth?t=<token> hands out. The app always sets one;
 	// "" (no check) is for the dev binary and tests only.
 	Token string
+	App   http.Handler // app-level endpoints (the updater), served at /app/
 }
 
 // Handler serves the sync API (the HTTP mirror of SyncTransport in
@@ -133,6 +134,10 @@ func Handler(store *Store, opts Options) http.Handler {
 		}
 		w.WriteHeader(http.StatusNoContent)
 	})
+	if opts.App != nil {
+		mux.Handle("GET /app/", opts.App)
+		mux.Handle("POST /app/", opts.App)
+	}
 	if opts.UI != nil {
 		mux.Handle("GET /", uiHandler(opts.UI))
 	}

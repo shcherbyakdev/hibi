@@ -36,7 +36,7 @@ func newServerWithToken(t *testing.T, token string) (*httptest.Server, string) {
 		"goals/__next._tree.txt":   {Data: []byte("goals list tree")},
 		"404.html":         {Data: []byte("not found")},
 	}
-	srv := httptest.NewUnstartedServer(Handler(s, Options{Port: port, UI: ui, Token: token}))
+	srv := httptest.NewUnstartedServer(Handler(s, Options{Port: port, UI: ui, Token: token, App: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = io.WriteString(w, "app "+r.Method) })}))
 	srv.Listener.Close()
 	srv.Listener = ln
 	srv.Start()
@@ -120,6 +120,16 @@ func TestTokenGuard(t *testing.T) {
 	}
 
 	cookie := map[string]string{"Cookie": "hibi_token=s3cret"}
+	// The updater's endpoints sit behind the same guards.
+	if res, _ := do(t, "POST", base+"/app/update", "application/json", "{}", nil); res.StatusCode != 403 {
+		t.Fatalf("POST /app/update without cookie: want 403, got %d", res.StatusCode)
+	}
+	if res, body := do(t, "POST", base+"/app/update", "application/json", "{}", cookie); res.StatusCode != 200 || body != "app POST" {
+		t.Fatalf("POST /app/update with cookie: want the app handler, got %d %q", res.StatusCode, body)
+	}
+	if res, _ := do(t, "POST", base+"/app/update", "text/plain", "{}", cookie); res.StatusCode != 415 {
+		t.Fatalf("no-cors POST /app/update: want 415, got %d", res.StatusCode)
+	}
 	if res, _ := do(t, "POST", base+"/sync/items", "application/json", itemJSON, cookie); res.StatusCode != 204 {
 		t.Fatalf("POST with the cookie: want 204, got %d", res.StatusCode)
 	}

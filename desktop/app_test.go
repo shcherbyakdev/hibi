@@ -39,3 +39,16 @@ func TestListenBindsLoopbackOnly(t *testing.T) {
 		t.Fatalf("must bind loopback only, bound %v", ip)
 	}
 }
+
+func TestBundlePath(t *testing.T) {
+	for exe, want := range map[string]string{
+		"/Applications/hibi.app/Contents/MacOS/hibi": "/Applications/hibi.app",
+		"/tmp/go-build123/exe/hibi":                  "",
+		"/Applications/hibi.app/Contents/hibi":       "",
+	} {
+		got, ok := bundlePath(exe)
+		if got != want || ok != (want != "") {
+			t.Fatalf("%s: want %q, got %q %v", exe, want, got, ok)
+		}
+	}
+}

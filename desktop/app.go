@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const (
@@ -17,6 +18,20 @@ const (
 	// origin must not change between launches.
 	Port = 47321
 )
+
+// version is set at release build time (-ldflags "-X main.version=x.y.z").
+// "dev" never offers updates.
+var version = "dev"
+
+// bundlePath turns .../hibi.app/Contents/MacOS/hibi into .../hibi.app; ok
+// is false when not running from a bundle (wails dev, go run).
+func bundlePath(exe string) (string, bool) {
+	app := filepath.Dir(filepath.Dir(filepath.Dir(exe)))
+	if !strings.HasSuffix(app, ".app") || filepath.Join(app, "Contents", "MacOS", filepath.Base(exe)) != exe {
+		return "", false
+	}
+	return app, true
+}
 
 // dataDir is ~/Library/Application Support/app.hibi.desktop on macOS —
 // outside the .app bundle, so updates and reinstalls never touch it.

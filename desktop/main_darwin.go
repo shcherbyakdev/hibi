@@ -13,10 +13,12 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
 	"github.com/shcherbyakdev/hibi/desktop/syncsvc"
+	"github.com/shcherbyakdev/hibi/desktop/update"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/menu"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -99,10 +101,11 @@ func (a *app) startup(ctx context.Context) {
 		return
 	}
 	ui, _ := fs.Sub(uiFiles, "ui")
+	updater := a.updater(ctx)
 	base, stop := context.WithCancel(context.Background())
 	a.stop = stop
 	a.server = &http.Server{
-		Handler:           syncsvc.Handler(a.store, syncsvc.Options{Port: Port, UI: ui, Token: a.token}),
+		Handler:           syncsvc.Handler(a.store, syncsvc.Options{Port: Port, UI: ui, Token: a.token, App: updater}),
 		ReadHeaderTimeout: 10 * time.Second,
 		BaseContext:       func(net.Listener) context.Context { return base },
 	}
@@ -111,6 +114,34 @@ func (a *app) startup(ctx context.Context) {
 			log.Printf("[hibi] server: %v", err)
 		}
 	}()
+}
+
+// updater finishes or rolls back an interrupted update, then serves
+// /app/update. Outside a bundle (wails dev) it never offers anything.
+func (a *app) updater(ctx context.Context) *update.Service {
+	svc := &update.Service{Feed: update.FeedURL, Current: version, Pub: update.PublicKey(),
+		OpenPage: func() { _ = exec.Command("/usr/bin/open", update.ReleasesPage).Start() }}
+	exe, err := os.Executable()
+	if err == nil {
+		exe, err = filepath.EvalSymlinks(exe)
+	}
+	appPath, ok := bundlePath(exe)
+	if err != nil || !ok {
+		svc.Pub = nil
+		return svc
+	}
+	if err := update.Cleanup(appPath); err != nil {
+		log.Printf("[hibi] update cleanup: %v", err)
+	}
+	svc.AppPath = appPath
+	svc.Relaunch = func() {
+		if err := update.Relaunch(appPath); err != nil {
+			log.Printf("[hibi] relaunch: %v", err) // the new version starts next time
+			return
+		}
+		runtime.Quit(ctx)
+	}
+	return svc
 }
 
 func (a *app) shutdown(ctx context.Context) {
