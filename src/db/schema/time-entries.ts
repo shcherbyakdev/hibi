@@ -1,4 +1,4 @@
-import { check, index, integer, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
+import { check, foreignKey, index, integer, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { syncColumns } from "./sync";
 import { items } from "./items";
@@ -11,15 +11,15 @@ export const timeEntries = pgTable(
   "time_entries",
   {
     ...syncColumns(),
-    itemId: uuid("item_id")
-      .notNull()
-      .references(() => items.id, { onDelete: "cascade" }),
+    itemId: uuid("item_id").notNull(),
     startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
     endedAt: timestamp("ended_at", { withTimezone: true }),
     plannedSeconds: integer("planned_seconds"),
   },
   (t) => [
     index("time_entries_user_synced_idx").on(t.userId, t.syncedAt),
+    // Owner-scoped (see routines.ts): only your own items' sessions.
+    foreignKey({ name: "time_entries_item_owner_fk", columns: [t.itemId, t.userId], foreignColumns: [items.id, items.userId] }).onDelete("cascade"),
     index("time_entries_item_id_idx").on(t.itemId),
     check("time_entries_order", sql`${t.endedAt} is null or ${t.endedAt} >= ${t.startedAt}`),
     check("time_entries_planned_range", sql`${t.plannedSeconds} is null or ${t.plannedSeconds} between 60 and 14400`),

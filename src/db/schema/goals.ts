@@ -1,4 +1,4 @@
-import { check, index, pgTable, smallint, text } from "drizzle-orm/pg-core";
+import { check, index, pgTable, smallint, text, unique } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { syncColumns } from "./sync";
 import { GOAL_LAYOUTS } from "../enums";
@@ -21,6 +21,8 @@ export const goals = pgTable(
   },
   (t) => [
     index("goals_user_synced_idx").on(t.userId, t.syncedAt),
+    // Target of owner-scoped FKs: a row can only link to its owner's goals.
+    unique("goals_id_owner_key").on(t.id, t.userId),
     check("goals_name_len", sql`char_length(${t.name}) between 1 and 120`),
     check("goals_notes_len", sql`char_length(${t.notes}) <= 20000`),
     check("goals_weekly_target_range", sql`${t.weeklyTarget} between 1 and 7`),

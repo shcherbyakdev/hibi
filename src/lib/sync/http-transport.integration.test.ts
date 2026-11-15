@@ -18,6 +18,7 @@ beforeAll(async () => {
 afterAll(() => go?.stop());
 
 const USER = "00000000-0000-4000-8000-000000000001";
+const OTHER = "00000000-0000-4000-8000-000000000002";
 const es = (f: typeof fetch) => (url: string) => new TestEventSource(url, f) as unknown as EventSource;
 const transport = (f: typeof fetch = fetch) => createHttpTransport(go.url, { fetch: f, EventSource: es(f) });
 const item = (over: Partial<SyncRow> = {}): SyncRow => {
@@ -30,7 +31,7 @@ describeTransportContract("http (desktop Go service)", async () => ({
   b: transport(),
   newItem: () => item(),
   refusedItem: () => item({ title: "" }),
-  refusals: { extra: { user_id: USER } },
+  refusals: { extra: { user_id: USER }, other: { transport: transport(), extra: { user_id: OTHER } } },
 }));
 
 describe("engine over the desktop service", () => {

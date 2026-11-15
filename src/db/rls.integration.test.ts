@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { anonClient, signedInUser } from "@/test/supabase";
+import { adminClient, anonClient, signedInUser } from "@/test/supabase";
 
 // The database contract the sync layer relies on (0001_rls_sync.sql).
 let a: { id: string; client: SupabaseClient };
@@ -161,5 +161,23 @@ describe("constraints", () => {
   it("rejects unknown statuses and empty titles", async () => {
     expect((await a.client.from("items").insert(item({ status: "maybe" }))).error?.code).toBe("23514");
     expect((await a.client.from("items").insert(item({ title: "" }))).error?.code).toBe("23514");
+  });
+});
+
+describe("owner-scoped links (0013)", () => {
+  // A hard delete (account deletion cascades, admin cleanup) must unlink the
+  // tasks: SET NULL (goal_id) clears the link column only, never user_id.
+  it("deleting a goal unlinks its tasks and routines", async () => {
+    const goal = { id: randomUUID(), name: "Japanese", sort_key: "a0", updated_at: new Date().toISOString() };
+    expect((await a.client.from("goals").insert(goal)).error).toBeNull();
+    const task = item({ goal_id: goal.id });
+    expect((await a.client.from("items").insert(task)).error).toBeNull();
+    const routine = { id: randomUUID(), title: "Anki", goal_id: goal.id, updated_at: new Date().toISOString() };
+    expect((await a.client.from("routines").insert(routine)).error).toBeNull();
+
+    expect((await adminClient().from("goals").delete().eq("id", goal.id)).error).toBeNull();
+    const after = await a.client.from("items").select("goal_id, user_id").eq("id", task.id).single();
+    expect(after.data).toEqual({ goal_id: null, user_id: a.id });
+    expect((await a.client.from("routines").select("goal_id").eq("id", routine.id).single()).data).toEqual({ goal_id: null });
   });
 });
