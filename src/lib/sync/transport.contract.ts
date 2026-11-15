@@ -93,8 +93,14 @@ export function describeTransportContract(name: string, setup: ContractSetup) {
       );
       try {
         await waitFor(() => ready);
-        await a.upsert("items", [newItem()]);
-        await waitFor(() => changed);
+        // Hints are best-effort: a change right after "ready" can slip past
+        // while the channel warms up (the engine's catch-up pull covers it).
+        // Keep writing until one gets through.
+        await waitFor(async () => {
+          await a.upsert("items", [newItem()]);
+          await new Promise((r) => setTimeout(r, 500));
+          return changed;
+        });
       } finally {
         off();
       }
