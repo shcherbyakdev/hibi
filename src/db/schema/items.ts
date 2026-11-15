@@ -1,4 +1,4 @@
-import { check, date, index, pgTable, smallint, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import { check, date, foreignKey, index, pgTable, smallint, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { syncColumns } from "./sync";
 import { goals } from "./goals";
@@ -20,17 +20,19 @@ export const items = pgTable(
     planScope: text("plan_scope", { enum: PLAN_SCOPES }),
     // The day, the first day of the week, or the 1st of the month.
     planDate: date("plan_date"),
-    // ponytail: like every cross-row FK here, this bypasses RLS, so a crafted write
-    // could point at another user's goal id. It leaks nothing (that goal stays
-    // invisible); add composite (id, user_id) FKs if goals are ever shared.
-    goalId: uuid("goal_id").references(() => goals.id, { onDelete: "set null" }),
+    goalId: uuid("goal_id"),
     // Set on a routine's daily copy (features/routines).
-    routineId: uuid("routine_id").references(() => routines.id, { onDelete: "set null" }),
+    routineId: uuid("routine_id"),
     sortKey: text("sort_key").notNull(),
     doneAt: timestamp("done_at", { withTimezone: true }),
   },
   (t) => [
     index("items_user_synced_idx").on(t.userId, t.syncedAt),
+    unique("items_id_owner_key").on(t.id, t.userId),
+    // Owner-scoped links (see routines.ts): SET NULL (goal_id) / (routine_id)
+    // in migration 0013.
+    foreignKey({ name: "items_goal_owner_fk", columns: [t.goalId, t.userId], foreignColumns: [goals.id, goals.userId] }).onDelete("set null"),
+    foreignKey({ name: "items_routine_owner_fk", columns: [t.routineId, t.userId], foreignColumns: [routines.id, routines.userId] }).onDelete("set null"),
     index("items_goal_id_idx").on(t.goalId),
     index("items_routine_id_idx").on(t.routineId),
     check("items_title_len", sql`char_length(${t.title}) between 1 and 500`),

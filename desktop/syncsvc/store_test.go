@@ -116,6 +116,26 @@ func TestForeignKeys(t *testing.T) {
 	mustUpsert(t, s, "items", child)
 }
 
+// Mirrors the composite (id, user_id) FKs of migration 0013: a link must
+// stay within one owner.
+func TestForeignKeysStayWithinOneOwner(t *testing.T) {
+	s := openTemp(t)
+	theirs := goal("g", "Theirs", tick)
+	theirs["user_id"] = "them"
+	mustUpsert(t, s, "goals", theirs)
+	child := item("i", "mine", tick)
+	child["user_id"] = "me"
+	child["goal_id"] = "g"
+	if rerr, _ := s.Upsert("items", []Row{child}); rerr == nil || rerr.Code != "23503" {
+		t.Fatalf("link to another owner's goal: want 23503, got %v", rerr)
+	}
+	mine := goal("g2", "Mine", tick)
+	mine["user_id"] = "me"
+	mustUpsert(t, s, "goals", mine)
+	child["goal_id"] = "g2"
+	mustUpsert(t, s, "items", child)
+}
+
 func TestFillsDefaultsLikePostgres(t *testing.T) {
 	s := openTemp(t)
 	mustUpsert(t, s, "items", item("a", "A", tick))

@@ -13,7 +13,8 @@ import (
 // refusal fixture in src/lib/sync/transport.contract.ts runs against both
 // servers and fails when they drift. Codes are the Postgres ones the engine
 // already understands: 23502 not null, 23514 check, 22P02 bad value,
-// 23503 foreign key (checked in store.go).
+// 23503 foreign key (checked in store.go, scoped to the row's user_id like
+// the composite (id, user_id) FKs in Postgres).
 
 // Row is a synced row as JSON: snake_case keys, ISO timestamps.
 type Row = map[string]any

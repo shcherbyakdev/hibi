@@ -13,8 +13,9 @@ export type ContractSetup = () => Promise<{
   refusedItem: () => SyncRow;
   /** Opt in to the refusal fixture: servers that enforce the schema's
       checks and FKs (Supabase, the desktop service). `extra` is merged
-      into every fixture row (e.g. user_id). */
-  refusals?: { extra: Record<string, unknown> };
+      into every fixture row (e.g. user_id). `other` is a second owner's
+      client, for links that must not cross owners. */
+  refusals?: { extra: Record<string, unknown>; other: { transport: SyncTransport; extra: Record<string, unknown> } };
 }>;
 
 /** One rule per table plus the FKs, with the Postgres code every
@@ -33,6 +34,15 @@ const REFUSALS: Array<{ name: string; table: SyncedTable; over: Record<string, u
   { name: "time entry with a missing item", table: "time_entries", over: { item_id: crypto.randomUUID() }, code: "23503" },
   { name: "time entry ending before it starts", table: "time_entries", over: { ended_at: "2026-11-15T09:00:00Z" }, code: "23514", withItem: true },
   { name: "time entry of 10 seconds planned", table: "time_entries", over: { planned_seconds: 10 }, code: "23514", withItem: true },
+];
+
+/** Links between rows stay within one owner: Postgres composite FKs
+    (id, user_id), the same check in rules.go/store.go. */
+const CROSS_OWNER: Array<{ name: string; child: SyncedTable; column: string; parent: SyncedTable }> = [
+  { name: "item on another owner's goal", child: "items", column: "goal_id", parent: "goals" },
+  { name: "item on another owner's routine", child: "items", column: "routine_id", parent: "routines" },
+  { name: "routine on another owner's goal", child: "routines", column: "goal_id", parent: "goals" },
+  { name: "time entry on another owner's item", child: "time_entries", column: "item_id", parent: "items" },
 ];
 
 const VALID: Record<SyncedTable, Record<string, unknown>> = {
@@ -145,6 +155,20 @@ export function describeTransportContract(name: string, setup: ContractSetup) {
       // …and the same row without the bad value is accepted.
       const ok = row(table, parent);
       expect(await a.upsert(table, [ok])).toBeNull();
+    });
+
+    it.each(CROSS_OWNER)("refuses: $name (23503)", async ({ child, column, parent }) => {
+      const { a, refusals } = await setup();
+      if (!refusals) return;
+      const now = new Date().toISOString();
+      const row = (t: SyncedTable, extra: Record<string, unknown>, o: Record<string, unknown> = {}): SyncRow => ({ id: crypto.randomUUID(), updated_at: now, synced_at: now, ...extra, ...VALID[t], ...o });
+      const theirs = row(parent, refusals.other.extra);
+      expect(await refusals.other.transport.upsert(parent, [theirs])).toBeNull();
+      expect((await a.upsert(child, [row(child, refusals.extra, { [column]: theirs.id })]))?.code).toBe("23503");
+      // …while a link to a parent of your own is fine.
+      const mine = row(parent, refusals.extra);
+      expect(await a.upsert(parent, [mine])).toBeNull();
+      expect(await a.upsert(child, [row(child, refusals.extra, { [column]: mine.id })])).toBeNull();
     });
 
     it("hints other clients", async () => {

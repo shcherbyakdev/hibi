@@ -152,10 +152,12 @@ func (s *Store) Upsert(table string, rows []Row) (*RowError, error) {
 			if ref == "" {
 				continue
 			}
+			// Owner-scoped, like Postgres' (id, user_id) FKs (migration 0013):
+			// the parent must belong to the same user_id. IS is null-safe.
 			var one int
-			err := tx.QueryRow(`SELECT 1 FROM `+f.parent+` WHERE id = ?`, ref).Scan(&one)
+			err := tx.QueryRow(`SELECT 1 FROM `+f.parent+` WHERE id = ? AND json_extract(row, '$.user_id') IS ?`, ref, r["user_id"]).Scan(&one)
 			if errors.Is(err, sql.ErrNoRows) {
-				return refuse("23503", "%s.%s: no %s row %s", table, f.column, f.parent, ref), nil
+				return refuse("23503", "%s.%s: no %s row %s for this owner", table, f.column, f.parent, ref), nil
 			} else if err != nil {
 				return nil, err
 			}
