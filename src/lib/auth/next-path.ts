@@ -20,7 +20,8 @@ export function afterLogin(raw: unknown): string {
 }
 
 // Everything is private except the auth pages and their callback.
-const PUBLIC = ["/login", "/signup", "/invite"];
+// "/" is the landing page (src/edition/hosted/home.tsx).
+const PUBLIC = ["/", "/login", "/signup", "/invite"];
 
 export function isProtectedPath(pathname: string): boolean {
   return !(PUBLIC.includes(pathname) || pathname.startsWith("/auth/"));
