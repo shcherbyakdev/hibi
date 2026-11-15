@@ -1,100 +1,83 @@
 # hibi
 
-hibi (日々, "day after day") — a personal day/week/month planner with boards. Plan: [docs/PLAN.md](docs/PLAN.md).
+hibi (日々, "day after day") is a quiet planner for your day, week and month,
+with goals and routines. It's local-first: every device keeps a full copy and
+syncs in the background.
 
-Next 16 · React 19 · Tailwind v4 · shadcn (Base UI) · Supabase · Drizzle.
+- **Web:** https://hibiapp.vercel.app (invite-only for now)
+- **Mac:** [download hibi.dmg](https://github.com/shcherbyakdev/hibi/releases/latest/download/hibi.dmg). No account; your data stays on your Mac.
 
-## Run
+## Tech stack
 
-Needs Docker Desktop, the Supabase CLI and Node 24 (`nvm use`).
+| Area | Tools |
+|---|---|
+| **Web app** | [Next.js](https://nextjs.org) 16 (App Router), [React](https://react.dev) 19, [TypeScript](https://www.typescriptlang.org) 6 |
+| **UI** | [Tailwind CSS](https://tailwindcss.com) v4, [shadcn/ui](https://ui.shadcn.com) on [Base UI](https://base-ui.com), [class-variance-authority](https://cva.style), tailwind-merge, clsx, tw-animate-css, [next-themes](https://github.com/pacocoursey/next-themes) |
+| **UI pieces** | [dnd-kit](https://dndkit.com) (drag and drop), [cmdk](https://cmdk.paco.me) (⌘K search), [Sonner](https://sonner.emilkowal.ski) (toasts), [Hugeicons](https://hugeicons.com) and [Lucide](https://lucide.dev) (icons) |
+| **Type** | Geist and Geist Mono (UI), Outfit (wordmark), via `next/font` |
+| **Local-first data** | [Dexie](https://dexie.org) (IndexedDB) + dexie-react-hooks, fractional-indexing (ordering), [Zod](https://zod.dev) (validation) |
+| **Backend (web)** | [Supabase](https://supabase.com): Postgres, Auth, Realtime (`@supabase/ssr`, `supabase-js`), [Drizzle ORM](https://orm.drizzle.team) + drizzle-kit (schema and migrations), postgres.js |
+| **Desktop** | [Go](https://go.dev) 1.26, [Wails](https://wails.io) v2.17 (native window), [modernc.org/sqlite](https://pkg.go.dev/modernc.org/sqlite) (pure-Go SQLite), a self-updater verified with Ed25519 (Go stdlib) |
+| **Testing** | [Vitest](https://vitest.dev), fake-indexeddb, a sync contract suite run against Supabase and the Go service, `go test` |
+| **Tooling** | ESLint (eslint-config-next), tsx, shadcn CLI, [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started), Docker, Node 24 |
+| **Infra** | [Vercel](https://vercel.com) (hosting), Supabase Cloud, GitHub Actions (CI and desktop releases), GitHub Releases (Mac downloads and update feed) |
+
+## Run locally
+
+Needs Node 24 (`nvm use`), Docker Desktop and the Supabase CLI.
 
 ```bash
 npm install
-npm run dev      # preflight: starts Supabase, fills .env.local, migrates
+npm run dev      # starts Supabase, fills .env.local, migrates; app on :3100
 ```
 
 | Service | URL |
 |---|---|
 | App | http://localhost:3100 |
-| Supabase API | http://127.0.0.1:54411 |
-| Postgres | postgresql://postgres:postgres@127.0.0.1:54412/postgres |
-| Studio | http://127.0.0.1:54413 |
+| Supabase Studio | http://127.0.0.1:54413 |
 | Mailpit (sign-in emails) | http://127.0.0.1:54414 |
 
-Ports are pipline-app's +60 (app on 3100), so both run side by side.
-`npm run verify` = lint + typecheck + test.
+| Command | Does |
+|---|---|
+| `npm run verify` | lint + typecheck + unit tests |
+| `npm run test:integration` | the sync contract against local Supabase and the Go service |
+| `npm run db:generate` / `db:migrate` | new migration from `src/db/schema` / apply it |
+| `npm run desktop:build` | the Mac app → `desktop/build/bin/hibi.app` (needs Go and Wails) |
+
+## Project map
+
+```text
+src/
+├── app/            # routes (*.hosted.tsx exist only in the web build)
+├── features/       # planner, goals, routines, items, time, settings, auth
+├── components/     # shell, shared pieces, shadcn ui
+├── lib/sync/       # local-first engine + transports (Supabase, HTTP)
+├── edition/        # what differs between web (hosted/) and Mac (desktop/)
+└── db/             # Drizzle schema and migrations
+desktop/
+├── syncsvc/        # Go sync service: SQLite store, rules, guards, SSE
+├── update/         # signed self-updater
+├── cmd/            # hibi-sync (dev server), hibi-sign (release key)
+└── main_darwin.go  # Wails window
+```
+
+Schema rules live in two places (Postgres and `desktop/syncsvc/rules.go`); see
+[AGENTS.md](AGENTS.md). Design notes: [docs/PLAN.md](docs/PLAN.md).
 
 ## hibi for Mac
 
-A desktop app with no account: your data stays in one file on your Mac.
+Open `hibi.dmg` and drag hibi to Applications. It isn't notarized, so the first
+launch is blocked: **System Settings → Privacy & Security → Open Anyway**.
 
-**Install:** download
-[hibi.dmg](https://github.com/shcherbyakdev/hibi/releases/latest/download/hibi.dmg)
-(always the latest release),
-open it and drag hibi to Applications. hibi isn't notarized, so the first
-launch is blocked: open **System Settings → Privacy & Security**, scroll
-to "hibi was blocked", click **Open Anyway**, then confirm. Later
-launches open normally.
+- **Updates** install themselves: "Update available" → **Restart**. They're signed, and a failed update keeps the old app.
+- **Data:** `~/Library/Application Support/app.hibi.desktop/hibi.sqlite`. Updates never touch it; copy the folder while hibi is closed to back it up.
+- **Uninstall:** delete hibi from Applications, plus that folder if you want the data gone.
 
-**Updates:** hibi checks on launch and daily and shows "Update available"
-with a Restart button. Updates are signed; a bad download never replaces
-the installed app. If hibi isn't in Applications, it links to the
-download instead.
+## CI and releases
 
-**Your data:** `~/Library/Application Support/app.hibi.desktop/hibi.sqlite`.
-Updates and reinstalls never touch it. Back it up by copying that folder
-while hibi is closed.
+Every PR runs lint, typecheck, unit tests, the production build, the desktop
+export check, Go tests, and a `db` job that applies all migrations to a fresh
+Supabase and runs the integration tests. `main` requires the `ci` check.
+Vercel deploys `main`; a `desktop-v<x.y.z>` tag publishes a Mac release.
 
-**Uninstall:** quit hibi, delete it from Applications, and delete the
-folder above if you want your data gone too.
-
-**Build it yourself:** `npm run desktop:build` (needs Go and
-[Wails](https://wails.io) v2.17.1) → `desktop/build/bin/hibi.app`.
-**Release:** push tag `desktop-v<x.y.z>`. The workflow builds in one job
-(`scripts/release-desktop.sh build <v>`: npm, Wails, no key) and signs and
-publishes in another (`… sign <v>`: Go only, with the key), so npm code
-never runs next to the signing key. Run both stages locally for a dry run
-(they write `dist/`). It signs with the
-`HIBI_UPDATE_PRIVATE_KEY` repo secret, which must match
-`desktop/update/pubkey.txt`; the private key also lives in
-`~/.config/hibi/update.key`, never in the repo.
-
-## CI
-
-`.github/workflows/ci.yml` on every PR and push to `main`: lint, typecheck,
-unit tests, production build, and a `db` job that starts a throwaway
-Supabase (CLI pinned to 2.75.0), applies every migration to an empty
-database, fails on schema/migration drift, and runs the integration tests.
-Require the single `ci` check in branch protection.
-
-## Production environment
-
-Set in Vercel (never locally or in CI):
-
-| Variable | Value |
-|---|---|
-| `APP_ENV` | `production` — turns on the checks in `src/env-schema.ts` |
-| `NEXT_PUBLIC_APP_URL` | the public `https://` URL (email links point here) |
-| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | the production project |
-
-With `APP_ENV=production` the build fails if the app URL is missing,
-local or not https, or if Supabase is local.
-
-Live at https://hibiapp.vercel.app (Vercel project `hibi`, auto-deploys
-from `main`; Supabase project `sovcaiebdyrdxxcflets`, eu-central-1).
-
-- **Migrations:** `ALLOW_REMOTE_DB=1 DATABASE_URL=$PROD_DATABASE_URL npx drizzle-kit migrate`
-  (`PROD_DATABASE_URL` lives in the gitignored `.env.production.local`).
-- **Auth settings:** `supabase config push --project-ref sovcaiebdyrdxxcflets`
-  applies `config.toml` with its `[remotes.production]` overrides. Read the
-  diff before answering yes.
-- **Accounts:** sign-up is closed. Visitors leave their email at `/signup`,
-  which lands in the `access_requests` table (Supabase dashboard → Table
-  Editor). To let someone in: Authentication → Users → Add user → **Send
-  invitation**. The email link lands on `/invite`, where they choose their
-  own password. (Or Create new user with a password + Auto Confirm: no email.)
-  A custom invite email (`supabase/templates/invite.html`, commented out in
-  `config.toml`) needs your own SMTP: Supabase blocks custom templates on
-  the built-in sender.
-- **Email:** the built-in mailer (a few per hour) only sends magic links.
-  Add SMTP before relying on email.
+Production runbook and the release process: [docs/OPERATIONS.md](docs/OPERATIONS.md).
