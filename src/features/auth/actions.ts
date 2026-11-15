@@ -41,6 +41,8 @@ export async function requestAccess(_prev: AuthState, formData: FormData): Promi
   if (!parsed.success) return { error: "Enter a valid email." };
   const supabase = await createClient();
   const { error } = await supabase.from("access_requests").insert({ email: parsed.data.email });
+  // 54000: the hourly cap (migration 0012) is full.
+  if (error?.code === "54000") return { error: "Lots of requests right now. Try again in an hour." };
   if (error && error.code !== "23505") return { error: "Couldn't send the request. Try again." };
   return { sent: true };
 }

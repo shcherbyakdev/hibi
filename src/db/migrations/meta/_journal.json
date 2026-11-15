@@ -85,6 +85,13 @@
       "when": 1794678403787,
       "tag": "0011_fold_boards",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794781114310,
+      "tag": "0012_access_requests_cap",
+      "breakpoints": true
     }
   ]
 }
