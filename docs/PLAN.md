@@ -86,6 +86,17 @@ rows = server rows from generated `src/db/database.types.ts`), `mutate.ts`
 - Tests: `src/lib/sync/engine.integration.test.ts` (two devices, offline, LWW,
   delete, rejection, empty-device fill).
 
+**Transport seam (2026-11-15, desktop project 1 of 4).** The engine
+(`engine.ts`) talks to a `SyncTransport` (`transport.ts`: upsert / get /
+pull / subscribe, with `RowError` = refused, `TransientError` = retry), not
+to Supabase. `supabase-transport.ts` is the hosted one (PostgREST, Postgres
+error codes, Realtime); `memory-transport.ts` is an in-memory reference
+server used by the engine's unit tests (`engine.test.ts`). Both pass one
+contract suite (`transport.contract.ts`: server-stamped synced_at, older
+writes dropped, cursor + keyset paging through a burst, all-or-nothing
+refusal, get, best-effort hints) — the desktop's built-in sync service must
+pass it too.
+
 Alternative considered: Rocicorp **Zero** (Linear-style sync engine on
 Postgres). Better at scale/conflicts, but adds a `zero-cache` server to run
 and deploy. Not worth it for one user; revisit if sharing boards.

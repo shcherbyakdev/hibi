@@ -6,6 +6,7 @@ import { createUser, signIn, waitFor, type TestUser } from "@/test/supabase";
 import { LocalDb } from "./db";
 import { createSyncEngine, type Rejection, type SyncEngine } from "./engine";
 import { createMutations, type Mutations } from "./mutate";
+import { createSupabaseTransport } from "./supabase-transport";
 import { toISODate } from "@/features/planner/periods";
 import { ensureToday, routineFromTask } from "@/features/routines/generate";
 import { occurrenceId } from "@/features/routines/model";
@@ -24,7 +25,7 @@ async function device(name: string): Promise<Device> {
     dev.online ? fetch(input, init) : Promise.reject(new TypeError("Failed to fetch"));
   dev.client = await signIn(user, fetchImpl);
   dev.db = new LocalDb(`test-${name}-${user.id}`);
-  dev.engine = createSyncEngine({ db: dev.db, supabase: dev.client, userId: user.id, onReject: (r) => dev.rejected.push(r) });
+  dev.engine = createSyncEngine({ db: dev.db, transport: createSupabaseTransport(dev.client, user.id), onReject: (r) => dev.rejected.push(r) });
   dev.m = createMutations(dev.db, user.id, dev.engine.kick);
   dev.engine.start();
   return dev;
