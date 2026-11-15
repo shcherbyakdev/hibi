@@ -27,6 +27,8 @@ func newServer(t *testing.T) (*httptest.Server, string) {
 		"plan/day.html":    {Data: []byte("day")},
 		"goals/_.html":     {Data: []byte("goal page")},
 		"goals/_.txt":      {Data: []byte("goal rsc")},
+		"goals/_/__next._tree.txt": {Data: []byte("goal tree")},
+		"goals/__next._tree.txt":   {Data: []byte("goals list tree")},
 		"404.html":         {Data: []byte("not found")},
 	}
 	srv := httptest.NewUnstartedServer(Handler(s, Options{Port: port, UI: ui}))
@@ -151,7 +153,7 @@ func TestPrefsEndpoint(t *testing.T) {
 
 func TestServesUIWithGoalFallback(t *testing.T) {
 	_, base := newServer(t)
-	for path, want := range map[string]string{"/": "home", "/plan/day": "day", "/goals/abc-123": "goal page", "/goals/abc-123.txt": "goal rsc"} {
+	for path, want := range map[string]string{"/": "home", "/plan/day": "day", "/goals/abc-123": "goal page", "/goals/abc-123.txt": "goal rsc", "/goals/abc-123/__next._tree.txt": "goal tree", "/goals/__next._tree.txt": "goals list tree"} {
 		if _, body := do(t, "GET", base+path, "", "", nil); body != want {
 			t.Errorf("%s: want %q, got %q", path, want, body)
 		}

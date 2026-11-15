@@ -1,6 +1,10 @@
-import { GoalView } from "@/features/goals/components/goal-view";
+import { GoalRoute } from "@/features/goals/components/goal-route";
 
-export default async function GoalPage({ params }: PageProps<"/goals/[id]">) {
-  const { id } = await params;
-  return <GoalView id={id} />;
+export default function GoalPage() {
+  return <GoalRoute />;
+}
+
+/** The desktop export needs one prerendered page to serve for every goal. */
+export function generateStaticParams() {
+  return [{ id: "_" }];
 }

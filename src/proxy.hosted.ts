@@ -7,6 +7,10 @@ export async function proxy(request: NextRequest) {
   return await updateSession(request);
 }
 
+// Named proxy.hosted.ts so only the hosted build has it (pageExtensions);
+// under that name Next looks for a default export.
+export default proxy;
+
 export const config = {
   matcher: [
     // Run on all routes except static assets and image files.

@@ -3,10 +3,9 @@
 import { createContext, use, useEffect, useState, useSyncExternalStore } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
 import { localDbFor, type LocalDb } from "./db";
 import { createSyncEngine, type SyncEngine } from "./engine";
-import { createSupabaseTransport } from "./supabase-transport";
+import { makeTransport } from "@edition/make-transport";
 import { createMutations, type Mutations } from "./mutate";
 
 type Sync = { db: LocalDb; engine: SyncEngine; mutations: Mutations };
@@ -19,7 +18,7 @@ export function SyncProvider({ userId, children }: { userId: string; children: R
     const db = localDbFor(userId);
     const engine = createSyncEngine({
       db,
-      transport: createSupabaseTransport(createClient(), userId),
+      transport: makeTransport(userId),
       onReject: (r) => {
         console.error(`[sync] ${r.table} ${r.id} rejected:`, r.error);
         toast.error("A change couldn't be saved and was undone.");

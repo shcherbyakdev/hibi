@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
+import { useSaveWeekStart, WEEK_START_HINT } from "@edition/week-start";
 import { usePrefs } from "@/lib/prefs";
 import { SEGMENTED_NAV_CLASS, segmentedItemClass } from "@/components/ui/segmented";
 import { ShortcutList } from "@/components/shortcuts";
@@ -12,22 +11,19 @@ import { ShortcutList } from "@/components/shortcuts";
 const noop = () => () => {};
 
 export function Settings() {
-  const router = useRouter();
   const { theme, setTheme } = useTheme();
   const prefs = usePrefs();
   const [weekStart, setWeekStart] = React.useState(prefs.weekStart);
   // next-themes only knows the theme on the client.
   const mounted = React.useSyncExternalStore(noop, () => true, () => false);
 
+  const persistWeekStart = useSaveWeekStart();
   const saveWeekStart = async (ws: 0 | 1) => {
     setWeekStart(ws);
-    const { error } = await createClient().auth.updateUser({ data: { week_start: ws } });
-    if (error) {
+    if (!(await persistWeekStart(ws))) {
       setWeekStart(prefs.weekStart);
       toast.error("Couldn't save. Try again.");
-      return;
     }
-    router.refresh(); // the layout re-reads it from the account
   };
 
   // px-3: text on the same line as the Today / Inbox rows.
@@ -48,7 +44,7 @@ export function Settings() {
         </Row>
       </Section>
       <Section title="Planner">
-        <Row label="Week starts on" hint="Saved to your account, so all your devices agree.">
+        <Row label="Week starts on" hint={WEEK_START_HINT}>
           <Choice
             label="Week starts on"
             value={String(weekStart)}

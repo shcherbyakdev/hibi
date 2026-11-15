@@ -4,7 +4,7 @@ import { AuthFooter, AuthHeading } from "../fields";
 
 // Deliberately no "already signed in" redirect: opening an invite on a
 // browser signed in as someone else must still let the invitee in.
-export default async function InvitePage({ searchParams }: PageProps<"/invite">) {
+export default async function InvitePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { token_hash } = (await searchParams) as { token_hash?: string };
   return (
     <div>

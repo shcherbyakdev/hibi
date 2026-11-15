@@ -164,10 +164,11 @@ func serverError(w http.ResponseWriter, err error) {
 	http.Error(w, "server error", http.StatusInternalServerError)
 }
 
-// goalRoute matches /goals/<id> and its RSC payload (/goals/<id>.txt): the
-// export has one placeholder page, goals/_.*, whose client reads the real
-// id from usePathname() (spike, 2026-11-15).
-var goalRoute = regexp.MustCompile(`^/goals/[^/]+?(\.txt|\.html)?$`)
+// goalRoute matches /goals/<id>, its RSC payload (/goals/<id>.txt) and its
+// segment files (/goals/<id>/__next.*.txt): the export has one placeholder
+// page, goals/_ (+ goals/_/…), whose client reads the real id from
+// usePathname() (spike, 2026-11-15).
+var goalRoute = regexp.MustCompile(`^/goals/[^/]+?(\.txt|\.html|/.+)?$`)
 
 func uiHandler(ui fs.FS) http.Handler {
 	exists := func(p string) bool {
@@ -195,11 +196,15 @@ func uiHandler(ui fs.FS) http.Handler {
 		case exists(p + "/index.html"):
 			serve(w, r, p+"/index.html")
 		case goalRoute.MatchString(p):
-			ext := goalRoute.FindStringSubmatch(p)[1]
-			if ext == "" {
-				ext = ".html"
+			rest := goalRoute.FindStringSubmatch(p)[1]
+			if rest == "" {
+				rest = ".html"
 			}
-			serve(w, r, "/goals/_"+ext)
+			if !exists("/goals/_" + rest) {
+				http.NotFound(w, r)
+				return
+			}
+			serve(w, r, "/goals/_"+rest)
 		default:
 			body, err := fs.ReadFile(ui, "404.html")
 			if err != nil {

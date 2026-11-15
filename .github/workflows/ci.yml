@@ -54,6 +54,14 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
           NEXT_PUBLIC_APP_URL: http://localhost:3100
 
+  desktop-export:
+    # The Mac app's web UI: a static export with no Supabase/auth code.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: npm run check:desktop-export
+
   go:
     # The desktop's sync service (desktop/syncsvc).
     runs-on: ubuntu-latest
@@ -117,7 +125,7 @@ jobs:
     # One required status for branch protection: adding a job above never
     # means editing the rule.
     if: always()
-    needs: [lint, typecheck, test, build, go, db]
+    needs: [lint, typecheck, test, build, desktop-export, go, db]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all checks passed

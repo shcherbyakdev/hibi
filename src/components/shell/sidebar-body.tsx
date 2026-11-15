@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
 import { NAV_ITEMS, NAV_SECTIONS } from "./nav";
-import { SignOutButton } from "./sign-out-button";
+import { AccountBox } from "@edition/account-box";
 import { OPEN_COMMAND_MENU_EVENT } from "@/components/command-menu";
 import { cn } from "@/lib/utils";
 import { SyncStatus } from "./sync-status";
@@ -73,10 +73,7 @@ export function SidebarBody({ userEmail, onNavigate }: { userEmail: string; onNa
       </nav>
 
       <div className="flex flex-col gap-1 pt-2">
-        <div className="text-subtle truncate px-2 text-xs" title={userEmail}>
-          {userEmail}
-        </div>
-        <SignOutButton />
+        <AccountBox email={userEmail} />
       </div>
     </div>
   );

@@ -25,7 +25,9 @@
     "predev": "tsx scripts/dev-preflight.ts",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
-    "supabase:status": "supabase status"
+    "supabase:status": "supabase status",
+    "build:desktop": "NEXT_PUBLIC_EDITION=desktop next build",
+    "check:desktop-export": "./scripts/check-desktop-export.sh"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

@@ -5,7 +5,7 @@ import { afterLogin, safeNextPath } from "@/lib/auth/next-path";
 import { LoginForm } from "./login-form";
 import { AuthFooter, AuthHeading } from "../fields";
 
-export default async function LoginPage({ searchParams }: PageProps<"/login">) {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { error, next } = (await searchParams) as { error?: string; next?: string };
   if (await getOptionalUser()) redirect(afterLogin(next));
 
