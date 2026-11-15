@@ -114,6 +114,14 @@ func (a *app) startup(ctx context.Context) {
 			log.Printf("[hibi] server: %v", err)
 		}
 	}()
+	// Come forward once the window exists. A launch from Finder or the Dock
+	// is in front anyway, but the updater's relaunch comes from a background
+	// script after we quit, and macOS (14+) then opens the window behind
+	// whatever app is active, so the restart looks like it never happened.
+	go func() {
+		time.Sleep(300 * time.Millisecond)
+		runtime.Show(ctx)
+	}()
 }
 
 // updater finishes or rolls back an interrupted update, then serves
