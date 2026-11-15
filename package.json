@@ -27,7 +27,8 @@
     "supabase:stop": "supabase stop",
     "supabase:status": "supabase status",
     "build:desktop": "NEXT_PUBLIC_EDITION=desktop next build",
-    "check:desktop-export": "./scripts/check-desktop-export.sh"
+    "check:desktop-export": "./scripts/check-desktop-export.sh",
+    "desktop:build": "npm run build:desktop && find desktop/ui -mindepth 1 ! -name .gitignore -delete && cp -R out/. desktop/ui/ && cd desktop && CGO_CFLAGS=-mmacosx-version-min=13.0 CGO_LDFLAGS=-mmacosx-version-min=13.0 wails build -platform darwin/universal -clean"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

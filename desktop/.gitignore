@@ -1,0 +1,3 @@
+# wails build output and its generated JS bindings (unused)
+/build/bin/
+/frontend/wailsjs/
