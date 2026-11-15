@@ -84,31 +84,48 @@ export default async function Home() {
   );
 }
 
-/* The hibi mark at night: a low sun (the dot) above a dark sea, its light
-   bending into the smile on the water. A band at the foot of the page. */
+/* A minimal sunrise at the foot of the page: the sun climbs from behind
+   an implied horizon (a glow line that fades at both ends) while the light
+   around it warms, once, then rests. Reduced motion shows the risen state. */
 function Horizon() {
   return (
-    <svg className="h-[clamp(140px,26vh,280px)] w-full shrink-0" viewBox="0 0 1600 280" preserveAspectRatio="xMidYMid slice" aria-hidden>
+    <svg className="h-[clamp(120px,22vh,220px)] w-full shrink-0" viewBox="0 0 1600 220" preserveAspectRatio="xMidYMax slice" aria-hidden>
+      <style>{`
+        .sunrise-sun { animation: sunrise-rise 3.2s cubic-bezier(.2,.7,.2,1) .5s both; }
+        .sunrise-glow { animation: sunrise-fade 3.6s ease-out .5s both; }
+        .sunrise-line { animation: sunrise-fade 1.2s ease-out .2s both; } /* before the sun breaks it */
+        @keyframes sunrise-rise { from { transform: translateY(70px); } to { transform: translateY(0); } }
+        @keyframes sunrise-fade { from { opacity: 0; } to { opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) {
+          .sunrise-sun, .sunrise-glow, .sunrise-line { animation: none; }
+        }
+      `}</style>
       <defs>
-        <radialGradient id="glow" cx="0.5" cy="1" r="0.6">
-          <stop offset="0" stopColor="#d0845a" stopOpacity="0.6" />
-          <stop offset="0.45" stopColor="#7a4a35" stopOpacity="0.2" />
-          <stop offset="1" stopColor="#7a4a35" stopOpacity="0" />
+        <radialGradient id="sunrise-halo" cx="0.5" cy="1" r="0.5">
+          <stop offset="0" stopColor="#d88a5c" stopOpacity="0.55" />
+          <stop offset="0.4" stopColor="#8a5238" stopOpacity="0.18" />
+          <stop offset="1" stopColor="#8a5238" stopOpacity="0" />
         </radialGradient>
-        <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#111c27" />
-          <stop offset="1" stopColor="#03060a" />
+        <linearGradient id="sunrise-edge" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#e3a77f" stopOpacity="0" />
+          <stop offset="0.5" stopColor="#e3a77f" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#e3a77f" stopOpacity="0" />
         </linearGradient>
-        <filter id="soft" x="-20%" y="-50%" width="140%" height="200%">
-          <feGaussianBlur stdDeviation="5" />
+        <clipPath id="sunrise-sky">
+          <rect width="1600" height="170" />
+        </clipPath>
+        <filter id="sunrise-blur" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="10" />
         </filter>
       </defs>
-      <ellipse cx="800" cy="150" rx="760" ry="140" fill="url(#glow)" />
-      <circle cx="800" cy="150" r="40" fill="#f0c49f" opacity="0.18" filter="url(#soft)" />
-      <circle cx="800" cy="134" r="12" fill="#f3cba6" />
-      <rect y="150" width="1600" height="130" fill="url(#sea)" />
-      <line x1="0" y1="150.5" x2="1600" y2="150.5" stroke="#c47a50" strokeOpacity="0.35" />
-      <path d="M720 196 A110 110 0 0 0 880 196" fill="none" stroke="#e3a77f" strokeWidth="5" strokeLinecap="round" opacity="0.35" filter="url(#soft)" />
+      <ellipse className="sunrise-glow" cx="800" cy="170" rx="720" ry="150" fill="url(#sunrise-halo)" />
+      <g clipPath="url(#sunrise-sky)">
+        <g className="sunrise-sun">
+          <circle cx="800" cy="138" r="34" fill="#f3cba6" opacity="0.25" filter="url(#sunrise-blur)" />
+          <circle cx="800" cy="138" r="16" fill="#f5d2b0" />
+        </g>
+      </g>
+      <rect className="sunrise-line" x="300" y="169.5" width="1000" height="1" fill="url(#sunrise-edge)" />
     </svg>
   );
 }
