@@ -49,9 +49,11 @@ folder above if you want your data gone too.
 
 **Build it yourself:** `npm run desktop:build` (needs Go and
 [Wails](https://wails.io) v2.17.1) → `desktop/build/bin/hibi.app`.
-**Release:** push tag `desktop-v<x.y.z>`. The workflow runs
-`scripts/release-desktop.sh` (try it locally first: it writes `dist/`) and
-publishes the dmg, the signed zip and `latest.json`. It signs with the
+**Release:** push tag `desktop-v<x.y.z>`. The workflow builds in one job
+(`scripts/release-desktop.sh build <v>`: npm, Wails, no key) and signs and
+publishes in another (`… sign <v>`: Go only, with the key), so npm code
+never runs next to the signing key. Run both stages locally for a dry run
+(they write `dist/`). It signs with the
 `HIBI_UPDATE_PRIVATE_KEY` repo secret, which must match
 `desktop/update/pubkey.txt`; the private key also lives in
 `~/.config/hibi/update.key`, never in the repo.
