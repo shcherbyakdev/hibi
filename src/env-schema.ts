@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 
 const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/;
 const isLocal = (url: string) => LOCAL.test(new URL(url).hostname);
