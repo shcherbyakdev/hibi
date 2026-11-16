@@ -46,6 +46,16 @@ export function useInbox(): Item[] | undefined {
   );
 }
 
+/** Open goal tasks with no plan yet: a goal's backlog, the source Today
+    picks "Goals" from. Same filtered scan as the Inbox. */
+export function useGoalBacklog(): Item[] | undefined {
+  const { db } = useSync();
+  return useLiveQuery(
+    async () => (await db.items.filter((i) => isLive(i) && isOpen(i) && !i.plan_scope && !!i.goal_id).toArray()).sort(bySortKey),
+    [db],
+  );
+}
+
 /** Last key of the list a place shows (a goal's unplanned tasks when a goal
     is given), so new and moved items go to its end. */
 async function lastKey(db: LocalDb, p: Place, goalId: string | null = null): Promise<string | null> {

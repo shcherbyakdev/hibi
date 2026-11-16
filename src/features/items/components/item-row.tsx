@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, NotebookText } from "lucide-react";
+import { ArrowUp, Check, NotebookText } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { MoreHorizontalIcon } from "@hugeicons/core-free-icons";
 import type { Item } from "@/lib/sync/db";
@@ -35,6 +35,7 @@ export function ItemRow({
   showPlace = false,
   overlay = false,
   density = "list",
+  onToday,
 }: {
   item: Item;
   today: string;
@@ -42,6 +43,9 @@ export function ItemRow({
   showPlace?: boolean;
   overlay?: boolean;
   density?: "list" | "card" | "minimal";
+  /** Offer "↑ Today" (Today's pick list): a quiet label at rest, a button
+      in the hover actions. List densities only. */
+  onToday?: () => void;
 }) {
   const actions = useItemActions();
   const { weekStart } = usePrefs();
@@ -105,6 +109,12 @@ export function ItemRow({
       {item.routine_id ? <RepeatIcon id={item.routine_id} /> : null}
       {item.notes ? <NotebookText aria-label="Has notes" className="text-subtle size-3.5 shrink-0" /> : null}
       {overlay ? null : <RowTime item={item} />}
+      {onToday ? (
+        <span className="text-subtle flex shrink-0 items-center gap-1 text-xs">
+          <ArrowUp className="size-3.5" />
+          Today
+        </span>
+      ) : null}
       {showPlace && item.plan_scope ? (
         <span className={cn("shrink-0 truncate font-mono text-[11px] uppercase tracking-[0.06em]", late ? "text-destructive" : "text-subtle")}>{placeLabel(item)}</span>
       ) : null}
@@ -160,14 +170,14 @@ export function ItemRow({
       <span className="flex shrink-0 items-center gap-2 transition-opacity duration-150 group-focus-within/row:opacity-0 group-hover/row:opacity-0 group-has-data-popup-open/row:opacity-0">
         {meta}
       </span>
-      {overlay ? null : <HoverActions item={item} today={today} className={cn("inset-y-0", density === "minimal" ? "right-2" : "right-1")} />}
+      {overlay ? null : <HoverActions item={item} today={today} onToday={onToday} className={cn("inset-y-0", density === "minimal" ? "right-2" : "right-1")} />}
     </div>
   );
 }
 
 /** ▶ and ⋯ laid over the row's right edge on hover/focus, on a fade of the
     row's hover colour; click-through while hidden. */
-function HoverActions({ item, today, className }: { item: Item; today: string; className?: string }) {
+function HoverActions({ item, today, onToday, className }: { item: Item; today: string; onToday?: () => void; className?: string }) {
   const actions = useItemActions();
   const sheet = useItemSheet();
   const button = "text-subtle hover:text-foreground hover:bg-background/60 flex size-6 shrink-0 items-center justify-center rounded-md outline-none";
@@ -179,6 +189,12 @@ function HoverActions({ item, today, className }: { item: Item; today: string; c
         className,
       )}
     >
+      {onToday ? (
+        <button type="button" data-no-dnd tabIndex={-1} title="Do it today (T)" onClick={onToday} className={cn(button, "w-auto gap-1 px-1.5 text-xs")}>
+          <ArrowUp className="size-3.5" />
+          Today
+        </button>
+      ) : null}
       <PlayButton item={item} className={button} />
       <DropdownMenu>
         <DropdownMenuTrigger data-no-dnd aria-label={`Options for "${item.title}"`} className={cn(button, "focus-visible:ring-ring/40 focus-visible:ring-2")}>
