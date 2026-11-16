@@ -86,7 +86,7 @@ export function ToolboxFloat() {
       role="region"
       aria-label="Toolbox"
       onKeyDown={(e) => e.key === "Escape" && setMode("hidden")}
-      style={{ left: pos?.x ?? 0, top: pos?.y ?? 0, width: WIDTH }}
+      style={{ left: pos?.x ?? 0, top: pos?.y ?? 0, width: `min(${WIDTH}px, 100vw - 32px)` }}
       className={cn("bg-sidebar fixed z-40 max-h-[calc(100dvh-32px)] overflow-y-auto rounded-md p-2 shadow-(--shadow-lift)", !pos && "invisible")}
     >
       <Toolbox dragHandleProps={{ onPointerDown, onPointerMove, onPointerUp, onPointerCancel: onPointerUp }} />

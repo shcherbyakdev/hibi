@@ -186,8 +186,9 @@ function TimerCard({ now }: { now: number }) {
         <button
           type="button"
           aria-label={running ? "Pause" : "Resume"}
-          disabled={!running && !timer.pausedItemId}
-          onClick={() => void (running ? timer.pause() : timer.pausedItemId && timer.start(timer.pausedItemId, { pomodoro: true }))}
+          // Resume only a paused task that still exists (as TimerBar does).
+          disabled={!running && !title}
+          onClick={() => void (running ? timer.pause() : title && timer.pausedItemId && timer.start(timer.pausedItemId, { pomodoro: true }))}
           className="bg-muted hover:bg-muted/70 flex h-10 items-center justify-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-40"
         >
           {running ? <Pause className="size-4" /> : <Play className="size-4" />}
