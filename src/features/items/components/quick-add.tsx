@@ -17,10 +17,32 @@ export function QuickAdd({ place, goalId = null, status, placeholder = "Add task
   const [priority, setPriority] = React.useState(0);
   const input = React.useRef<HTMLInputElement>(null);
   const active = value.length > 0 || priority > 0;
+  const submit = () => {
+    if (!value.trim()) return;
+    void actions.create(value, place, priority, { goalId, status });
+    setValue("");
+    setPriority(0);
+  };
 
   return (
-    <div className={cn("text-subtle focus-within:text-foreground group/qa flex h-8 items-center gap-2.5 rounded-lg px-2 text-[13px]", className)}>
-      <Plus className="size-4 shrink-0" />
+    // The whole row is the field: a click anywhere on it starts typing.
+    <div
+      onClick={(e) => e.target === e.currentTarget && input.current?.focus()}
+      className={cn("text-subtle focus-within:text-foreground hover:text-foreground group/qa flex h-8 cursor-text items-center gap-2.5 rounded-lg px-2 text-[13px] transition-colors", className)}
+    >
+      {/* The plus starts a task, and adds it once there is text. */}
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-label={value.trim() ? "Add task" : placeholder}
+        onClick={() => {
+          submit();
+          input.current?.focus();
+        }}
+        className="hover:bg-foreground/8 -m-1 flex shrink-0 cursor-pointer items-center justify-center rounded-md p-1 outline-none"
+      >
+        <Plus className="size-4" />
+      </button>
       <input
         ref={input}
         value={value}
@@ -30,11 +52,7 @@ export function QuickAdd({ place, goalId = null, status, placeholder = "Add task
         data-quick-add
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter" && value.trim()) {
-            void actions.create(value, place, priority, { goalId, status });
-            setValue("");
-            setPriority(0);
-          }
+          if (e.key === "Enter") submit();
           if (e.key === "Escape") e.currentTarget.blur();
         }}
         className="placeholder:text-subtle text-foreground min-w-0 flex-1 bg-transparent outline-none"

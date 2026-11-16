@@ -30,6 +30,7 @@ export const SHORTCUTS: Array<[string, string]> = [
   ["1 / 2 / 3", "Day / Week / Month (no task focused)"],
   ["← / →", "Previous / next period"],
   ["T", "Jump to today (no task focused)"],
+  ["D", "Plan my day (on Today)"],
   ["/ or ⌘K", "Search and commands"],
   ["?", "This list"],
 ];
@@ -96,7 +97,7 @@ export function Shortcuts() {
         if (e.altKey && (key === "ArrowUp" || key === "ArrowDown")) {
           handled();
           const group = row.closest<HTMLElement>("[data-group]");
-          if (!group || group.dataset.group === "overdue") return;
+          if (!group || group.dataset.group === "overdue" || group.dataset.group === "suggested") return;
           const ids = [...group.querySelectorAll<HTMLElement>("[data-item-id]")].map((el) => idOf(el)!);
           const list = (await db.items.bulkGet(ids)).filter((x) => x !== undefined);
           const k = keyForStep(list, ids.indexOf(item.id), key === "ArrowUp" ? -1 : 1);
@@ -126,6 +127,7 @@ export function Shortcuts() {
       if (key === "ArrowLeft") return handled(), click("[data-nav=prev]");
       if (key === "ArrowRight") return handled(), click("[data-nav=next]");
       if (key === "t") return handled(), click("[data-nav=today]");
+      if (key === "d") return handled(), click("[data-plan-day]");
       // S with no task focused: pause the running timer, or resume the paused one.
       if (key === "s" && (timer.running || timer.pausedItemId)) {
         handled();
