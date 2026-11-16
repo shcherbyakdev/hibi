@@ -56,3 +56,21 @@ export function formatTotal(seconds: number): string {
   const m = Math.floor((seconds % 3600) / 60);
   return h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
 }
+
+// ponytail: a fixed daily focus goal; becomes a pref when someone wants to change it.
+export const FOCUS_GOAL_SECONDS = 4 * 3600;
+
+const startedIn = (e: Session, dayStart: number, dayEnd: number) => {
+  const s = ms(e.started_at);
+  return !e.deleted_at && s >= dayStart && s < dayEnd;
+};
+
+/** Pomodoros on a task, started in [dayStart, dayEnd), that ran their full length. */
+export function pomodorosDone(entries: Session[], itemId: string, dayStart: number, dayEnd: number, now: number): number {
+  return entries.filter((e) => e.item_id === itemId && e.planned_seconds && startedIn(e, dayStart, dayEnd) && sessionSeconds(e, now) >= e.planned_seconds).length;
+}
+
+/** Seconds tracked (timers and pomodoros) by sessions started in [dayStart, dayEnd). */
+export function focusSeconds(entries: Session[], dayStart: number, dayEnd: number, now: number): number {
+  return entries.reduce((sum, e) => sum + (startedIn(e, dayStart, dayEnd) ? sessionSeconds(e, now) : 0), 0);
+}

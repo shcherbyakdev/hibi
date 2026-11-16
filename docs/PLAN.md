@@ -366,6 +366,17 @@ src/
    button (focus, or add once there is text) and the whole row focuses
    the field.
 
+13. **Toolbox.** A widget of focus tools, shown docked (320px column right
+   of the panel, md+) or floating (draggable card, kept on screen), or
+   hidden — per device in localStorage `todo:toolbox`. Top-bar button, F,
+   ⌘K. First tool: pomodoro over today's tasks — ▶ starts a pomodoro,
+   dashes count today's finished ones, big countdown with a tick ring
+   (reset/pause), focus time today vs a fixed 4h goal. A view over
+   `useTimer()`, no schema change; `pomodorosDone`/`focusSeconds` in
+   `features/time/model.ts` (tested). Next: pop-out over other apps
+   (Document Picture-in-Picture; desktop mini window). Spec:
+   `docs/superpowers/specs/2026-11-16-toolbox-design.md`.
+
 Later, not now: custom goal columns (stages), monthly / interval routines, recurring items (pipline has `features/recurrence`), weekly
 review/stats, labels, calendar layout for boards, PWA offline install.
 

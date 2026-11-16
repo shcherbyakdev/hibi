@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Moon, Plus, Sun } from "lucide-react";
+import { Moon, PanelRight, PictureInPicture2, Plus, Sun, X } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CheckmarkCircle02Icon, CircleIcon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ import { useItemSheet } from "@/features/items/components/item-sheet";
 import { isLive, placeLabel } from "@/features/items/model";
 import { PriorityIcon } from "@/features/items/components/priority-icon";
 import { useTimer } from "@/features/time/use-timer";
+import { setToolboxMode, useToolbox } from "@/features/toolbox/use-toolbox";
 import { Pause, Play } from "lucide-react";
 
 /** Dispatched on `window` by the sidebar's search button and "/"; toggles like ⌘K. */
@@ -34,6 +35,7 @@ export function CommandMenu() {
   const goals = useGoals();
   const sheet = useItemSheet();
   const timer = useTimer();
+  const toolbox = useToolbox();
 
   // Tasks are searched in the local db, only while the menu is open and the
   // query isn't empty. Pre-filtered to a short list so cmdk ranks dozens, not
@@ -97,6 +99,21 @@ export function CommandMenu() {
           <CommandItem value="new task create add" onSelect={() => run(() => void focusQuickAdd(router.push))}>
             <Plus className="size-4" /> New task
           </CommandItem>
+          {toolbox.mode !== "docked" ? (
+            <CommandItem value="dock toolbox pomodoro focus panel" onSelect={() => run(() => setToolboxMode("docked"))}>
+              <PanelRight className="size-4" /> Dock toolbox
+            </CommandItem>
+          ) : null}
+          {toolbox.mode !== "floating" ? (
+            <CommandItem value="float toolbox pomodoro focus widget" onSelect={() => run(() => setToolboxMode("floating"))}>
+              <PictureInPicture2 className="size-4" /> Float toolbox
+            </CommandItem>
+          ) : null}
+          {toolbox.mode !== "hidden" ? (
+            <CommandItem value="hide toolbox close" onSelect={() => run(() => setToolboxMode("hidden"))}>
+              <X className="size-4" /> Hide toolbox
+            </CommandItem>
+          ) : null}
           <CommandItem
             value="toggle theme dark light"
             onSelect={() => run(() => setTheme(resolvedTheme === "dark" ? "light" : "dark"))}

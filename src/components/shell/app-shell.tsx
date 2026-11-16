@@ -1,5 +1,6 @@
 import { SidebarBody } from "./sidebar-body";
 import { TopBar } from "./top-bar";
+import { ToolboxDock, ToolboxFloat } from "@/features/toolbox/components/toolbox-host";
 
 /* Linear-style shell: the viewport ground is the sidebar surface and the
    content lives in a rounded, hairline-bordered panel floating on it. The
@@ -19,6 +20,8 @@ export function AppShell({ userEmail, children }: { userEmail: string; children:
           <main className="relative flex min-h-0 flex-1 flex-col overflow-y-auto p-6">{children}</main>
         </div>
       </div>
+      <ToolboxDock />
+      <ToolboxFloat />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clock, dueToClose, formatTotal, sessionSeconds, totalsByItem } from "./model";
+import { clock, dueToClose, focusSeconds, formatTotal, pomodorosDone, sessionSeconds, totalsByItem } from "./model";
 
 const t = (s: string) => `2026-11-13T${s}.000Z`;
 const at = (s: string) => Date.parse(t(s));
@@ -56,5 +56,26 @@ describe("time model", () => {
     expect(formatTotal(25 * 60)).toBe("25m");
     expect(formatTotal(85 * 60)).toBe("1h 25m");
     expect(formatTotal(2 * 3600)).toBe("2h");
+  });
+
+  it("counts only finished pomodoros on the item, started in the day", () => {
+    const day = [at("00:00:00"), at("23:59:59") + 1000] as const;
+    const es = [
+      entry({ start: "09:00:00", end: "09:25:00", planned: 1500 }), // done
+      entry({ start: "10:00:00", end: "10:10:00", planned: 1500 }), // paused early
+      entry({ start: "11:00:00", end: "11:30:00" }), // plain timer
+      entry({ start: "12:00:00", end: "12:25:00", planned: 1500, item: "b" }), // other item
+      { ...entry({ start: "13:00:00", end: "13:25:00", planned: 1500 }), deleted_at: t("14:00:00") },
+      entry({ start: "15:00:00", planned: 1500 }), // running, left open
+    ];
+    expect(pomodorosDone(es, "a", ...day, at("15:10:00"))).toBe(1);
+    expect(pomodorosDone(es, "a", ...day, at("16:00:00"))).toBe(2); // the open one reached 25m
+  });
+
+  it("sums focus time for sessions started in the day", () => {
+    const es = [entry({ start: "09:00:00", end: "09:30:00" }), entry({ start: "10:00:00", planned: 1500 })];
+    expect(focusSeconds(es, at("00:00:00"), at("23:59:59") + 1000, at("11:00:00"))).toBe(1800 + 1500);
+    // a session started before the day doesn't count
+    expect(focusSeconds(es, at("09:30:00"), at("23:59:59"), at("11:00:00"))).toBe(1500);
   });
 });
