@@ -70,6 +70,10 @@ Push a tag `desktop-v<x.y.z>`. `.github/workflows/desktop-release.yml` then:
 So npm code never runs next to the signing key. Run both stages locally
 for a dry run (they write `dist/`).
 
+- **Sign-in:** the build bakes in the hosted project from the repo
+  variables `HIBI_SUPABASE_URL` and `HIBI_SUPABASE_ANON_KEY` (Settings →
+  Secrets and variables → Actions → Variables; both are public values, the
+  same ones Vercel has). Without them the release has no sign-in.
 - **Signing key:** the `HIBI_UPDATE_PRIVATE_KEY` repo secret, which must
   match `desktop/update/pubkey.txt`. A copy lives in
   `~/.config/hibi/update.key` (never in the repo). Back it up: if it's

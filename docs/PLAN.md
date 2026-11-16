@@ -343,6 +343,20 @@ src/
    `scripts/release-desktop.sh`). Spec and plan:
    `docs/superpowers/specs/2026-11-15-hibi-desktop-design.md`,
    `docs/superpowers/plans/2026-11-15-hibi-desktop.md`.
+13. **Sign in on the Mac.** Optional: the app still opens with no account.
+   Settings → Account signs in to the hosted project by password
+   (`src/edition/desktop/account.tsx`: supabase-js in the window, session
+   in its localStorage). Signed in, the window syncs with Supabase through
+   the same transport as the site (`make-transport.ts` picks by user), in
+   a per-account local db, with prefs from the account. On sign-in
+   `merge.ts` takes every row from the built-in service into the account
+   (owner rewritten, queued for push; a cursor per table skips them on
+   later launches). Sign-out deletes the account's local copy and returns
+   to the Mac's own data. This replaces the desktop spec's "no Supabase
+   code in the export" rule; the hosted auth pages still stay out.
+   Ceiling: while signed in, the SQLite file stops changing (it keeps the
+   pre-sign-in data); the account's copy lives in Supabase and IndexedDB.
+   A build without `NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY` has no sign-in.
 
 Later, not now: custom goal columns (stages), monthly / interval routines, recurring items (pipline has `features/recurrence`), weekly
 review/stats, labels, calendar layout for boards, PWA offline install.

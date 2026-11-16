@@ -28,6 +28,11 @@ jobs:
       # The tag reaches the shell as an env var, never spliced into the
       # script; release-desktop.sh refuses anything but x.y.z.
       - run: scripts/release-desktop.sh build "${GITHUB_REF_NAME#desktop-v}"
+        env:
+          # The hosted project the app signs in to (both values are public:
+          # the site ships them too). Unset = a build with no sign-in.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.HIBI_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.HIBI_SUPABASE_ANON_KEY }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dist

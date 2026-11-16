@@ -133,6 +133,8 @@ export function createSyncEngine({
       failures = 0;
       setPhase("idle");
     } catch (e) {
+      // Stopped mid-run (sign-out deletes the db under it): nothing to retry.
+      if (stopped) return;
       if (!(e instanceof TransientError) && !(e instanceof TypeError)) console.error("[sync]", e);
       // Offline or failing: try everything again, backing off to 30s.
       wantPush = wantPull = true;

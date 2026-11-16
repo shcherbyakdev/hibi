@@ -2,10 +2,10 @@
 
 import { useDesktopPrefs } from "./prefs";
 
-/** Saves week start in the built-in sync service, so paired phones agree. */
+/** Saves week start to the account when signed in, else on this Mac. */
 export function useSaveWeekStart() {
   const { save } = useDesktopPrefs();
   return (ws: 0 | 1) => save({ weekStart: ws });
 }
 
-export const WEEK_START_HINT = "Saved on this Mac, so your phone agrees once it's paired.";
+export const WEEK_START_HINT = "Saved with your data.";

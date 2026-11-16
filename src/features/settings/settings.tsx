@@ -4,6 +4,7 @@ import * as React from "react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { useSaveWeekStart, WEEK_START_HINT } from "@edition/week-start";
+import { AccountSettings } from "@edition/account-settings";
 import { usePrefs } from "@/lib/prefs";
 import { SEGMENTED_NAV_CLASS, segmentedItemClass } from "@/components/ui/segmented";
 import { ShortcutList } from "@/components/shortcuts";
@@ -56,6 +57,7 @@ export function Settings() {
           />
         </Row>
       </Section>
+      <AccountSettings />
       <Section title="Keyboard shortcuts">
         <ShortcutList />
       </Section>
