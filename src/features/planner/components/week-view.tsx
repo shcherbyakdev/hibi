@@ -35,6 +35,10 @@ export function WeekView({ date, today, go }: { date: string; today: string; go:
   useEffect(() => {
     if (loaded) grid.current?.querySelector("[data-today]")?.scrollIntoView({ block: "nearest" });
   }, [loaded, start]);
+  // On small screens the opened day moves onto a row of its own: follow it.
+  useEffect(() => {
+    if (open) grid.current?.querySelector("[data-open]")?.scrollIntoView({ block: "nearest" });
+  }, [open]);
   if (!bucket || !dayItems) return null;
   const openCol = open ? days.indexOf(open) : -1;
 
@@ -46,7 +50,7 @@ export function WeekView({ date, today, go }: { date: string; today: string; go:
   return (
     <div className="flex flex-col gap-5">
       <DateNav title="Week" sub={label.week(start)} onPrev={() => go(addDays(start, -7))} onNext={() => go(addDays(start, 7))} onToday={() => go(today)} isCurrent={date === today} />
-      <PlannerBoard groups={groups} today={today} renderItem={(item, { overlay }) => <ItemCard item={item} today={today} overlay={overlay} />}>
+      <PlannerBoard groups={groups} today={today} renderItem={(item, { overlay }) => <ItemCard item={item} today={today} overlay={overlay} fullTitle={item.plan_scope === "day" && item.plan_date === open} />}>
         {(list) => (
           <>
             <section className="bg-muted/60 rounded-xl p-1">
@@ -73,6 +77,7 @@ export function WeekView({ date, today, go }: { date: string; today: string; go:
                   <section
                     key={d}
                     data-today={isToday || undefined}
+                    data-open={isOpen || undefined}
                     onClick={(e) => isCellBackground(e.target as Element) && setOpen(d)}
                     className={cn(
                       "flex min-w-0 flex-col rounded-xl p-1 md:min-h-56",
@@ -84,6 +89,7 @@ export function WeekView({ date, today, go }: { date: string; today: string; go:
                       <button
                         type="button"
                         aria-expanded={isOpen}
+                        aria-label={`${isOpen ? "Collapse" : "Expand"} ${label.dayLong(d)}`}
                         title={isOpen ? "Collapse (Esc)" : "Expand"}
                         onClick={() => setOpen(isOpen ? null : d)}
                         className={cn(columnHeader, "focus-visible:ring-ring/40 w-full rounded-md text-left outline-none focus-visible:ring-2")}

@@ -20,8 +20,8 @@ import { cellClickIntent, isCellBackground, openTracks, useOpenDay } from "../op
    month" bucket. Drag from the bucket onto a day to schedule it; click a
    day's number to open that day; "+" (or double-click a cell's empty
    space) adds a task right there. Clicking a cell's empty space opens that
-   day in place: its column widens, its tasks show as full rows, and the
-   other days squeeze but keep calendar order. */
+   day in place: it widens within its week, its tasks show as full cards,
+   and that week's other days squeeze; other weeks are untouched. */
 export function MonthView({ date, today, go, openDay }: { date: string; today: string; go: (d: string) => void; openDay: (d: string) => void }) {
   const start = periodOf("month", date);
   const { weekStart } = usePrefs();
@@ -39,7 +39,6 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
   const dayId = (d: string) => placeId({ plan_scope: "day", plan_date: d });
   const groups = [{ id: bucketId, items: bucket }, ...grid.flat().map((d) => ({ id: dayId(d), items: byDay.get(d)! }))];
   const inMonth = (d: string) => d.slice(0, 7) === start.slice(0, 7);
-  const openCol = open ? grid.flat().indexOf(open) % 7 : -1;
 
   return (
     <div className="flex flex-col gap-5">
@@ -48,7 +47,7 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
         groups={groups}
         today={today}
         renderItem={(item, { overlay }) =>
-          item.plan_scope !== "day" || overlay ? <ItemRow item={item} today={today} overlay={overlay} /> : item.plan_date === open ? <ItemCard item={item} today={today} /> : <DayChip item={item} />
+          item.plan_scope !== "day" || overlay ? <ItemRow item={item} today={today} overlay={overlay} /> : item.plan_date === open ? <ItemCard item={item} today={today} fullTitle /> : <DayChip item={item} />
         }
       >
         {(list) => (
@@ -62,64 +61,71 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
               <QuickAdd place={{ plan_scope: "month", plan_date: start }} placeholder="Add" />
             </section>
             <div className="min-w-0 flex-1 overflow-x-auto">
-              <div
-                style={{ "--month-cols": openTracks(7, openCol) } as CSSProperties}
-                className={cn(
-                  "grid min-w-[42rem] grid-cols-(--month-cols) overflow-hidden rounded-xl border transition-[grid-template-columns] duration-200 ease-out motion-reduce:transition-none",
-                )}
-              >
-                {weekDays(grid[0][0]).map((d) => (
-                  <div key={d} className="text-subtle border-b px-2 py-1.5 text-xs font-medium">
-                    {label.weekday(d)}
-                  </div>
-                ))}
-                {grid.flat().map((d, i) => (
+              <div className="min-w-[42rem] overflow-hidden rounded-xl border">
+                <div className="grid grid-cols-7">
+                  {weekDays(grid[0][0]).map((d) => (
+                    <div key={d} className="text-subtle border-b px-2 py-1.5 text-xs font-medium">
+                      {label.weekday(d)}
+                    </div>
+                  ))}
+                </div>
+                {/* Each week is its own grid: only the open day's week reshapes,
+                    the other weeks stay lined up under the weekday header. */}
+                {grid.map((week) => (
                   <div
-                    key={d}
-                    onClickCapture={(e) => {
-                      // Capture phase: a double-click's second click must not reach the
-                      // card that opening the day just put under the pointer.
-                      const background = isCellBackground(e.target as Element);
-                      const intent = cellClickIntent(e.detail, background, firstClickOnBackground.current);
-                      if (e.detail === 1) firstClickOnBackground.current = background;
-                      if (intent === "add") {
-                        e.stopPropagation();
-                        setOpen(d);
-                        setAdding(d);
-                      } else if (intent === "open") setOpen(d);
-                    }}
-                    className={cn("group/cell flex min-h-24 min-w-0 flex-col gap-0.5 border-b p-1", i % 7 !== 6 && "border-r", open === d ? "bg-brand/5" : !inMonth(d) && "bg-muted/40")}
+                    key={week[0]}
+                    style={{ "--week-cols": openTracks(7, open ? week.indexOf(open) : -1) } as CSSProperties}
+                    className="grid grid-cols-(--week-cols) transition-[grid-template-columns] duration-200 ease-out motion-reduce:transition-none"
                   >
-                    <div className="flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => openDay(d)}
-                      aria-label={`Open ${label.dayLong(d)}`}
-                      className={cn(
-                        "hover:bg-muted focus-visible:ring-ring/40 flex size-6 items-center justify-center self-start rounded-md text-xs tabular-nums outline-none focus-visible:ring-2",
-                        d === today ? "bg-primary hover:bg-primary text-primary-foreground font-semibold" : inMonth(d) ? "text-foreground" : "text-subtle",
-                      )}
-                    >
-                      {label.dayOfMonth(d)}
-                    </button>
-                    <div className="flex">
-                      <button
-                        type="button"
-                        aria-expanded={open === d}
-                        aria-label={`${open === d ? "Collapse" : "Expand"} ${label.dayLong(d)}`}
-                        title={open === d ? "Collapse (Esc)" : "Expand"}
-                        onClick={() => setOpen(open === d ? null : d)}
-                        className={cn(cellIcon, open === d && "opacity-100")}
+                    {week.map((d, i) => (
+                      <div
+                        key={d}
+                        onClickCapture={(e) => {
+                          // Capture phase: a double-click's second click must not reach the
+                          // card that opening the day just put under the pointer.
+                          const background = isCellBackground(e.target as Element);
+                          const intent = cellClickIntent(e.detail, background, firstClickOnBackground.current);
+                          if (e.detail === 1) firstClickOnBackground.current = background;
+                          if (intent === "add") {
+                            e.stopPropagation();
+                            setOpen(d);
+                            setAdding(d);
+                          } else if (intent === "open") setOpen(d);
+                        }}
+                        className={cn("group/cell flex min-h-24 min-w-0 flex-col gap-0.5 border-b p-1", i % 7 !== 6 && "border-r", open === d ? "bg-brand/5" : !inMonth(d) && "bg-muted/40")}
                       >
-                        {open === d ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
-                      </button>
-                      <button type="button" aria-label={`Add task on ${label.dayLong(d)}`} title="Add task" onClick={() => setAdding(d)} className={cellIcon}>
-                        <Plus className="size-3.5" />
-                      </button>
-                    </div>
-                    </div>
-                    {list(dayId(d), "flex-1")}
-                    {adding === d ? <CellAdd place={{ plan_scope: "day", plan_date: d }} day={label.dayLong(d)} onClose={() => setAdding(null)} /> : null}
+                        <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={() => openDay(d)}
+                          aria-label={`Open ${label.dayLong(d)}`}
+                          className={cn(
+                            "hover:bg-muted focus-visible:ring-ring/40 flex size-6 items-center justify-center self-start rounded-md text-xs tabular-nums outline-none focus-visible:ring-2",
+                            d === today ? "bg-primary hover:bg-primary text-primary-foreground font-semibold" : inMonth(d) ? "text-foreground" : "text-subtle",
+                          )}
+                        >
+                          {label.dayOfMonth(d)}
+                        </button>
+                        <div className="flex">
+                          <button
+                            type="button"
+                            aria-expanded={open === d}
+                            aria-label={`${open === d ? "Collapse" : "Expand"} ${label.dayLong(d)}`}
+                            title={open === d ? "Collapse (Esc)" : "Expand"}
+                            onClick={() => setOpen(open === d ? null : d)}
+                            className={cn(cellIcon, open === d && "opacity-100")}
+                          >
+                            {open === d ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+                          </button>
+                          <button type="button" aria-label={`Add task on ${label.dayLong(d)}`} title="Add task" onClick={() => setAdding(d)} className={cellIcon}>
+                            <Plus className="size-3.5" />
+                          </button>
+                        </div>
+                        </div>
+                        {list(dayId(d), "flex-1")}
+                        {adding === d ? <CellAdd place={{ plan_scope: "day", plan_date: d }} day={label.dayLong(d)} onClose={() => setAdding(null)} /> : null}
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
