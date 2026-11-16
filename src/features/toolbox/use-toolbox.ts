@@ -33,15 +33,15 @@ const subscribe = (cb: () => void) => {
   };
 };
 
+/** Module-level so keyboard and ⌘K handlers can call them without the hook. */
+export const setToolboxMode = (mode: ToolboxMode) => write({ ...read(), mode, ...(mode !== "hidden" && { last: mode }) });
+export const toggleToolbox = () => {
+  const cur = read();
+  write({ ...cur, mode: cur.mode === "hidden" ? cur.last : "hidden" });
+};
+const moveTo = (x: number, y: number) => write({ ...read(), x, y });
+
 export function useToolbox() {
   const p = useSyncExternalStore(subscribe, read, () => DEFAULT_PLACEMENT);
-  return {
-    ...p,
-    setMode: (mode: ToolboxMode) => write({ ...read(), mode, ...(mode !== "hidden" && { last: mode }) }),
-    toggle: () => {
-      const cur = read();
-      write({ ...cur, mode: cur.mode === "hidden" ? cur.last : "hidden" });
-    },
-    moveTo: (x: number, y: number) => write({ ...read(), x, y }),
-  };
+  return { ...p, setMode: setToolboxMode, toggle: toggleToolbox, moveTo };
 }

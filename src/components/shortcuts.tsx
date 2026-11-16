@@ -8,6 +8,7 @@ import { useToday } from "@/lib/use-today";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { OPEN_COMMAND_MENU_EVENT } from "@/components/command-menu";
 import { useItemActions } from "@/features/items/use-items";
+import { toggleToolbox } from "@/features/toolbox/use-toolbox";
 import { useItemSheet } from "@/features/items/components/item-sheet";
 import { INBOX, keyForStep, type Place } from "@/features/items/model";
 import { periodOf } from "@/features/planner/periods";
@@ -30,6 +31,7 @@ export const SHORTCUTS: Array<[string, string]> = [
   ["1 / 2 / 3", "Day / Week / Month (no task focused)"],
   ["← / →", "Previous / next period"],
   ["T", "Jump to today (no task focused)"],
+  ["F", "Show / hide the toolbox"],
   ["/ or ⌘K", "Search and commands"],
   ["?", "This list"],
 ];
@@ -131,6 +133,7 @@ export function Shortcuts() {
         handled();
         return void (timer.running ? timer.pause() : timer.start(timer.pausedItemId!));
       }
+      if (key === "f") return handled(), toggleToolbox();
       if (key === "/") return handled(), window.dispatchEvent(new Event(OPEN_COMMAND_MENU_EVENT));
       if (key === "?") return handled(), setHelp(true);
     };

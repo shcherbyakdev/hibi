@@ -71,9 +71,11 @@ function TodayTasks({ today, day, now }: { today: string; day: readonly [number,
   const actions = useItemActions();
   const [adding, setAdding] = React.useState(false);
   const [text, setText] = React.useState("");
-  const add = async () => {
-    await actions.create(text, { plan_scope: "day", plan_date: today });
+  // Clear before the write, so typing the next task right away isn't
+  // appended to the one being saved.
+  const add = () => {
     setText("");
+    void actions.create(text, { plan_scope: "day", plan_date: today });
   };
 
   return (
@@ -86,7 +88,7 @@ function TodayTasks({ today, day, now }: { today: string; day: readonly [number,
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") void add();
+            if (e.key === "Enter") add();
             if (e.key === "Escape") {
               e.stopPropagation(); // closes the input, not the floating card
               setAdding(false);
@@ -165,7 +167,7 @@ function TimerCard({ now }: { now: number }) {
     <div className={cn(card, "flex flex-col gap-3 p-3")}>
       <div className="mx-auto w-full max-w-56">
         <TickRing fraction={planned ? session / planned : 0}>
-          <span role="timer" aria-label={running ? `${planned ? "Pomodoro" : "Timer"}${title ? ` for ${title}` : ""}` : "Pomodoro"} className={cn("font-mono text-5xl tabular-nums", !running && "text-muted-foreground")}>
+          <span role="timer" aria-label={running ? `${planned ? "Pomodoro" : "Timer"}${title ? ` for ${title}` : ""}` : "Pomodoro"} className={cn("font-mono tabular-nums", display.length > 5 ? "text-3xl" : "text-5xl", !running && "text-muted-foreground")}>
             {display}
           </span>
           <span className="text-subtle mt-1 max-w-36 truncate text-xs">{title ?? (running ? "" : "Pick a task")}</span>
