@@ -16,7 +16,7 @@ while the rest of the period stays visible.
 - Anti-goal: dates no longer lining up in columns (a broken calendar).
 
 ## Approaches
-- **A. The open day's column grows (picked).** The open column becomes
+- **A. The open day grows within its week (picked, revised 2026-11-17: originally the whole column grew).** In that week row the open day becomes
   `minmax(20rem, 3fr)`, the others `minmax(0, 1fr)`. The grid stays a calendar.
 - B. The open day spans a 2×2 or 3×2 block and the others flow around it.
   Rejected: days move out of their weekday columns.
