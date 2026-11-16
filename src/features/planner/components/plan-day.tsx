@@ -93,10 +93,12 @@ export function PlanDay({ today }: { today: string }) {
             <Button onClick={() => setQueue(null)} className="self-start">
               Start the day
             </Button>
-          ) : item ? (
+          ) : step && item?.id === step.id ? (
+            // Both checked: while the dialog animates shut the queue is gone
+            // (no step) but the live query still holds the last task.
             <>
               <div className="flex flex-col gap-1.5">
-                <div className="text-muted-foreground font-mono text-[11px] tracking-[0.06em] uppercase">{step!.from}</div>
+                <div className="text-muted-foreground font-mono text-[11px] tracking-[0.06em] uppercase">{step.from}</div>
                 <div className="flex items-start gap-2 text-[15px]">
                   {item.priority ? <PriorityIcon priority={item.priority} className="mt-0.5" /> : null}
                   <span className="min-w-0 break-words">{item.title}</span>
