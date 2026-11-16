@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Check, Plus } from "lucide-react";
+import { useState, type CSSProperties } from "react";
+import { Check, Maximize2, Minimize2, Plus } from "lucide-react";
 import { useItemActions, usePlanned } from "@/features/items/use-items";
 import { placeId, type Place } from "@/features/items/model";
 import { QuickAdd } from "@/features/items/components/quick-add";
-import { ItemRow } from "@/features/items/components/item-row";
+import { ItemCard, ItemRow } from "@/features/items/components/item-row";
 import type { Item } from "@/lib/sync/db";
 import { cn } from "@/lib/utils";
 import { addMonths, label, monthGrid, periodOf, weekDays } from "../periods";
@@ -14,16 +14,20 @@ import { PlannerBoard } from "./planner-board";
 import { PriorityPicker } from "@/features/items/components/priority-icon";
 import { useItemSheet } from "@/features/items/components/item-sheet";
 import { usePrefs } from "@/lib/prefs";
+import { isCellBackground, openTracks, useOpenDay } from "../open-day";
 
 /* The month as a grid of day cells (each a drop target) beside the "This
    month" bucket. Drag from the bucket onto a day to schedule it; click a
    day's number to open that day; "+" (or double-click a cell's empty
-   space) adds a task right there. */
+   space) adds a task right there. Clicking a cell's empty space opens that
+   day in place: its column widens, its tasks show as full rows, and the
+   other days squeeze but keep calendar order. */
 export function MonthView({ date, today, go, openDay }: { date: string; today: string; go: (d: string) => void; openDay: (d: string) => void }) {
   const start = periodOf("month", date);
   const { weekStart } = usePrefs();
   const [adding, setAdding] = useState<string | null>(null);
   const grid = monthGrid(start, weekStart);
+  const { open, setOpen } = useOpenDay(start);
   const bucket = usePlanned("month", start);
   const dayItems = usePlanned("day", grid[0][0], grid.at(-1)!.at(-1)!);
   if (!bucket || !dayItems) return null;
@@ -34,6 +38,7 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
   const dayId = (d: string) => placeId({ plan_scope: "day", plan_date: d });
   const groups = [{ id: bucketId, items: bucket }, ...grid.flat().map((d) => ({ id: dayId(d), items: byDay.get(d)! }))];
   const inMonth = (d: string) => d.slice(0, 7) === start.slice(0, 7);
+  const openCol = open ? grid.flat().indexOf(open) % 7 : -1;
 
   return (
     <div className="flex flex-col gap-5">
@@ -41,7 +46,9 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
       <PlannerBoard
         groups={groups}
         today={today}
-        renderItem={(item, { overlay }) => (item.plan_scope === "day" && !overlay ? <DayChip item={item} /> : <ItemRow item={item} today={today} overlay={overlay} />)}
+        renderItem={(item, { overlay }) =>
+          item.plan_scope !== "day" || overlay ? <ItemRow item={item} today={today} overlay={overlay} /> : item.plan_date === open ? <ItemCard item={item} today={today} /> : <DayChip item={item} />
+        }
       >
         {(list) => (
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
@@ -54,7 +61,12 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
               <QuickAdd place={{ plan_scope: "month", plan_date: start }} placeholder="Add" />
             </section>
             <div className="min-w-0 flex-1 overflow-x-auto">
-              <div className="grid min-w-[42rem] grid-cols-7 overflow-hidden rounded-xl border">
+              <div
+                style={{ "--month-cols": openTracks(7, openCol) } as CSSProperties}
+                className={cn(
+                  "grid min-w-[42rem] grid-cols-(--month-cols) overflow-hidden rounded-xl border transition-[grid-template-columns] duration-200 ease-out motion-reduce:transition-none",
+                )}
+              >
                 {weekDays(grid[0][0]).map((d) => (
                   <div key={d} className="text-subtle border-b px-2 py-1.5 text-xs font-medium">
                     {label.weekday(d)}
@@ -63,8 +75,9 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
                 {grid.flat().map((d, i) => (
                   <div
                     key={d}
-                    onDoubleClick={(e) => !(e.target as HTMLElement).closest("button, input, [aria-roledescription]") && setAdding(d)}
-                    className={cn("group/cell flex min-h-24 flex-col gap-0.5 border-b p-1", i % 7 !== 6 && "border-r", !inMonth(d) && "bg-muted/40")}
+                    onClick={(e) => isCellBackground(e.target as Element) && setOpen(d)}
+                    onDoubleClick={(e) => isCellBackground(e.target as Element) && setAdding(d)}
+                    className={cn("group/cell flex min-h-24 min-w-0 flex-col gap-0.5 border-b p-1", i % 7 !== 6 && "border-r", open === d ? "bg-brand/5" : !inMonth(d) && "bg-muted/40")}
                   >
                     <div className="flex items-center justify-between">
                     <button
@@ -78,15 +91,21 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
                     >
                       {label.dayOfMonth(d)}
                     </button>
-                    <button
-                      type="button"
-                      aria-label={`Add task on ${label.dayLong(d)}`}
-                      title="Add task"
-                      onClick={() => setAdding(d)}
-                      className="text-subtle hover:text-foreground hover:bg-muted focus-visible:ring-ring/40 flex size-6 items-center justify-center rounded-md opacity-0 outline-none group-hover/cell:opacity-100 focus-visible:opacity-100 focus-visible:ring-2"
-                    >
-                      <Plus className="size-3.5" />
-                    </button>
+                    <div className="flex">
+                      <button
+                        type="button"
+                        aria-expanded={open === d}
+                        aria-label={`${open === d ? "Collapse" : "Expand"} ${label.dayLong(d)}`}
+                        title={open === d ? "Collapse (Esc)" : "Expand"}
+                        onClick={() => setOpen(open === d ? null : d)}
+                        className={cn(cellIcon, open === d && "opacity-100")}
+                      >
+                        {open === d ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+                      </button>
+                      <button type="button" aria-label={`Add task on ${label.dayLong(d)}`} title="Add task" onClick={() => setAdding(d)} className={cellIcon}>
+                        <Plus className="size-3.5" />
+                      </button>
+                    </div>
                     </div>
                     {list(dayId(d), "flex-1")}
                     {adding === d ? <CellAdd place={{ plan_scope: "day", plan_date: d }} day={label.dayLong(d)} onClose={() => setAdding(null)} /> : null}
@@ -100,6 +119,9 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
     </div>
   );
 }
+
+const cellIcon =
+  "text-subtle hover:text-foreground hover:bg-muted focus-visible:ring-ring/40 flex size-6 items-center justify-center rounded-md opacity-0 outline-none group-hover/cell:opacity-100 focus-visible:opacity-100 focus-visible:ring-2";
 
 /** A day's item inside a month cell: one line. The leading icon is the
     same priority picker as every other view (small); the title opens the

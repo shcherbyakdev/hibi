@@ -22,6 +22,8 @@ export function shouldCloseOnKey(e: { key: string; defaultPrevented: boolean; ta
 /** The day opened in place in week/month view. Changing `period` closes it. */
 export function useOpenDay(period: string) {
   const [state, setState] = useState<{ period: string; day: string | null }>({ period, day: null });
+  // Period changed: forget the open day, so coming back finds it closed.
+  if (state.period !== period) setState({ period, day: null });
   const open = state.period === period ? state.day : null;
   const setOpen = (day: string | null) => setState({ period, day });
   useEffect(() => {
