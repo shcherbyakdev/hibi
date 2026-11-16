@@ -7,29 +7,31 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 /** Index = priority value: 0 none, 1 urgent … 4 low (Linear's order). */
 export const PRIORITY_LABELS = ["No priority", "Urgent", "High", "Medium", "Low"] as const;
 
-/* Signal bars (Linear-style): three ascending bars, the lit count is the
-   level — high 3, medium 2, low 1. Only the top two get colour: urgent
-   red (the alert colour), high amber; medium and low are ink. Unlit bars
-   are faint; "No priority" is all three faint. */
-const LIT = [0, 3, 3, 2, 1];
-const BARS = [
-  { x: 2, h: 5 },
-  { x: 6.5, h: 8 },
-  { x: 11, h: 11 },
+/* Jira-style glyphs: urgent ⇈ red, high ^ rose, medium = amber, low ∨
+   teal. "No priority" is a faint = so the slot still reads as a control. */
+const GLYPHS = [
+  { d: "M3.5 6.5h9M3.5 9.5h9", tone: "text-subtle opacity-40" },
+  { d: "M4 8.5l4-4 4 4M4 12.5l4-4 4 4", tone: "text-destructive" },
+  { d: "M4 10l4-4 4 4", tone: "text-tone-rose" },
+  { d: "M3.5 6.5h9M3.5 9.5h9", tone: "text-tone-amber" },
+  { d: "M4 6l4 4 4-4", tone: "text-tone-teal" },
 ];
 
 export function PriorityIcon({ priority, className }: { priority: number; className?: string }) {
-  const lit = LIT[priority] ?? 0;
+  const g = GLYPHS[priority] ?? GLYPHS[0];
   return (
     <svg
       viewBox="0 0 16 16"
       role="img"
       aria-label={priority ? `${PRIORITY_LABELS[priority]} priority` : "No priority"}
-      className={cn("size-4 shrink-0", priority === 1 ? "text-destructive" : priority === 2 ? "text-tone-amber" : "text-foreground", className)}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("size-4 shrink-0", g.tone, className)}
     >
-      {BARS.map((b, i) => (
-        <rect key={i} x={b.x} y={13.5 - b.h} width="3" height={b.h} rx="1" fill={i < lit ? "currentColor" : "var(--subtle)"} opacity={i < lit ? 1 : 0.3} />
-      ))}
+      <path d={g.d} />
     </svg>
   );
 }
