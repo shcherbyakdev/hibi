@@ -357,13 +357,14 @@ src/
    Ceiling: while signed in, the SQLite file stops changing (it keeps the
    pre-sign-in data); the account's copy lives in Supabase and IndexedDB.
    A build without `NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY` has no sign-in.
-14. **Plan my day.** On Today: a "Plan my day" button (`D`) opens a walk
-   through overdue, this week's bucket and the Inbox, one task and one key
-   each (`plan-day.tsx`; the row letters T / W / M / U / X, → skips). Below
-   the list, "Suggested" shows up to five tasks from this week's bucket
-   (and the month's in its last week), most urgent first
-   (`planner/suggest.ts`, tested). Quick add: the plus is a button (focus,
-   or add once there is text) and the whole row focuses the field.
+14. **Pick for today.** On Today, under the list, one inline section (no
+   dialog): sources as tabs in its header — This week, This month (the
+   buckets: planned, no day yet), Goals (unplanned goal tasks), Inbox —
+   each with open tasks most urgent first (`planner/pick.ts`, tested). A
+   row's "Today" button, T on a focused row, or a drag up moves it into
+   today. Overdue stays its own group above. Quick add: the plus is a
+   button (focus, or add once there is text) and the whole row focuses
+   the field.
 
 Later, not now: custom goal columns (stages), monthly / interval routines, recurring items (pipline has `features/recurrence`), weekly
 review/stats, labels, calendar layout for boards, PWA offline install.
