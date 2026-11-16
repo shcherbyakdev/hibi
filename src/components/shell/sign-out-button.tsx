@@ -3,14 +3,15 @@
 import * as React from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Logout03Icon } from "@hugeicons/core-free-icons";
-import { signOut } from "@/features/auth/actions";
 import { useForgetDevice } from "@/lib/sync/provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 /* Sign out = push unsynced changes, clear this device's copy, end the
-   session. If changes can't be pushed (offline), ask before losing them. */
-export function SignOutButton() {
+   session. If changes can't be pushed (offline), ask before losing them.
+   `signOut` ends the session and moves on (hosted: the server action, which
+   redirects to /login; desktop: back to this Mac's own data). */
+export function SignOutButton({ signOut }: { signOut: () => Promise<void> }) {
   const forget = useForgetDevice();
   const [busy, setBusy] = React.useState(false);
   const [unsynced, setUnsynced] = React.useState(0);
@@ -23,7 +24,7 @@ export function SignOutButton() {
       setBusy(false);
       return;
     }
-    await signOut(); // redirects to /login
+    await signOut();
   };
 
   return (
