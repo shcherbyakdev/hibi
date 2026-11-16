@@ -48,7 +48,7 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
         groups={groups}
         today={today}
         renderItem={(item, { overlay }) =>
-          item.plan_scope !== "day" || overlay ? <ItemRow item={item} today={today} overlay={overlay} /> : item.plan_date === open ? <ItemCard item={item} today={today} /> : <DayChip item={item} />
+          item.plan_scope !== "day" || overlay ? <ItemRow item={item} today={today} overlay={overlay} /> : item.plan_date === open ? <ItemCard item={item} today={today} fullTitle /> : <DayChip item={item} />
         }
       >
         {(list) => (

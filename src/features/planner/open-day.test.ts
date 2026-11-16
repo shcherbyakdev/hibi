@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cellClickIntent, isCellBackground, openTracks, shouldCloseOnKey } from "./open-day";
+import { cellClickIntent, closeDay, isCellBackground, openTracks, shouldCloseOnKey } from "./open-day";
 
 const ONE = "minmax(0,1fr)", OPEN = "minmax(20rem,3fr)";
 
@@ -26,6 +26,18 @@ describe("shouldCloseOnKey", () => {
     expect(shouldCloseOnKey({ key: "Escape", defaultPrevented: false, target: null })).toBe(true);
     expect(shouldCloseOnKey({ key: "Escape", defaultPrevented: true, target: null })).toBe(false);
     expect(shouldCloseOnKey({ key: "ArrowLeft", defaultPrevented: false, target: null })).toBe(false);
+  });
+  // Esc mid-drag cancels the drag; collapsing the day too would jump the layout under the drop animation.
+  it("leaves the day open when Escape cancels a drag", () => {
+    expect(shouldCloseOnKey({ key: "Escape", defaultPrevented: false, target: null, dragging: true })).toBe(false);
+  });
+});
+
+describe("closeDay", () => {
+  it("keeps the same state when nothing is open (no re-render)", () => {
+    const s = { period: "2026-11-01", day: null };
+    expect(closeDay(s)).toBe(s);
+    expect(closeDay({ period: "2026-11-01", day: "2026-11-11" })).toEqual(s);
   });
 });
 

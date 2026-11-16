@@ -36,6 +36,7 @@ export function ItemRow({
   overlay = false,
   density = "list",
   onToday,
+  fullTitle = false,
 }: {
   item: Item;
   today: string;
@@ -46,6 +47,8 @@ export function ItemRow({
   /** Offer "↑ Today" (Today's pick list): a quiet label at rest, a button
       in the hover actions. List densities only. */
   onToday?: () => void;
+  /** Card only: wrap the whole title instead of clamping at two lines. */
+  fullTitle?: boolean;
 }) {
   const actions = useItemActions();
   const { weekStart } = usePrefs();
@@ -95,7 +98,7 @@ export function ItemRow({
       onClick={() => setEditing(true)}
       className={cn(
         "min-w-0 flex-1 text-left outline-none",
-        density === "card" ? "line-clamp-2 leading-5 break-words" : "truncate",
+        density === "card" ? cn("leading-5 break-words", !fullTitle && "line-clamp-2") : "truncate",
         done && "text-muted-foreground line-through",
       )}
     >
@@ -250,14 +253,26 @@ function TitleInput({ item, onDone }: { item: Item; onDone: () => void }) {
     one task ends and the next begins, so its metadata line clearly belongs
     to it; cards sit 6px apart. Done cards step back. The drag copy draws
     its own lifted card (ItemRow overlay). */
-export function ItemCard({ item, today, showPlace = false, overlay = false }: { item: Item; today: string; showPlace?: boolean; overlay?: boolean }) {
+export function ItemCard({
+  item,
+  today,
+  showPlace = false,
+  overlay = false,
+  fullTitle = false,
+}: {
+  item: Item;
+  today: string;
+  showPlace?: boolean;
+  overlay?: boolean;
+  fullTitle?: boolean;
+}) {
   return (
     <div className="py-[3px]">
       {overlay ? (
         <ItemRow item={item} today={today} showPlace={showPlace} density="card" overlay />
       ) : (
         <div className={cn("bg-card rounded-md border transition-opacity", item.status === "done" && "opacity-60 hover:opacity-100")}>
-          <ItemRow item={item} today={today} showPlace={showPlace} density="card" />
+          <ItemRow item={item} today={today} showPlace={showPlace} density="card" fullTitle={fullTitle} />
         </div>
       )}
     </div>
