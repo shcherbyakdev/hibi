@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { Check, Maximize2, Minimize2, Plus } from "lucide-react";
 import { useItemActions, usePlanned } from "@/features/items/use-items";
 import { placeId, type Place } from "@/features/items/model";
@@ -14,7 +14,7 @@ import { PlannerBoard } from "./planner-board";
 import { PriorityPicker } from "@/features/items/components/priority-icon";
 import { useItemSheet } from "@/features/items/components/item-sheet";
 import { usePrefs } from "@/lib/prefs";
-import { isCellBackground, openTracks, useOpenDay } from "../open-day";
+import { cellClickIntent, isCellBackground, openTracks, useOpenDay } from "../open-day";
 
 /* The month as a grid of day cells (each a drop target) beside the "This
    month" bucket. Drag from the bucket onto a day to schedule it; click a
@@ -26,6 +26,7 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
   const start = periodOf("month", date);
   const { weekStart } = usePrefs();
   const [adding, setAdding] = useState<string | null>(null);
+  const firstClickOnBackground = useRef(false);
   const grid = monthGrid(start, weekStart);
   const { open, setOpen } = useOpenDay(start);
   const bucket = usePlanned("month", start);
@@ -75,8 +76,18 @@ export function MonthView({ date, today, go, openDay }: { date: string; today: s
                 {grid.flat().map((d, i) => (
                   <div
                     key={d}
-                    onClick={(e) => isCellBackground(e.target as Element) && setOpen(d)}
-                    onDoubleClick={(e) => isCellBackground(e.target as Element) && setAdding(d)}
+                    onClickCapture={(e) => {
+                      // Capture phase: a double-click's second click must not reach the
+                      // card that opening the day just put under the pointer.
+                      const background = isCellBackground(e.target as Element);
+                      const intent = cellClickIntent(e.detail, background, firstClickOnBackground.current);
+                      if (e.detail === 1) firstClickOnBackground.current = background;
+                      if (intent === "add") {
+                        e.stopPropagation();
+                        setOpen(d);
+                        setAdding(d);
+                      } else if (intent === "open") setOpen(d);
+                    }}
                     className={cn("group/cell flex min-h-24 min-w-0 flex-col gap-0.5 border-b p-1", i % 7 !== 6 && "border-r", open === d ? "bg-brand/5" : !inMonth(d) && "bg-muted/40")}
                   >
                     <div className="flex items-center justify-between">

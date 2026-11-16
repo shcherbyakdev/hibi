@@ -11,6 +11,14 @@ export function isCellBackground(target: { closest(selector: string): unknown } 
   return !target?.closest("button, input, [aria-roledescription]");
 }
 
+/** What a click on a month cell means. `detail` is the click count. The
+    first click opens the day and swaps its chips for taller cards, so a
+    second click may land on a card: where the first one landed decides. */
+export function cellClickIntent(detail: number, background: boolean, firstWasBackground: boolean): "open" | "add" | null {
+  if (detail === 1) return background ? "open" : null;
+  return firstWasBackground ? "add" : null;
+}
+
 /** Escape that nothing else (a focused row, an input) already handled. */
 export function shouldCloseOnKey(e: { key: string; defaultPrevented: boolean; target: unknown }): boolean {
   if (e.key !== "Escape" || e.defaultPrevented) return false;
