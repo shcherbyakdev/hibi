@@ -1,7 +1,7 @@
 "use client";
 
-import { usePlanned, useOverdue } from "@/features/items/use-items";
-import { placeId, type Place } from "@/features/items/model";
+import { usePlanned, useOverdue, useInbox } from "@/features/items/use-items";
+import { INBOX, placeId, type Place } from "@/features/items/model";
 import { QuickAdd } from "@/features/items/components/quick-add";
 import { addDays, label } from "../periods";
 import { DateNav } from "./date-nav";
@@ -12,10 +12,17 @@ export function DayView({ date, today, go }: { date: string; today: string; go: 
   const place: Place = { plan_scope: "day", plan_date: date };
   const items = usePlanned("day", date);
   // Overdue is shown on today only: it's what you pick up from.
-  const overdue = useOverdue(date === today ? today : null);
-  if (!items || !overdue) return null;
+  const isToday = date === today;
+  const overdue = useOverdue(isToday ? today : null);
+  // So is the Inbox: drag in to plan for today, drag out to unplan.
+  const inbox = useInbox();
+  if (!items || !overdue || !inbox) return null;
 
-  const groups = [...(overdue.length ? [{ id: "overdue", items: overdue, noDrop: true }] : []), { id: placeId(place), items }];
+  const groups = [
+    ...(overdue.length ? [{ id: "overdue", items: overdue, noDrop: true }] : []),
+    { id: placeId(place), items },
+    ...(isToday ? [{ id: placeId(INBOX), items: inbox }] : []),
+  ];
   const open = items.filter((i) => i.status !== "done" && i.status !== "dropped").length;
 
   return (
@@ -46,6 +53,12 @@ export function DayView({ date, today, go }: { date: string; today: string; go: 
               {list(placeId(place))}
               <QuickAdd place={place} className="h-11 gap-3 px-3 text-[14px]" />
             </section>
+            {isToday ? (
+              <section>
+                <GroupHeader count={inbox.length} className="px-3">Inbox</GroupHeader>
+                {list(placeId(INBOX))}
+              </section>
+            ) : null}
           </>
         )}
       </PlannerBoard>
