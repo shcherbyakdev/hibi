@@ -25,6 +25,9 @@ export type BoardGroup<T extends Row> = {
   items: T[];
   /** Can be dragged out of, not into (e.g. "Overdue"). */
   noDrop?: boolean;
+  /** Shown in its own order (e.g. by priority): drops land with no
+      neighbours (the caller appends) and reordering inside is ignored. */
+  unordered?: boolean;
 };
 
 /** Pointer drags start after 4px, and never from a text field or a control
@@ -76,6 +79,7 @@ export function Board<T extends Row>({
   const byId = React.useMemo(() => new Map(groups.flatMap((g) => g.items.map((i) => [i.id, i] as const))), [groups]);
   const order = drag?.order ?? Object.fromEntries(groups.map((g) => [g.id, g.items.map((i) => i.id)]));
   const noDrop = new Set(groups.filter((g) => g.noDrop).map((g) => g.id));
+  const unordered = new Set(groups.filter((g) => g.unordered).map((g) => g.id));
   const groupOf = (id: string, o = order) => (id in o ? id : Object.keys(o).find((g) => o[g].includes(id)));
 
   const onDragStart = ({ active }: DragStartEvent) => {
@@ -101,8 +105,9 @@ export function Board<T extends Row>({
     if (!d || !over) return;
     const id = String(active.id);
     const to = groupOf(id, d.order)!;
-    // Reordering inside a no-drop group means nothing.
-    if (to === d.from && noDrop.has(to)) return;
+    // Reordering inside a no-drop or unordered group means nothing.
+    if (to === d.from && (noDrop.has(to) || unordered.has(to))) return;
+    if (unordered.has(to)) return onMove(byId.get(id)!, to, null, null);
     let list = d.order[to];
     const overIdx = list.indexOf(String(over.id));
     if (overIdx >= 0) list = arrayMove(list, list.indexOf(id), overIdx);
@@ -135,7 +140,7 @@ export function Board<T extends Row>({
   const list = (groupId: string, className?: string, grid = false) => {
     const ids = order[groupId] ?? [];
     return (
-      <DropList id={groupId} disabled={noDrop.has(groupId)} className={className}>
+      <DropList id={groupId} disabled={noDrop.has(groupId)} unordered={unordered.has(groupId)} className={className}>
         <SortableContext items={ids} strategy={grid ? rectSortingStrategy : verticalListSortingStrategy}>
           {ids.map((id) => {
             const item = byId.get(id);
@@ -161,10 +166,10 @@ export function Board<T extends Row>({
 }
 
 /** The group's own drop zone, so an empty group still accepts a row. */
-function DropList({ id, disabled, className, children }: { id: string; disabled?: boolean; className?: string; children: React.ReactNode }) {
+function DropList({ id, disabled, unordered, className, children }: { id: string; disabled?: boolean; unordered?: boolean; className?: string; children: React.ReactNode }) {
   const { setNodeRef } = useDroppable({ id, disabled });
   return (
-    <div ref={setNodeRef} data-group={id} className={cn("flex min-h-9 flex-col", className)}>
+    <div ref={setNodeRef} data-group={id} data-unordered={unordered || undefined} className={cn("flex min-h-9 flex-col", className)}>
       {children}
     </div>
   );

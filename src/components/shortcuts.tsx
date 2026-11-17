@@ -98,7 +98,7 @@ export function Shortcuts() {
         if (e.altKey && (key === "ArrowUp" || key === "ArrowDown")) {
           handled();
           const group = row.closest<HTMLElement>("[data-group]");
-          if (!group || group.dataset.group === "overdue" || group.dataset.group === "pick") return;
+          if (!group || group.dataset.group === "overdue" || group.dataset.unordered) return;
           const ids = [...group.querySelectorAll<HTMLElement>("[data-item-id]")].map((el) => idOf(el)!);
           const list = (await db.items.bulkGet(ids)).filter((x) => x !== undefined);
           const k = keyForStep(list, ids.indexOf(item.id), key === "ArrowUp" ? -1 : 1);

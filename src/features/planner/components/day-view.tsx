@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Item } from "@/lib/sync/db";
 import { useGoalBacklog, useInbox, useItemActions, usePlanned, useOverdue } from "@/features/items/use-items";
-import { placeId, type Place } from "@/features/items/model";
+import { INBOX, placeId, type Place } from "@/features/items/model";
 import { QuickAdd } from "@/features/items/components/quick-add";
 import { ItemRow } from "@/features/items/components/item-row";
 import { usePrefs } from "@/lib/prefs";
@@ -33,11 +33,21 @@ export function DayView({ date, today, go }: { date: string; today: string; go: 
   const pick = sources.find((s) => s.source === chosen) ?? sources[0];
   const pickIds = new Set(pick?.items.map((i) => i.id));
   const toToday = (item: Item) => void actions.plan(item, place);
+  // Dropping into the pick list moves the task to that source's place;
+  // Goals isn't one place, so it only gives.
+  const pickPlace: Record<PickSource, Place | null> = {
+    inbox: INBOX,
+    week: { plan_scope: "week", plan_date: periodOf("week", today, weekStart) },
+    month: { plan_scope: "month", plan_date: periodOf("month", today) },
+    goals: null,
+  };
+  const pickTo = pick && pickPlace[pick.source];
+  const pickId = pickTo ? placeId(pickTo) : "pick";
 
   const groups = [
     ...(overdue.length ? [{ id: "overdue", items: overdue, noDrop: true }] : []),
     { id: placeId(place), items },
-    ...(pick ? [{ id: "pick", items: pick.items, noDrop: true }] : []),
+    ...(pick ? [{ id: pickId, items: pick.items, noDrop: !pickTo, unordered: true }] : []),
   ];
   const open = items.filter((i) => i.status !== "done" && i.status !== "dropped").length;
 
@@ -98,7 +108,7 @@ export function DayView({ date, today, go }: { date: string; today: string; go: 
                     </button>
                   ))}
                 </div>
-                {list("pick")}
+                {list(pickId)}
               </section>
             ) : null}
           </>

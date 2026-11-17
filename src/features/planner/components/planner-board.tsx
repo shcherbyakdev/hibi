@@ -29,7 +29,8 @@ export function PlannerBoard({
       groups={groups}
       onMove={(item, groupId, prev, next) => {
         const place = parsePlaceId(groupId);
-        if (place) void actions.move(item, place, prev, next);
+        // No neighbours: an empty list, or an unordered one — append.
+        if (place) void (prev || next ? actions.move(item, place, prev, next) : actions.plan(item, place));
       }}
       itemLabel={(i) => i.title}
       renderItem={renderItem ?? ((item, { overlay }) => <ItemRow item={item} today={today} overlay={overlay} showPlace={showPlace(item)} />)}
